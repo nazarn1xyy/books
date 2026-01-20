@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, Bell, Cpu, HardDrive, Search, Filter, MoreVertical, Check, X as XIcon, ChevronRight } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { getOverallStats, getActiveUsers, getPopularBooks, getActivityByPeriod, getGenres, getNotifications, getManagedBooks, type UserStat, type AdminNotification, type ManagedBook } from '../../services/mockStats';
+import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, Bell, Cpu, HardDrive, X as XIcon, ChevronRight } from 'lucide-react';
+import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { getOverallStats, getActiveUsers, getActivityByPeriod, getGenres, getNotifications, getManagedBooks, type UserStat } from '../../services/mockStats';
 
 export function Admin() {
     const stats = getOverallStats();
     const activeUsers = getActiveUsers();
-    const popularBooks = getPopularBooks();
     const genres = getGenres();
     const notifications = getNotifications();
     const managedBooks = getManagedBooks();
@@ -79,8 +78,8 @@ export function Admin() {
                                         {notifications.map(n => (
                                             <div key={n.id} className="p-3 hover:bg-white/5 rounded-xl transition-colors flex gap-3">
                                                 <div className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${n.type === 'error' ? 'bg-red-500' :
-                                                        n.type === 'warning' ? 'bg-yellow-500' :
-                                                            n.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+                                                    n.type === 'warning' ? 'bg-yellow-500' :
+                                                        n.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
                                                     }`} />
                                                 <div>
                                                     <p className="text-sm text-white leading-snug">{n.message}</p>
@@ -215,7 +214,7 @@ export function Admin() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={genres}
+                                        data={genres as any[]}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
@@ -304,7 +303,7 @@ export function Admin() {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${book.status === 'published' ? 'bg-green-500/10 text-green-500' :
-                                                        book.status === 'review' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-gray-500/10 text-gray-400'
+                                                    book.status === 'review' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-gray-500/10 text-gray-400'
                                                     }`}>
                                                     {book.status === 'published' ? 'Опубликован' : book.status === 'review' ? 'На проверке' : 'Черновик'}
                                                 </span>
