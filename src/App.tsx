@@ -10,6 +10,7 @@ import { Auth } from './pages/Auth';
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
 const Search = lazy(() => import('./pages/Search').then(module => ({ default: module.Search })));
 const MyBooks = lazy(() => import('./pages/MyBooks').then(module => ({ default: module.MyBooks })));
+const Reader = lazy(() => import('./pages/Reader').then(module => ({ default: module.Reader })));
 const Admin = lazy(() => import('./pages/Admin/Admin').then(module => ({ default: module.Admin })));
 
 // ... existing code ...
