@@ -23,7 +23,7 @@ export function Auth() {
                 });
                 if (error) throw error;
             } else {
-                const { error: signUpError } = await supabase.auth.signUp({
+                const { data, error: signUpError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -33,7 +33,14 @@ export function Auth() {
                     },
                 });
                 if (signUpError) throw signUpError;
-                // Auto login or success message
+
+                if (data.user && !data.session) {
+                    alert('Регистрация успешна! Пожалуйста, проверьте email для подтверждения или войдите, если подтверждение не требуется.');
+                    setIsLogin(true);
+                } else if (data.session) {
+                    // Auto-login happened
+                    alert('Регистрация успешна! Добро пожаловать.');
+                }
             }
         } catch (err: any) {
             console.error('Auth error:', err);
