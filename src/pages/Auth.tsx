@@ -32,6 +32,7 @@ export function Auth() {
                         },
                     },
                 });
+                console.log('Signup response:', { data, signUpError });
                 if (signUpError) throw signUpError;
 
                 if (data.user && !data.session) {
@@ -40,6 +41,11 @@ export function Auth() {
                 } else if (data.session) {
                     // Auto-login happened
                     alert('Регистрация успешна! Добро пожаловать.');
+                } else {
+                    // Fallback
+                    console.warn('Signup succeed but no session/user returned', data);
+                    alert('Запрос на регистрацию отправлен. Попробуйте войти.');
+                    setIsLogin(true);
                 }
             }
         } catch (err: any) {
