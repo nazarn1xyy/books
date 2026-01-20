@@ -111,6 +111,79 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
     }
 }
 
+// Shared parsing logic for both remote and local books
+export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; cover?: string; title?: string; author?: string; description?: string }> {
+    // 1. Use Web Worker for heavy lifting (Unzip & Decode)
+    const text = await new Promise<string>((resolve, reject) => {
+        const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
+
+        worker.onmessage = (e) => {
+            if (e.data.type === 'SUCCESS') {
+                resolve(e.data.text);
+            } else {
+                reject(new Error(e.data.error));
+            }
+            worker.terminate();
+        };
+
+        worker.onerror = (err) => {
+            reject(err);
+            worker.terminate();
+        };
+
+        // Transfer buffer to worker
+        worker.postMessage({ arrayBuffer: data }, [data]);
+    });
+
+    // 2. Parse XML for metadata and body
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/xml');
+
+    if (doc.querySelector('parsererror')) {
+        throw new Error('Failed to parse FB2 XML');
+    }
+
+    // Extract Metadata (Title, Author, Description)
+    const descriptionBlock = doc.querySelector('description');
+    const title = descriptionBlock?.querySelector('title-info book-title')?.textContent ||
+        doc.querySelector('body > title > p')?.textContent ||
+        'Без названия';
+
+    // Author
+    const authorFirstName = descriptionBlock?.querySelector('title-info author first-name')?.textContent || '';
+    const authorLastName = descriptionBlock?.querySelector('title-info author last-name')?.textContent || '';
+    const authorMiddleName = descriptionBlock?.querySelector('title-info author middle-name')?.textContent || '';
+    const author = [authorFirstName, authorMiddleName, authorLastName].filter(Boolean).join(' ') || 'Неизвестный автор';
+
+    const description = descriptionBlock?.querySelector('title-info annotation')?.textContent || '';
+
+    // Extract Cover
+    let cover = '';
+    const binaryCover = doc.querySelector('binary[id*="cover"]');
+    if (binaryCover) {
+        const contentType = binaryCover.getAttribute('content-type') || 'image/jpeg';
+        const base64 = binaryCover.textContent;
+        cover = `data:${contentType};base64,${base64}`;
+    }
+
+    // Extract Body Text
+    const body = doc.querySelector('body');
+    let extractedText = '';
+
+    if (body) {
+        const paragraphs = body.querySelectorAll('p');
+        extractedText = Array.from(paragraphs).map(p => p.textContent).join('\n\n');
+    }
+
+    return {
+        text: extractedText,
+        cover,
+        title,
+        author,
+        description
+    };
+}
+
 export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string }> {
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
@@ -126,65 +199,18 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
         // Fetch as ArrayBuffer to handle ZIP
         const data = await fetchViaProxy(url, 'arraybuffer') as ArrayBuffer;
 
-        // Use Web Worker for heavy lifting (Unzip & Decode)
-        const text = await new Promise<string>((resolve, reject) => {
-            const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
-
-            worker.onmessage = (e) => {
-                if (e.data.type === 'SUCCESS') {
-                    resolve(e.data.text);
-                } else {
-                    reject(new Error(e.data.error));
-                }
-                worker.terminate();
-            };
-
-            worker.onerror = (err) => {
-                reject(err);
-                worker.terminate();
-            };
-
-            // Transfer buffer to worker
-            worker.postMessage({ arrayBuffer: data }, [data]);
-        });
-
-        // Main thread only parses the XML string now
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/xml');
-
-        // Parse cover
-        // <binary id="cover.jpg" content-type="image/jpeg">BASE64...</binary>
-        let cover = '';
-        const binaryCover = doc.querySelector('binary[id*="cover"]');
-        if (binaryCover) {
-            const contentType = binaryCover.getAttribute('content-type') || 'image/jpeg';
-            const base64 = binaryCover.textContent;
-            cover = `data:${contentType};base64,${base64}`;
-        }
-
-        // Parse body
-        // <body><section><p>...</p></section></body>
-        const body = doc.querySelector('body');
-        let extractedText = '';
-
-        if (body) {
-            const paragraphs = body.querySelectorAll('p');
-            // Convert to simple text for now, joining with newlines
-            // Better: keep structure? For now simple text string as reader expects
-            extractedText = Array.from(paragraphs).map(p => p.textContent).join('\n\n');
-        }
-
-        if (!extractedText && doc.querySelector('parsererror')) {
-            throw new Error('Failed to parse FB2 XML');
-        }
+        // Use shared parsing logic
+        const parsedData = await parseBookData(data);
 
         // 2. Cache the result
-        if (extractedText) {
+        if (parsedData.text) {
             console.log(`Caching book ${bookId}`);
-            await cacheBook(bookId, extractedText, cover);
+            // Note: For remote books, we might want to prioritize the cover from OPDS if available,
+            // but inner FB2 cover is often better quality.
+            await cacheBook(bookId, parsedData.text, parsedData.cover || '');
         }
 
-        return { text: extractedText, cover };
+        return { text: parsedData.text, cover: parsedData.cover };
     } catch (error) {
         console.error('Failed to fetch FB2:', error);
         throw error;

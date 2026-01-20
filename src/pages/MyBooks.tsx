@@ -1,14 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Plus, Upload } from 'lucide-react';
 import type { Book } from '../types';
 import { books } from '../data/books';
-import { getMyBookIds, getReadingProgress, getBookMetadata } from '../utils/storage';
+import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
 import { ImageWithLoader } from '../components/ImageWithLoader';
+import { parseBookData } from '../services/flibustaApi';
+import { cacheBook } from '../utils/cache';
 
 export function MyBooks() {
-    const myBookIds = getMyBookIds();
+    const [myBookIds, setMyBookIds] = useState(getMyBookIds());
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const myBooks = useMemo(() => {
         return myBookIds
@@ -22,15 +26,57 @@ export function MyBooks() {
             .sort((a, b) => (b?.progress?.lastRead || 0) - (a?.progress?.lastRead || 0));
     }, [myBookIds]);
 
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const buffer = await file.arrayBuffer();
+            const { text, cover, title, author, description } = await parseBookData(buffer);
+
+            const newBookId = `local-${Date.now()}`;
+
+            // Cache the book content
+            await cacheBook(newBookId, text, cover || '');
+
+            // Create book metadata
+            const newBook: Book = {
+                id: newBookId,
+                title: title || file.name.replace(/\.fb2(\.zip)?$/i, ''),
+                author: author || 'Unknown Author',
+                cover: cover || 'https://placehold.co/300x450?text=Wait...',
+                description: description || '',
+                genre: 'Local',
+                contentUrl: 'local',
+            };
+
+            // Save to storage
+            addToMyBooks(newBook);
+
+            // Update UI
+            setMyBookIds(getMyBookIds());
+
+        } catch (error) {
+            console.error('Failed to upload book:', error);
+            alert('Не удалось открыть файл. Убедитесь, что это корректный FB2 или FB2.ZIP.');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)]">
+        <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)] relative">
             <div className="px-5 pt-8">
                 {/* Header */}
-                <header className="mb-6">
-                    <h1 className="text-3xl font-bold text-white">Мои книги</h1>
-                    {myBooks.length > 0 && (
-                        <p className="text-gray-500 mt-1">{myBooks.length} книг</p>
-                    )}
+                <header className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-white">Мои книги</h1>
+                        {myBooks.length > 0 && (
+                            <p className="text-gray-500 mt-1">{myBooks.length} книг</p>
+                        )}
+                    </div>
                 </header>
 
                 {/* Book List */}
@@ -45,10 +91,32 @@ export function MyBooks() {
                         <BookOpen size={48} className="text-gray-600 mb-4" />
                         <p className="text-gray-500 text-center">
                             Здесь пока пусто<br />
-                            Начните читать книгу, чтобы<br />она появилась здесь
+                            Начните читать книгу или добавьте свою
                         </p>
                     </div>
                 )}
+            </div>
+
+            {/* Upload Button */}
+            <div className="fixed bottom-24 right-5 z-20">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".fb2,.zip,.fb2.zip"
+                    className="hidden"
+                />
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center shadow-lg shadow-white/10 active:scale-90 transition-transform disabled:opacity-50"
+                >
+                    {isUploading ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-black border-t-transparent" />
+                    ) : (
+                        <Plus size={28} />
+                    )}
+                </button>
             </div>
         </div>
     );
