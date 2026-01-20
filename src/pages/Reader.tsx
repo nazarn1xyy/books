@@ -25,7 +25,8 @@ export function Reader() {
     const [fullText, setFullText] = useState<string>('');
     const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
     const [numPages, setNumPages] = useState<number>(0);
-    const [pageNumber, setPageNumber] = useState<number>(1);
+    // pageNumber is now primarily used for display (1-based) derived from scroll
+    const [displayPageNumber, setDisplayPageNumber] = useState<number>(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [scrollProgress, setScrollProgress] = useState(0);
@@ -89,24 +90,48 @@ export function Reader() {
 
     // Restore scroll position
     useEffect(() => {
-        if (!id || paragraphs.length === 0 || !virtuosoRef.current) return;
+        if (!id || !virtuosoRef.current) return;
+
+        const isPdf = book?.format === 'pdf';
+        const total = isPdf ? numPages : paragraphs.length;
+
+        // Only run if we have content ready to scroll
+        if (total === 0) return;
 
         const progress = getReadingProgress(id);
-        if (progress && progress.scrollPercentage) {
-            const index = Math.floor((progress.scrollPercentage / 100) * paragraphs.length);
-            const safeIndex = Math.max(0, Math.min(index, paragraphs.length - 1));
+        if (progress) {
+            let startIndex = 0;
+            // Use saved currentPage (index) if available, otherwise calc from percentage
+            if (progress.currentPage !== undefined && progress.currentPage < total) {
+                startIndex = progress.currentPage;
+            } else if (progress.scrollPercentage) {
+                startIndex = Math.floor((progress.scrollPercentage / 100) * total);
+            }
 
-            // Initial scroll
+            const safeIndex = Math.max(0, Math.min(startIndex, total - 1));
+
+            // Initial scroll with slight delay to ensure list is rendered
             setTimeout(() => {
                 virtuosoRef.current?.scrollToIndex({ index: safeIndex, align: 'start' });
             }, 100);
         }
-    }, [id, paragraphs]);
+    }, [id, paragraphs.length, numPages, book?.format]);
 
     const handleRangeChanged = (range: { startIndex: number, endIndex: number }) => {
         if (!id) return;
 
-        const percentage = Math.round((range.startIndex / paragraphs.length) * 100);
+        const isPdf = book?.format === 'pdf';
+        const total = isPdf ? numPages : paragraphs.length;
+        if (total === 0) return;
+
+        const currentIndex = range.startIndex;
+
+        // Update display page number (1-based)
+        if (isPdf) {
+            setDisplayPageNumber(currentIndex + 1);
+        }
+
+        const percentage = Math.round((currentIndex / total) * 100);
         setScrollProgress(percentage);
 
         // Debounce saving
@@ -117,8 +142,8 @@ export function Reader() {
         scrollTimeoutRef.current = setTimeout(() => {
             saveReadingProgress({
                 bookId: id,
-                currentPage: range.startIndex,
-                totalPages: paragraphs.length,
+                currentPage: currentIndex, // 0-based index
+                totalPages: total,
                 lastRead: Date.now(),
                 scrollPercentage: percentage
             });
@@ -165,17 +190,22 @@ export function Reader() {
             }}
         >
             {/* Header */}
-            <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-black/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10">
+            <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-black/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 transition-transform">
                 <button
                     onClick={() => navigate(-1)}
                     className="p-2 -ml-2 text-white active:opacity-50 transition-opacity"
                 >
                     <ChevronLeft size={28} />
                 </button>
-                <div className="flex-1 text-center">
+                <div className="flex-1 text-center overflow-hidden">
                     <h1 className="text-sm font-medium text-white truncate px-4">
                         {book.title}
                     </h1>
+                    {book.format === 'pdf' && (
+                        <p className="text-xs text-gray-400">
+                            Стр. {displayPageNumber} из {numPages}
+                        </p>
+                    )}
                 </div>
                 <button
                     onClick={() => setShowSettings(true)}
@@ -186,71 +216,50 @@ export function Reader() {
             </header>
 
             {/* Content */}
-            <main
-                className="flex-1 relative bg-black"
-            >
+            <main className="flex-1 relative bg-black overflow-hidden">
                 {book?.format === 'pdf' && pdfData ? (
-                    <div className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center bg-[#1C1C1E] pt-4"
-                        style={{ touchAction: 'pan-y' }}
-                    >
+                    <div className="h-full w-full bg-[#1C1C1E]">
                         <Document
                             file={pdfData}
                             onLoadSuccess={({ numPages }) => {
                                 setNumPages(numPages);
-                                // Restore page
-                                const progress = getReadingProgress(id!);
-                                if (progress) setPageNumber(progress.currentPage || 1);
                             }}
-                            loading={<div className="text-white">Загрузка PDF...</div>}
-                            className="max-w-full"
+                            loading={<div className="flex h-full items-center justify-center text-white">Загрузка PDF...</div>}
+                            className="h-full"
                         >
-                            <Page
-                                pageNumber={pageNumber}
-                                width={window.innerWidth > 768 ? 768 : window.innerWidth}
-                                renderTextLayer={false}
-                                renderAnnotationLayer={false}
-                                className="shadow-2xl mb-4"
-                            />
+                            {numPages > 0 && (
+                                <Virtuoso
+                                    ref={virtuosoRef}
+                                    style={{ height: '100%' }}
+                                    totalCount={numPages}
+                                    rangeChanged={handleRangeChanged}
+                                    itemContent={(index) => (
+                                        <div className="flex justify-center py-2 px-2">
+                                            <Page
+                                                key={`page_${index + 1}`}
+                                                pageNumber={index + 1}
+                                                width={window.innerWidth > 768 ? 768 : window.innerWidth - 16} // Small padding on mobile
+                                                renderTextLayer={false}
+                                                renderAnnotationLayer={false}
+                                                className="shadow-xl bg-white"
+                                                loading={
+                                                    <div
+                                                        className="bg-white/10 animate-pulse rounded"
+                                                        style={{
+                                                            width: window.innerWidth > 768 ? 768 : window.innerWidth - 16,
+                                                            height: (window.innerWidth > 768 ? 768 : window.innerWidth - 16) * 1.414
+                                                        }}
+                                                    />
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                    components={{
+                                        Footer: () => <div className="h-24" />, // Extra space at bottom
+                                    }}
+                                />
+                            )}
                         </Document>
-
-                        {/* PDF Controls */}
-                        <div className="flex items-center gap-6 py-8 text-white z-20">
-                            <button
-                                onClick={() => {
-                                    const prev = Math.max(1, pageNumber - 1);
-                                    setPageNumber(prev);
-                                    saveReadingProgress({
-                                        bookId: id!,
-                                        currentPage: prev,
-                                        totalPages: numPages,
-                                        lastRead: Date.now(),
-                                        scrollPercentage: Math.round((prev / numPages) * 100)
-                                    });
-                                }}
-                                disabled={pageNumber <= 1}
-                                className="px-6 py-3 bg-white/10 rounded-full disabled:opacity-30"
-                            >
-                                Назад
-                            </button>
-                            <span className="font-medium">{pageNumber} / {numPages}</span>
-                            <button
-                                onClick={() => {
-                                    const next = Math.min(numPages, pageNumber + 1);
-                                    setPageNumber(next);
-                                    saveReadingProgress({
-                                        bookId: id!,
-                                        currentPage: next,
-                                        totalPages: numPages,
-                                        lastRead: Date.now(),
-                                        scrollPercentage: Math.round((next / numPages) * 100)
-                                    });
-                                }}
-                                disabled={pageNumber >= numPages}
-                                className="px-6 py-3 bg-white/10 rounded-full disabled:opacity-30"
-                            >
-                                Вперед
-                            </button>
-                        </div>
                     </div>
                 ) : fullText && paragraphs.length > 0 ? (
                     <Virtuoso
@@ -267,7 +276,7 @@ export function Reader() {
                             </div>
                         )}
                         components={{
-                            Footer: () => <div className="h-20" />,
+                            Footer: () => <div className="h-24" />,
                         }}
                     />
                 ) : (
@@ -277,7 +286,7 @@ export function Reader() {
                 )}
             </main>
 
-            {/* Footer */}
+            {/* Footer - Progress Bar Only */}
             <footer className="px-4 pb-6 pt-4 bg-black/90 backdrop-blur-xl border-t border-white/5 pb-[env(safe-area-inset-bottom)] z-10">
                 <div className="max-w-3xl mx-auto w-full">
                     <div className="flex items-center gap-4 mb-2">
@@ -309,25 +318,27 @@ export function Reader() {
                             </button>
                         </div>
 
-                        {/* Font Size */}
-                        <div className="mb-6">
-                            <label className="text-sm text-gray-400 mb-3 block">Размер шрифта</label>
-                            <div className="flex items-center justify-between bg-[#2C2C2E] rounded-xl p-4">
-                                <button
-                                    onClick={() => updateFontSize(-2)}
-                                    className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
-                                >
-                                    <Minus size={20} />
-                                </button>
-                                <span className="text-white font-medium">{settings.fontSize}px</span>
-                                <button
-                                    onClick={() => updateFontSize(2)}
-                                    className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
-                                >
-                                    <Plus size={20} />
-                                </button>
+                        {/* Font Size - Only for local text books */}
+                        {book?.format !== 'pdf' && (
+                            <div className="mb-6">
+                                <label className="text-sm text-gray-400 mb-3 block">Размер шрифта</label>
+                                <div className="flex items-center justify-between bg-[#2C2C2E] rounded-xl p-4">
+                                    <button
+                                        onClick={() => updateFontSize(-2)}
+                                        className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
+                                    >
+                                        <Minus size={20} />
+                                    </button>
+                                    <span className="text-white font-medium">{settings.fontSize}px</span>
+                                    <button
+                                        onClick={() => updateFontSize(2)}
+                                        className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
+                                    >
+                                        <Plus size={20} />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Brightness */}
                         <div>
