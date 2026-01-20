@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { Book } from '../types';
 import { getReadingProgress } from '../utils/storage';
 import { ProgressBar } from './ProgressBar';
@@ -8,10 +8,10 @@ interface BookCardProps {
     book: Book;
     size?: 'small' | 'medium' | 'large';
     showProgress?: boolean;
+    priority?: boolean;
 }
 
-export function BookCard({ book, size = 'medium', showProgress = false }: BookCardProps) {
-    const navigate = useNavigate();
+export function BookCard({ book, size = 'medium', showProgress = false, priority = false }: BookCardProps) {
     const progress = getReadingProgress(book.id);
     const rawPercentage = progress && progress.totalPages > 0
         ? Math.round(((progress.currentPage + 1) / progress.totalPages) * 100)
@@ -31,16 +31,18 @@ export function BookCard({ book, size = 'medium', showProgress = false }: BookCa
     };
 
     return (
-        <button
-            onClick={() => navigate(`/reader/${book.id}`)}
-            aria-label={`Read ${book.title} by ${book.author}`}
+        <Link
+            to={`/reader/${book.id}`}
+            aria-label={`Читать книгу ${book.title}, автор ${book.author}`}
             className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full`}
         >
             <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">
                 <ImageWithLoader
                     src={book.cover || 'https://placehold.co/300x450?text=No+Cover'}
                     alt={book.title}
-                    loading="lazy"
+                    loading={priority ? "eager" : "lazy"}
+                    decoding={priority ? "sync" : "async"}
+                    fetchPriority={priority ? "high" : "low"}
                     className={`w-full ${imageHeights[size]} object-cover transition-opacity duration-300 group-hover:opacity-90`}
                     wrapperClassName="w-full bg-[#1C1C1E]"
                 />
@@ -57,6 +59,6 @@ export function BookCard({ book, size = 'medium', showProgress = false }: BookCa
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{book.author}</p>
             </div>
-        </button>
+        </Link>
     );
 }

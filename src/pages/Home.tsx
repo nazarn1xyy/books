@@ -83,12 +83,13 @@ export function Home() {
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4">Продолжить чтение</h2>
                                 <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-5 px-5">
-                                    {booksInProgress.map((item) => (
+                                    {booksInProgress.map((item, index) => (
                                         <BookCard
                                             key={item!.book.id}
                                             book={item!.book}
                                             size="medium"
                                             showProgress
+                                            priority={index < 2}
                                         />
                                     ))}
                                 </div>
@@ -100,8 +101,13 @@ export function Home() {
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4">Рекомендуем</h2>
                                 <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-5 px-5">
-                                    {recommendedBooks.map((book) => (
-                                        <BookCard key={book.id} book={book} size="large" />
+                                    {recommendedBooks.map((book, index) => (
+                                        <BookCard
+                                            key={book.id}
+                                            book={book}
+                                            size="large"
+                                            priority={index < 2}
+                                        />
                                     ))}
                                 </div>
                             </section>
