@@ -36,15 +36,12 @@ export function Auth() {
                 if (signUpError) throw signUpError;
 
                 if (data.user && !data.session) {
-                    alert('Регистрация успешна! Пожалуйста, проверьте email для подтверждения или войдите, если подтверждение не требуется.');
                     setIsLogin(true);
                 } else if (data.session) {
-                    // Auto-login happened
-                    alert('Регистрация успешна! Добро пожаловать.');
+                    // Auto-login happened, App.tsx will redirect
                 } else {
                     // Fallback
                     console.warn('Signup succeed but no session/user returned', data);
-                    alert('Запрос на регистрацию отправлен. Попробуйте войти.');
                     setIsLogin(true);
                 }
             }
