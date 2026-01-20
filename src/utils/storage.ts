@@ -53,6 +53,15 @@ export function addToMyBooks(book: Book): void {
     saveAppState(state);
 }
 
+export function removeFromMyBooks(bookId: string): void {
+    const state = getAppState();
+    state.myBooks = state.myBooks.filter(id => id !== bookId);
+    // Optional: Keep metadata/progress or clean it up? 
+    // Usually better to keep small metadata in case of re-add, but maybe clean progress?
+    // Let's keep it simple for now and just remove from the list.
+    saveAppState(state);
+}
+
 export function getBookMetadata(bookId: string): Book | undefined {
     return getAppState().bookMetadata[bookId];
 }
