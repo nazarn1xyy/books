@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/flibusta/:path*",
-            "destination": "http://flibusta.is/:path*"
+            "destination": "https://flibusta.site/:path*"
         },
         {
             "source": "/(.*)",
