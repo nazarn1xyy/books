@@ -1,0 +1,77 @@
+import type { AppState, ReadingProgress, UserSettings, Book } from '../types';
+
+const STORAGE_KEY = 'book-library-state';
+
+const defaultState: AppState = {
+    myBooks: [],
+    bookMetadata: {},
+    readingProgress: {},
+    settings: {
+        fontSize: 18,
+        brightness: 100,
+    },
+};
+
+export function getAppState(): AppState {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            return { ...defaultState, ...JSON.parse(stored) };
+        }
+    } catch (e) {
+        console.error('Failed to load app state:', e);
+    }
+    return defaultState;
+}
+
+export function saveAppState(state: AppState): void {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.error('Failed to save app state:', e);
+    }
+}
+
+export function getReadingProgress(bookId: string): ReadingProgress | null {
+    const state = getAppState();
+    return state.readingProgress[bookId] || null;
+}
+
+export function saveReadingProgress(progress: ReadingProgress): void {
+    const state = getAppState();
+    state.readingProgress[progress.bookId] = progress;
+    saveAppState(state);
+}
+
+export function addToMyBooks(book: Book): void {
+    const state = getAppState();
+    if (!state.myBooks.includes(book.id)) {
+        state.myBooks.push(book.id);
+    }
+    // Always update metadata
+    state.bookMetadata[book.id] = book;
+    saveAppState(state);
+}
+
+export function getBookMetadata(bookId: string): Book | undefined {
+    return getAppState().bookMetadata[bookId];
+}
+
+export function isInMyBooks(bookId: string): boolean {
+    const state = getAppState();
+    return state.myBooks.includes(bookId);
+}
+
+export function getMyBookIds(): string[] {
+    return getAppState().myBooks;
+}
+
+export function getSettings(): UserSettings {
+    return getAppState().settings;
+}
+
+export function saveSettings(settings: UserSettings): void {
+    const state = getAppState();
+    state.settings = settings;
+    saveAppState(state);
+}
