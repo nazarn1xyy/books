@@ -1,3 +1,4 @@
+// Deployment trigger: 2026-01-20
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
