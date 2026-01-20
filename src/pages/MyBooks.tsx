@@ -126,7 +126,7 @@ export function MyBooks() {
             </div>
 
             {/* Upload Button */}
-            <div className="fixed bottom-24 right-5 z-20">
+            <div className="fixed bottom-32 right-5 z-20 pb-[env(safe-area-inset-bottom)]">
                 <input
                     type="file"
                     ref={fileInputRef}
