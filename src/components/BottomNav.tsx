@@ -18,7 +18,7 @@ export function BottomNav() {
                         className={({ isActive }) =>
                             `flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all duration-200 ${isActive
                                 ? 'text-white'
-                                : 'text-gray-500 hover:text-gray-300'
+                                : 'text-gray-400 hover:text-gray-300'
                             }`
                         }
                     >

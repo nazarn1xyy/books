@@ -55,7 +55,7 @@ export function BookCard({ book, size = 'medium', showProgress = false }: BookCa
                 <h3 className="mt-2 text-sm font-semibold text-white line-clamp-2 min-h-[2.5rem] group-hover:text-gray-200 transition-colors">
                     {book.title}
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{book.author}</p>
+                <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{book.author}</p>
             </div>
         </button>
     );

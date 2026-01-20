@@ -65,19 +65,21 @@ export function Search() {
                     <div className="relative">
                         <SearchIcon
                             size={20}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                         />
                         <input
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Книги, авторы, жанры..."
+                            aria-label="Поиск книг"
                             className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
                         />
                         {query && (
                             <button
                                 onClick={() => setQuery('')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors active:scale-90"
+                                aria-label="Очистить поиск"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90"
                             >
                                 <X size={20} />
                             </button>
@@ -88,8 +90,8 @@ export function Search() {
                 {/* Results */}
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                        <Loader2 className="animate-spin text-gray-500 mb-4" size={32} />
-                        <p className="text-gray-500">Ищем на Флибусте...</p>
+                        <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />
+                        <p className="text-gray-400">Ищем на Флибусте...</p>
                     </div>
                 ) : results.length > 0 ? (
                     <div className="grid grid-cols-3 gap-4">
@@ -100,14 +102,14 @@ export function Search() {
                 ) : debouncedQuery ? (
                     <div className="flex flex-col items-center justify-center py-16">
                         <SearchIcon size={48} className="text-gray-600 mb-4" />
-                        <p className="text-gray-500 text-center">
+                        <p className="text-gray-400 text-center">
                             По запросу «{debouncedQuery}»<br />ничего не найдено
                         </p>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16">
-                        <SearchIcon size={48} className="text-gray-800 mb-4" />
-                        <p className="text-gray-600 text-center">
+                        <SearchIcon size={48} className="text-gray-700 mb-4" />
+                        <p className="text-gray-500 text-center">
                             Введите название книги<br />или автора
                         </p>
                     </div>
