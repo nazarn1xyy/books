@@ -57,9 +57,9 @@ export function Home() {
         <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)]">
             <div className="px-5 pt-8">
                 {/* Header */}
-                <header className="mb-8">
-                    <p className="text-gray-500 text-sm font-medium">Libify</p>
-                    <h1 className="text-3xl font-bold text-white mt-1">Библиотека</h1>
+                {/* Header */}
+                <header className="mb-6 mt-2">
+                    <h1 className="text-3xl font-bold text-white">Библиотека</h1>
                 </header>
 
                 {loading ? (
