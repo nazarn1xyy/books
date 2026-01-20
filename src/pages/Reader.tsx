@@ -193,6 +193,7 @@ export function Reader() {
             <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-black/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 transition-transform">
                 <button
                     onClick={() => navigate(-1)}
+                    aria-label="Go back"
                     className="p-2 -ml-2 text-white active:opacity-50 transition-opacity"
                 >
                     <ChevronLeft size={28} />
@@ -209,6 +210,7 @@ export function Reader() {
                 </div>
                 <button
                     onClick={() => setShowSettings(true)}
+                    aria-label="Open settings"
                     className="p-2 -mr-2 text-white active:opacity-50 transition-opacity"
                 >
                     <Settings size={24} />
@@ -312,6 +314,7 @@ export function Reader() {
                             <h2 className="text-lg font-semibold text-white">Настройки</h2>
                             <button
                                 onClick={() => setShowSettings(false)}
+                                aria-label="Close settings"
                                 className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors"
                             >
                                 <X size={24} />
@@ -325,6 +328,7 @@ export function Reader() {
                                 <div className="flex items-center justify-between bg-[#2C2C2E] rounded-xl p-4">
                                     <button
                                         onClick={() => updateFontSize(-2)}
+                                        aria-label="Decrease font size"
                                         className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
                                     >
                                         <Minus size={20} />
@@ -332,6 +336,7 @@ export function Reader() {
                                     <span className="text-white font-medium">{settings.fontSize}px</span>
                                     <button
                                         onClick={() => updateFontSize(2)}
+                                        aria-label="Increase font size"
                                         className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
                                     >
                                         <Plus size={20} />

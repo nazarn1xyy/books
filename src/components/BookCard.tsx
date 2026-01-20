@@ -33,6 +33,7 @@ export function BookCard({ book, size = 'medium', showProgress = false }: BookCa
     return (
         <button
             onClick={() => navigate(`/reader/${book.id}`)}
+            aria-label={`Read ${book.title} by ${book.author}`}
             className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full`}
         >
             <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">

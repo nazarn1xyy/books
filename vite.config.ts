@@ -12,6 +12,7 @@ const torAgent = new SocksProxyAgent('socks5h://127.0.0.1:9050', {
 });
 
 import { VitePWA } from 'vite-plugin-pwa';
+import { compression } from 'vite-plugin-compression2';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -75,7 +76,11 @@ export default defineConfig({
           }
         ]
       }
-    })
+    }),
+    compression({
+      algorithms: ['gzip', 'brotliCompress'],
+      exclude: [/\.(br)$/, /\.(gz)$/],
+    }),
   ],
   build: {
     rollupOptions: {
@@ -83,6 +88,8 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           ui: ['lucide-react'],
+          charts: ['recharts'],
+          animation: ['framer-motion'],
         },
       },
     },
