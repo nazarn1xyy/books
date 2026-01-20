@@ -58,7 +58,7 @@ export function Home() {
             <div className="px-5 pt-8">
                 {/* Header */}
                 <header className="mb-8">
-                    <p className="text-gray-500 text-sm font-medium">Библиотека</p>
+                    <p className="text-gray-500 text-sm font-medium">Libify</p>
                     <h1 className="text-3xl font-bold text-white mt-1">Библиотека</h1>
                 </header>
 
