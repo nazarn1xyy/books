@@ -179,16 +179,18 @@ export function Reader() {
                     <Virtuoso
                         ref={virtuosoRef}
                         style={{ height: '100%' }}
-                        totalCount={paragraphs.length}
-                        initialTopMostItemIndex={Math.max(0, Math.min(initialIndex, paragraphs.length - 1))}
-                        itemContent={itemContent}
+                        data={paragraphs}
+                        rangeChanged={handleRangeChanged}
+                        itemContent={(_index, para) => (
+                            <div
+                                className="px-6 py-2 text-white leading-relaxed font-serif max-w-3xl mx-auto"
+                                style={{ fontSize: `${settings.fontSize}px` }}
+                            >
+                                <p>{para}</p>
+                            </div>
+                        )}
                         components={{
-                            Footer: () => <div className="h-20" />, // Extra space at bottom
-                        }}
-                        rangeChanged={(range) => {
-                            // Update progress based on the middle visible item
-                            const midIndex = Math.floor((range.startIndex + range.endIndex) / 2);
-                            handleScroll(midIndex);
+                            Footer: () => <div className="h-20" />,
                         }}
                     />
                 ) : (
