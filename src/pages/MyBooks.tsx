@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Trash2 } from 'lucide-react';
-import { AnimatePresence, motion, PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book } from '../types';
 import { books } from '../data/books';
 import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks } from '../utils/storage';
