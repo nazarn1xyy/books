@@ -83,5 +83,73 @@ export const getActiveUsers = (): UserStat[] => [
         progress: 3,
         lastActive: '3 ч назад',
         totalRead: 1
+// ... existing interfaces ...
+
+export interface GenreStat {
+        name: string;
+        value: number;
+        color: string;
     }
+
+export interface SystemStat {
+    cpu: number;
+    ram: number;
+    storage: number;
+}
+
+export interface AdminNotification {
+    id: string;
+    type: 'info' | 'warning' | 'error' | 'success';
+    message: string;
+    time: string;
+    read: boolean;
+}
+
+export interface ManagedBook {
+    id: string;
+    title: string;
+    author: string;
+    status: 'published' | 'draft' | 'review';
+    downloads: number;
+}
+
+// ... existing functions ...
+
+export const getGenres = (): GenreStat[] => [
+    { name: 'Фантастика', value: 45, color: '#8B5CF6' },
+    { name: 'Детективы', value: 25, color: '#3B82F6' },
+    { name: 'Классика', value: 20, color: '#10B981' },
+    { name: 'Бизнес', value: 10, color: '#F59E0B' },
+];
+
+export const getActivityByPeriod = (period: 'day' | 'week' | 'month') => {
+    switch (period) {
+        case 'day':
+            return Array.from({ length: 24 }, (_, i) => ({
+                name: `${i}:00`,
+                value: Math.floor(Math.random() * 50) + 10
+            }));
+        case 'week':
+            return getWeeklyActivity();
+        case 'month':
+            return Array.from({ length: 30 }, (_, i) => ({
+                name: `${i + 1}`,
+                value: Math.floor(Math.random() * 1000) + 500
+            }));
+    }
+};
+
+export const getNotifications = (): AdminNotification[] => [
+    { id: '1', type: 'info', message: 'Новый пользователь зарегистрирован', time: '5 мин назад', read: false },
+    { id: '2', type: 'warning', message: 'Высокая нагрузка на CPU', time: '15 мин назад', read: false },
+    { id: '3', type: 'success', message: 'Бекап базы данных выполнен', time: '1 час назад', read: true },
+    { id: '4', type: 'error', message: 'Ошибка загрузки обложки #482', time: '2 часа назад', read: true },
+];
+
+export const getManagedBooks = (): ManagedBook[] => [
+    { id: '1', title: 'Мастер и Маргарита', author: 'М. Булгаков', status: 'published', downloads: 1240 },
+    { id: '2', title: 'Dune', author: 'Frank Herbert', status: 'published', downloads: 890 },
+    { id: '3', title: 'Project Hail Mary', author: 'Andy Weir', status: 'review', downloads: 0 },
+    { id: '4', title: 'Atomic Habits', author: 'James Clear', status: 'draft', downloads: 0 },
+    { id: '5', title: '1984', author: 'George Orwell', status: 'published', downloads: 2100 },
 ];
