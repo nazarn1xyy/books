@@ -21,7 +21,11 @@ export class ErrorBoundary extends Component<Props, State> {
         console.error("Uncaught error:", error, errorInfo);
 
         // Check if it's a chunk load error (deployment update)
-        if (error.message.includes('Loading chunk') || error.message.includes('Importing a module script failed')) {
+        if (
+            error.message.includes('Loading chunk') ||
+            error.message.includes('Importing a module script failed') ||
+            error.name === 'SyntaxError' // HTML returned for JS often causes SyntaxError
+        ) {
             console.log('Chunk load error detected, reloading page...');
             window.location.reload();
         }
