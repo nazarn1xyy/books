@@ -92,11 +92,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/static_flibusta/, ''),
         agent: torAgent,
       },
-      '/flibusta_proxy': {
+      '/flibusta': {
         // Use the onion address directly for maximum reliability via Tor
         target: 'http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/flibusta_proxy/, ''),
+        rewrite: (path) => path.replace(/^\/flibusta/, ''),
         agent: torAgent,
         configure: (proxy, _options) => {
           proxy.on('proxyRes', (proxyRes, _req, _res) => {
@@ -115,7 +115,7 @@ export default defineConfig({
                 console.log('Rewriting redirect to static proxy:', newLoc);
                 proxyRes.headers['location'] = newLoc;
               } else if (mainMatch) {
-                const newLoc = location.replace(mainMatch[0], '/flibusta_proxy');
+                const newLoc = location.replace(mainMatch[0], '/flibusta');
                 console.log('Rewriting redirect to main proxy:', newLoc);
                 proxyRes.headers['location'] = newLoc;
               }

@@ -1,7 +1,7 @@
 import type { Book } from '../types';
 import { getCachedBook, cacheBook } from '../utils/cache';
 
-const PROXY_URL = '/flibusta_proxy';
+const PROXY_URL = '/flibusta';
 const FLIBUSTA_BASE = 'http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion';
 
 // Helper to fetch via proxy
