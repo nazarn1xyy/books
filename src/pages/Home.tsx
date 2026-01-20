@@ -64,6 +64,16 @@ export function Home() {
                     <div className="flex justify-center py-20">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
                     </div>
+                ) : books.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <p className="text-gray-400 mb-4">Не удалось загрузить рекомендации.</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-4 py-2 bg-white/10 rounded-full text-white text-sm hover:bg-white/20 transition-colors"
+                        >
+                            Попробовать снова
+                        </button>
+                    </div>
                 ) : (
                     <>
                         {/* Continue Reading */}
