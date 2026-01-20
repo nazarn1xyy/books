@@ -20,14 +20,30 @@ export class ErrorBoundary extends Component<Props, State> {
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
 
-        // Check if it's a chunk load error (deployment update)
-        if (
-            error.message.includes('Loading chunk') ||
-            error.message.includes('Importing a module script failed') ||
-            error.name === 'SyntaxError' // HTML returned for JS often causes SyntaxError
-        ) {
-            console.log('Chunk load error detected, reloading page...');
-            window.location.reload();
+        const msg = error.message?.toLowerCase() || '';
+        const isChunkError =
+            msg.includes('loading chunk') ||
+            msg.includes('importing a module script failed') ||
+            msg.includes('token') ||
+            msg.includes('syntax') ||
+            msg.includes('mime');
+
+        if (isChunkError || error.name === 'SyntaxError') {
+            console.log('Chunk/MIME error detected, forcing hard reload...');
+
+            // Clear SW cache if possible
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (const registration of registrations) {
+                        registration.unregister();
+                    }
+                });
+            }
+
+            // Force reload with cache busting
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         }
     }
 
