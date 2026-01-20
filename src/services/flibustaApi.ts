@@ -12,7 +12,27 @@ async function fetchViaProxy(url: string, responseType: 'text' | 'blob' | 'array
 
     console.log(`Fetching via local proxy: ${PROXY_URL}${pathAndQuery}`);
     try {
-        const response = await fetch(`${PROXY_URL}${pathAndQuery}`);
+        const response = await fetch(`${PROXY_URL}${pathAndQuery}`, {
+            redirect: 'manual' // Prevent browser from following automatically (which causes mixed content)
+        });
+
+        // Handle Redirects Manually
+        if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+            const location = response.headers.get('Location');
+            if (location) {
+                console.log('Intercepted redirect to:', location);
+                // Recursively fetch the new location
+                // If it's absolute (http/https), strip domain and use proxy again
+                let newUrl = location;
+                if (location.startsWith('http')) {
+                    const u = new URL(location);
+                    newUrl = `${FLIBUSTA_BASE}${u.pathname}${u.search}`;
+                }
+                // Call self with new URL (which enters proxy logic again)
+                return fetchViaProxy(newUrl, responseType);
+            }
+        }
+
         if (!response.ok) {
             throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
         }
