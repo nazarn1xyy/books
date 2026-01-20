@@ -144,18 +144,54 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
     }
 
     // Extract Metadata (Title, Author, Description)
-    const descriptionBlock = doc.querySelector('description');
-    const title = descriptionBlock?.querySelector('title-info book-title')?.textContent ||
-        doc.querySelector('body > title > p')?.textContent ||
-        'Без названия';
+    // Use getElementsByTagName to avoid namespace issues with querySelector
+    const descriptions = doc.getElementsByTagName('description');
+    const descriptionBlock = descriptions.length > 0 ? descriptions[0] : null;
 
-    // Author
-    const authorFirstName = descriptionBlock?.querySelector('title-info author first-name')?.textContent || '';
-    const authorLastName = descriptionBlock?.querySelector('title-info author last-name')?.textContent || '';
-    const authorMiddleName = descriptionBlock?.querySelector('title-info author middle-name')?.textContent || '';
-    const author = [authorFirstName, authorMiddleName, authorLastName].filter(Boolean).join(' ') || 'Неизвестный автор';
+    let title = 'Без названия';
+    let author = 'Неизвестный автор';
+    let description = '';
 
-    const description = descriptionBlock?.querySelector('title-info annotation')?.textContent || '';
+    if (descriptionBlock) {
+        // Title
+        // Try title-info -> book-title
+        const titleInfos = descriptionBlock.getElementsByTagName('title-info');
+        if (titleInfos.length > 0) {
+            const bookTitles = titleInfos[0].getElementsByTagName('book-title');
+            if (bookTitles.length > 0) {
+                title = bookTitles[0].textContent || title;
+            }
+
+            // Author
+            const authors = titleInfos[0].getElementsByTagName('author');
+            if (authors.length > 0) {
+                const firstNames = authors[0].getElementsByTagName('first-name');
+                const lastNames = authors[0].getElementsByTagName('last-name');
+                const middleNames = authors[0].getElementsByTagName('middle-name');
+
+                const fName = firstNames.length > 0 ? firstNames[0].textContent : '';
+                const lName = lastNames.length > 0 ? lastNames[0].textContent : '';
+                const mName = middleNames.length > 0 ? middleNames[0].textContent : '';
+
+                const fullName = [fName, mName, lName].filter(Boolean).join(' ');
+                if (fullName) author = fullName;
+            }
+
+            // Description (Annotation)
+            const annotations = titleInfos[0].getElementsByTagName('annotation');
+            if (annotations.length > 0) {
+                description = annotations[0].textContent || '';
+            }
+        }
+    }
+
+    // Fallback if title is still missing (try body title)
+    if (title === 'Без названия') {
+        const bodyTitles = doc.querySelector('body > title > p');
+        if (bodyTitles) {
+            title = bodyTitles.textContent || title;
+        }
+    }
 
     // Extract Cover
     let cover = '';
