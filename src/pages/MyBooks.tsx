@@ -216,8 +216,8 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                     />
                     <div className="flex-1 flex flex-col justify-between text-left py-1">
                         <div>
-                            <h3 className="font-semibold text-white line-clamp-2">{book.title}</h3>
-                            <p className="text-sm text-gray-500 mt-0.5">{book.author}</p>
+                            <h3 className="font-semibold text-white line-clamp-2">{book.title || 'Без названия'}</h3>
+                            <p className="text-sm text-gray-500 mt-0.5">{book.author || 'Неизвестный автор'}</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex-1">

@@ -2,20 +2,106 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, Bell, Cpu, HardDrive, X as XIcon, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { getOverallStats, getActiveUsers, getActivityByPeriod, getGenres, getNotifications, getManagedBooks, type UserStat } from '../../services/mockStats';
+import { getGenres, getNotifications, getActivityByPeriod, type UserStat } from '../../services/mockStats';
+
+import { supabase } from '../../lib/supabase';
+
+// ... other imports
 
 export function Admin() {
-    const stats = getOverallStats();
-    const activeUsers = getActiveUsers();
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        activeNow: 0,
+        booksReadTotal: 0,
+        averageTime: '24м' // Mock for now
+    });
+
     const genres = getGenres();
+
+    // We'll keep some mock data for UI elements that we haven't implemented fully in DB yet
+    // like "Notifications" and "System Stats"
     const notifications = getNotifications();
-    const managedBooks = getManagedBooks();
+    const systemMock = { cpu: 45, ram: 62 };
+
+    const [activeUsers, setActiveUsers] = useState<UserStat[]>([]);
+    const [managedBooks, setManagedBooks] = useState<any[]>([]);
 
     const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
     const [activityData, setActivityData] = useState(getActivityByPeriod('week'));
     const [showNotifications, setShowNotifications] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserStat | null>(null);
     const [systemStats, setSystemStats] = useState({ cpu: 45, ram: 62 });
+
+    // ...
+
+    useEffect(() => {
+        async function fetchAdminData() {
+            try {
+                // 1. Fetch all reading progress for "Active Now" and "Total Users" (approximation)
+                const { data: progressData } = await supabase
+                    .from('reading_progress')
+                    .select('user_id, last_read, book_id, scroll_percentage');
+
+                // 2. Fetch all books for "Total Books"
+                const { data: booksData } = await supabase
+                    .from('user_books')
+                    .select('*');
+
+                if (progressData && booksData) {
+                    // Calculate Unique Users
+                    const uniqueUsers = new Set(progressData.map(p => p.user_id));
+
+                    // Calculate Active Now (last 15 min)
+                    const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
+                    const activeCount = progressData.filter(p => p.last_read > fifteenMinsAgo).length;
+
+                    setStats(prev => ({
+                        ...prev,
+                        totalUsers: uniqueUsers.size,
+                        activeNow: activeCount,
+                        booksReadTotal: booksData.length
+                    }));
+
+                    // Map Active Users for List
+                    // We need user profiles, but we can't fetch them easily if they are in auth.users and we don't have a profiles table.
+                    // For now, let's mock the names/avatars based on user_id hash or similar, 
+                    // OR assume we have a profiles table. Let's fallback to "User {id.slice(0,4)}"
+                    const activeUserList = Array.from(uniqueUsers).map(uid => {
+                        const userProgress = progressData.filter(p => p.user_id === uid);
+                        const lastActivity = Math.max(...userProgress.map(p => p.last_read));
+                        const currentBookId = userProgress.find(p => p.last_read === lastActivity)?.book_id;
+                        const currentBook = booksData.find(b => b.book_id === currentBookId);
+
+                        return {
+                            id: uid,
+                            name: `User ${uid.slice(0, 4)}`,
+                            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`,
+                            currentBook: currentBook?.title || 'Reading...',
+                            progress: userProgress.find(p => p.book_id === currentBookId)?.scroll_percentage || 0,
+                            lastActive: new Date(lastActivity).toLocaleTimeString(),
+                            totalRead: 0 // Calc later
+                        };
+                    });
+
+                    setActiveUsers(activeUserList.slice(0, 5)); // Top 5
+                    setManagedBooks(booksData.slice(0, 5)); // Top 5 books
+                }
+
+            } catch (error) {
+                console.error('Admin fetch error:', error);
+            }
+        }
+
+        fetchAdminData();
+        // Poll every 30s
+        const interval = setInterval(fetchAdminData, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Update charts on period change
+    useEffect(() => {
+        setActivityData(getActivityByPeriod(period));
+    }, [period]);
 
     // Simulate system stats updates
     useEffect(() => {
@@ -27,11 +113,6 @@ export function Admin() {
         }, 3000);
         return () => clearInterval(interval);
     }, []);
-
-    // Update charts on period change
-    useEffect(() => {
-        setActivityData(getActivityByPeriod(period));
-    }, [period]);
 
     return (
         <div className="min-h-screen bg-black text-white pb-24 pt-[env(safe-area-inset-top)] overflow-x-hidden">
