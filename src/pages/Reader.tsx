@@ -151,7 +151,7 @@ export function Reader() {
             }}
         >
             {/* Header */}
-            <header className="flex items-center justify-between px-4 h-14 bg-black/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] z-10">
+            <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-black/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10">
                 <button
                     onClick={() => navigate(-1)}
                     className="p-2 -ml-2 text-white active:opacity-50 transition-opacity"
