@@ -13,6 +13,34 @@ export interface ChartData {
     value: number;
 }
 
+export interface GenreStat {
+    name: string;
+    value: number;
+    color: string;
+}
+
+export interface SystemStat {
+    cpu: number;
+    ram: number;
+    storage: number;
+}
+
+export interface AdminNotification {
+    id: string;
+    type: 'info' | 'warning' | 'error' | 'success';
+    message: string;
+    time: string;
+    read: boolean;
+}
+
+export interface ManagedBook {
+    id: string;
+    title: string;
+    author: string;
+    status: 'published' | 'draft' | 'review';
+    downloads: number;
+}
+
 export const getOverallStats = () => ({
     totalUsers: 142,
     activeNow: 12,
@@ -83,37 +111,8 @@ export const getActiveUsers = (): UserStat[] => [
         progress: 3,
         lastActive: '3 ч назад',
         totalRead: 1
-// ... existing interfaces ...
-
-export interface GenreStat {
-        name: string;
-        value: number;
-        color: string;
     }
-
-export interface SystemStat {
-    cpu: number;
-    ram: number;
-    storage: number;
-}
-
-export interface AdminNotification {
-    id: string;
-    type: 'info' | 'warning' | 'error' | 'success';
-    message: string;
-    time: string;
-    read: boolean;
-}
-
-export interface ManagedBook {
-    id: string;
-    title: string;
-    author: string;
-    status: 'published' | 'draft' | 'review';
-    downloads: number;
-}
-
-// ... existing functions ...
+];
 
 export const getGenres = (): GenreStat[] => [
     { name: 'Фантастика', value: 45, color: '#8B5CF6' },
