@@ -10,13 +10,27 @@ import { Auth } from './pages/Auth';
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
 const Search = lazy(() => import('./pages/Search').then(module => ({ default: module.Search })));
 const MyBooks = lazy(() => import('./pages/MyBooks').then(module => ({ default: module.MyBooks })));
-const Reader = lazy(() => import('./pages/Reader').then(module => ({ default: module.Reader })));
+const Admin = lazy(() => import('./pages/Admin/Admin').then(module => ({ default: module.Admin })));
 
-// Component to handle scroll restoration inside Router context
-function ScrollHandler() {
-  useScrollRestoration();
-  return null;
-}
+// ... existing code ...
+
+            <Route path="/reader/:id" element={
+              <PageWrapper>
+                <ProtectedRoute><Reader /></ProtectedRoute>
+              </PageWrapper>
+            } />
+            <Route path="/admin" element={
+              <PageWrapper>
+                 <Admin />
+              </PageWrapper>
+            } />
+          </Routes >
+
+  // Component to handle scroll restoration inside Router context
+  function ScrollHandler() {
+    useScrollRestoration();
+    return null;
+  }
 
 function LoadingFallback() {
   return (
