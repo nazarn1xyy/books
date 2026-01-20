@@ -49,7 +49,7 @@ export function Reader() {
                     cover: cover || existingBook.cover
                 } : {
                     id,
-                    title: 'Загрузка...', // Placeholder, ideally we'd parse this from FB2
+                    title: '', // Placeholder, ideally we'd parse this from FB2
                     author: '',
                     cover: cover || 'https://placehold.co/300x450?text=No+Cover',
                     description: '',
@@ -195,7 +195,7 @@ export function Reader() {
                     />
                 ) : (
                     <div className="h-full flex items-center justify-center text-gray-500 p-8 text-center">
-                        {loading ? 'Загрузка...' : 'Не удалось отобразить текст книги. Попробуйте обновить страницу или выбрать другую книгу.'}
+                        {loading ? 'Загрузка книги...' : 'Не удалось отобразить текст книги. Попробуйте обновить страницу или выбрать другую книгу.'}
                     </div>
                 )}
             </main>

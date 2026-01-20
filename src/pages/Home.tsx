@@ -57,7 +57,7 @@ export function Home() {
                 {/* Header */}
                 <header className="mb-8">
                     <p className="text-gray-500 text-sm font-medium">Библиотека</p>
-                    <h1 className="text-3xl font-bold text-white mt-1">Libify</h1>
+                    <h1 className="text-3xl font-bold text-white mt-1">Библиотека</h1>
                 </header>
 
                 {loading ? (
