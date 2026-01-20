@@ -103,7 +103,7 @@ export function MyBooks() {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileUpload}
-                    accept=".fb2,.zip,.fb2.zip"
+                    accept=".fb2,.zip,.fb2.zip,.pdf"
                     className="hidden"
                 />
                 <button

@@ -184,12 +184,12 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
     };
 }
 
-export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string }> {
+export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer }> {
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {
         console.log(`Cache hit for book ${bookId}`);
-        return { text: cached.text, cover: cached.cover };
+        return { text: cached.text, cover: cached.cover, pdfData: cached.pdfData };
     }
 
     try {

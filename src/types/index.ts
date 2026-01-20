@@ -8,6 +8,7 @@ export interface Book {
   pages?: number;
   content?: string[];
   contentUrl?: string;
+  format?: 'fb2' | 'pdf';
 }
 
 export interface ReadingProgress {

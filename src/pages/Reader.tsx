@@ -2,10 +2,19 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, X, Minus, Plus, Sun } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { fetchBookContent } from '../services/flibustaApi';
 import { ProgressBar } from '../components/ProgressBar';
 import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, addToMyBooks, getBookMetadata } from '../utils/storage';
 import type { Book } from '../types';
+
+// Setup PDF worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+).toString();
 
 export function Reader() {
     const { id } = useParams<{ id: string }>();
@@ -14,6 +23,9 @@ export function Reader() {
     // State
     const [book, setBook] = useState<Book | null>(null);
     const [fullText, setFullText] = useState<string>('');
+    const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+    const [numPages, setNumPages] = useState<number>(0);
+    const [pageNumber, setPageNumber] = useState<number>(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [scrollProgress, setScrollProgress] = useState(0);
@@ -33,11 +45,12 @@ export function Reader() {
             setLoading(true);
 
             try {
-                // Fetch book content from Flibusta (FB2 parsed)
-                const { text, cover } = await fetchBookContent(id);
+                // Fetch book content from Flibusta (FB2 parsed) or cache (PDF)
+                const { text, cover, pdfData } = await fetchBookContent(id);
                 setFullText(text);
+                if (pdfData) setPdfData(pdfData);
 
-                if (!text) {
+                if (!text && !pdfData) {
                     throw new Error('No text content available');
                 }
 
@@ -54,7 +67,8 @@ export function Reader() {
                     cover: cover || 'https://placehold.co/300x450?text=No+Cover',
                     description: '',
                     genre: '',
-                    contentUrl: ''
+                    contentUrl: '',
+                    format: pdfData ? 'pdf' : 'fb2'
                 };
 
                 setBook(bookData);
@@ -175,7 +189,70 @@ export function Reader() {
             <main
                 className="flex-1 relative bg-black"
             >
-                {fullText && paragraphs.length > 0 ? (
+                {book?.format === 'pdf' && pdfData ? (
+                    <div className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center bg-[#1C1C1E] pt-4"
+                        style={{ touchAction: 'pan-y' }}
+                    >
+                        <Document
+                            file={pdfData}
+                            onLoadSuccess={({ numPages }) => {
+                                setNumPages(numPages);
+                                // Restore page
+                                const progress = getReadingProgress(id!);
+                                if (progress) setPageNumber(progress.currentPage || 1);
+                            }}
+                            loading={<div className="text-white">Загрузка PDF...</div>}
+                            className="max-w-full"
+                        >
+                            <Page
+                                pageNumber={pageNumber}
+                                width={window.innerWidth > 768 ? 768 : window.innerWidth}
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                                className="shadow-2xl mb-4"
+                            />
+                        </Document>
+
+                        {/* PDF Controls */}
+                        <div className="flex items-center gap-6 py-8 text-white z-20">
+                            <button
+                                onClick={() => {
+                                    const prev = Math.max(1, pageNumber - 1);
+                                    setPageNumber(prev);
+                                    saveReadingProgress({
+                                        bookId: id!,
+                                        currentPage: prev,
+                                        totalPages: numPages,
+                                        lastRead: Date.now(),
+                                        scrollPercentage: Math.round((prev / numPages) * 100)
+                                    });
+                                }}
+                                disabled={pageNumber <= 1}
+                                className="px-6 py-3 bg-white/10 rounded-full disabled:opacity-30"
+                            >
+                                Назад
+                            </button>
+                            <span className="font-medium">{pageNumber} / {numPages}</span>
+                            <button
+                                onClick={() => {
+                                    const next = Math.min(numPages, pageNumber + 1);
+                                    setPageNumber(next);
+                                    saveReadingProgress({
+                                        bookId: id!,
+                                        currentPage: next,
+                                        totalPages: numPages,
+                                        lastRead: Date.now(),
+                                        scrollPercentage: Math.round((next / numPages) * 100)
+                                    });
+                                }}
+                                disabled={pageNumber >= numPages}
+                                className="px-6 py-3 bg-white/10 rounded-full disabled:opacity-30"
+                            >
+                                Вперед
+                            </button>
+                        </div>
+                    </div>
+                ) : fullText && paragraphs.length > 0 ? (
                     <Virtuoso
                         ref={virtuosoRef}
                         style={{ height: '100%' }}
