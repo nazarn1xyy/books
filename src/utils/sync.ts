@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import type { Book, ReadingProgress } from '../types';
 import { getAppState, saveAppState } from './storage';
 
 export async function syncData(userId: string) {

@@ -21,7 +21,6 @@ export function Admin() {
     // We'll keep some mock data for UI elements that we haven't implemented fully in DB yet
     // like "Notifications" and "System Stats"
     const notifications = getNotifications();
-    const systemMock = { cpu: 45, ram: 62 };
 
     const [activeUsers, setActiveUsers] = useState<UserStat[]>([]);
     const [managedBooks, setManagedBooks] = useState<any[]>([]);
