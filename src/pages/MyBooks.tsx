@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Upload } from 'lucide-react';
+import { BookOpen, Plus } from 'lucide-react';
 import type { Book } from '../types';
 import { books } from '../data/books';
 import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks } from '../utils/storage';
