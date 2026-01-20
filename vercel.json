@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/flibusta/:path*",
-            "destination": "https://flibusta.site/:path*"
+            "destination": "/api/proxy?path=:path*"
         },
         {
             "source": "/(.*)",
