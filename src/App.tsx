@@ -5,6 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Auth } from './pages/Auth';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
@@ -13,25 +14,11 @@ const MyBooks = lazy(() => import('./pages/MyBooks').then(module => ({ default: 
 const Reader = lazy(() => import('./pages/Reader').then(module => ({ default: module.Reader })));
 const Admin = lazy(() => import('./pages/Admin/Admin').then(module => ({ default: module.Admin })));
 
-// ... existing code ...
-
-            <Route path="/reader/:id" element={
-              <PageWrapper>
-                <ProtectedRoute><Reader /></ProtectedRoute>
-              </PageWrapper>
-            } />
-            <Route path="/admin" element={
-              <PageWrapper>
-                 <Admin />
-              </PageWrapper>
-            } />
-          </Routes >
-
-  // Component to handle scroll restoration inside Router context
-  function ScrollHandler() {
-    useScrollRestoration();
-    return null;
-  }
+// Component to handle scroll restoration inside Router context
+function ScrollHandler() {
+  useScrollRestoration();
+  return null;
+}
 
 function LoadingFallback() {
   return (
@@ -97,6 +84,11 @@ function AppContent() {
                 <ProtectedRoute><Reader /></ProtectedRoute>
               </PageWrapper>
             } />
+            <Route path="/admin" element={
+              <PageWrapper>
+                <Admin />
+              </PageWrapper>
+            } />
           </Routes>
         </Suspense>
       </AnimatePresence>
@@ -112,8 +104,6 @@ function AppContent() {
     </div>
   );
 }
-
-import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
