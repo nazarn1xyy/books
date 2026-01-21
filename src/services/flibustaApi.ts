@@ -143,8 +143,8 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
                     worker.terminate();
                 };
 
-                // Transfer buffer to worker
-                worker.postMessage({ arrayBuffer: data }, [data]);
+                // Don't use transferable to keep data available for fallback
+                worker.postMessage({ arrayBuffer: data });
             } catch (workerError) {
                 // Worker creation failed (iOS/Safari issue)
                 console.error('Failed to create worker:', workerError);
