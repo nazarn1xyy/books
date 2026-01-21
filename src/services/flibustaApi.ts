@@ -144,57 +144,54 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
     }
 
     // Extract Metadata (Title, Author, Description)
-    // Use getElementsByTagName to avoid namespace issues with querySelector
-    // Improved logic: Search globally first to handle varying structures
+    // Use getElementsByTagNameNS('*', tag) to ignore namespace prefixes (e.g., <fb:book-title>)
+
+    // Helper to find first element by local name, ignoring namespace
+    const getFirstText = (tagName: string, root: Document | Element = doc): string | null => {
+        const elements = root.getElementsByTagNameNS('*', tagName);
+        return elements.length > 0 ? elements[0].textContent : null;
+    };
 
     let title = 'Без названия';
     let author = 'Неизвестный автор';
     let description = '';
 
-    // 1. Unsafe Global Search (Most robust)
-    const bookTitles = doc.getElementsByTagName('book-title');
-    if (bookTitles.length > 0) {
-        title = bookTitles[0].textContent || title;
+    // 1. Title
+    // Priority: <book-title> -> <title>
+    const bookTitleText = getFirstText('book-title');
+    if (bookTitleText) {
+        title = bookTitleText;
     } else {
-        // Fallback: simple <title> tag inside <body> (legacy structure)
-        const bodyTitles = doc.getElementsByTagName('title');
-        if (bodyTitles.length > 0) {
-            // Often title tag contains <p>
-            title = bodyTitles[0].textContent || title;
-        }
+        const titleText = getFirstText('title');
+        if (titleText) title = titleText;
     }
 
-    // 2. Author Global Search
-    // Try to find author in title-info first to be safe, but fallback to global
-    const titleInfos = doc.getElementsByTagName('title-info');
-    let authorContainer = titleInfos.length > 0 ? titleInfos[0] : doc;
-
-    const authors = authorContainer.getElementsByTagName('author');
+    // 2. Author
+    // Search for <author> tag globally. If multiple, take first.
+    // Logic: extract first-name, middle-name, last-name
+    const authors = doc.getElementsByTagNameNS('*', 'author');
     if (authors.length > 0) {
         // Use the first author found
-        const firstNames = authors[0].getElementsByTagName('first-name');
-        const lastNames = authors[0].getElementsByTagName('last-name');
-        const middleNames = authors[0].getElementsByTagName('middle-name');
+        const authorNode = authors[0];
 
-        const fName = firstNames.length > 0 ? firstNames[0].textContent : '';
-        const lName = lastNames.length > 0 ? lastNames[0].textContent : '';
-        const mName = middleNames.length > 0 ? middleNames[0].textContent : '';
+        const fName = getFirstText('first-name', authorNode) || '';
+        const lName = getFirstText('last-name', authorNode) || '';
+        const mName = getFirstText('middle-name', authorNode) || '';
 
         const fullName = [fName, mName, lName].filter(Boolean).join(' ');
         if (fullName) author = fullName;
     }
 
-    // 3. Description Global Search
-    const annotations = doc.getElementsByTagName('annotation');
-    if (annotations.length > 0) {
-        description = annotations[0].textContent || '';
+    // 3. Description
+    const descText = getFirstText('annotation') || getFirstText('description');
+    if (descText) {
+        description = descText;
     }
 
     // Extract Cover
     let cover = '';
     // Global search for binary with id containing 'cover' OR content-type image
-    // Some books use id="cover.jpg" or similar
-    const binaries = Array.from(doc.getElementsByTagName('binary'));
+    const binaries = Array.from(doc.getElementsByTagNameNS('*', 'binary'));
     const coverBinary = binaries.find(b => {
         const id = b.getAttribute('id') || '';
         const type = b.getAttribute('content-type') || '';
@@ -208,11 +205,14 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
     }
 
     // Extract Body Text
-    const body = doc.querySelector('body');
+    // Note: getElementsByTagNameNS matches whatever namespace.
+    const bodyElements = doc.getElementsByTagNameNS('*', 'body');
+    const body = bodyElements.length > 0 ? bodyElements[0] : null;
+
     let extractedText = '';
 
     if (body) {
-        const paragraphs = body.querySelectorAll('p');
+        const paragraphs = body.getElementsByTagNameNS('*', 'p');
         extractedText = Array.from(paragraphs).map(p => p.textContent).join('\n\n');
     }
 
