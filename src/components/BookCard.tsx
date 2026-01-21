@@ -53,11 +53,11 @@ export function BookCard({ book, size = 'medium', showProgress = false, priority
                     </div>
                 )}
             </div>
-            <div className="flex-1 flex flex-col">
-                <h3 className="mt-2 text-sm font-semibold text-white line-clamp-2 min-h-[2.5rem] group-hover:text-gray-200 transition-colors">
+            <div className="flex-1 flex flex-col pt-2">
+                <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight min-h-[2.25rem] group-hover:text-gray-200 transition-colors">
                     {book.title}
                 </h3>
-                <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{book.author}</p>
+                <p className="text-xs text-gray-400 mt-1 line-clamp-1">{book.author}</p>
             </div>
         </Link>
     );

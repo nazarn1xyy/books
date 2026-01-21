@@ -63,7 +63,14 @@ export function MyBooks() {
             } else {
                 const parsed = await parseBookData(buffer);
                 text = parsed.text;
-                title = parsed.title || title;
+                // Use parsed title if valid, otherwise fallback to filename (cleaned up)
+                if (parsed.title && parsed.title !== 'Без названия' && parsed.title.trim() !== '') {
+                    title = parsed.title;
+                } else {
+                    // Clean up filename title: replace underscores with spaces
+                    title = title.replace(/_/g, ' ');
+                }
+
                 author = parsed.author || author;
                 cover = parsed.cover || 'https://placehold.co/300x450?text=Wait...';
                 description = parsed.description || description;
