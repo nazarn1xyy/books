@@ -119,6 +119,43 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Touch action utilities for gesture control */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+.touch-none {
+  touch-action: none;
+}
+
+/* Prevent text selection on swipeable elements */
+.select-none-important {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Input focus stability - prevent layout shifts */
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Prevent iOS zoom on input focus */
+@supports (-webkit-touch-callout: none) {
+
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Custom range slider styling */
 input[type="range"] {
   -webkit-appearance: none;

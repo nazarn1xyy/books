@@ -58,7 +58,7 @@ export function Search() {
         <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)]">
             <div className="px-5 pt-8">
                 {/* Search Header */}
-                <header className="mb-6">
+                <header className="sticky top-0 z-10 bg-black pb-4 -mx-5 px-5 pt-8">
                     <h1 className="text-3xl font-bold text-white mb-4">Поиск</h1>
 
                     {/* Search Input */}
@@ -68,7 +68,11 @@ export function Search() {
                             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                         />
                         <input
-                            type="text"
+                            type="search"
+                            inputMode="search"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Книги, авторы, жанры..."
@@ -79,7 +83,7 @@ export function Search() {
                             <button
                                 onClick={() => setQuery('')}
                                 aria-label="Очистить поиск"
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
                             >
                                 <X size={20} />
                             </button>

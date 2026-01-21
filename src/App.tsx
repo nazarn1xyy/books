@@ -55,7 +55,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-black overflow-hidden">
       <ScrollHandler />
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         <Suspense fallback={<LoadingFallback />}>
           <Routes location={location} key={location.pathname}>
             <Route path="/auth" element={
