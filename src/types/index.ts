@@ -30,4 +30,5 @@ export interface AppState {
   readingProgress: Record<string, ReadingProgress>;
   settings: UserSettings;
   pendingDeletions?: string[];
+  pendingUploads?: string[];
 }

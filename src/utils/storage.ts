@@ -113,3 +113,14 @@ export function removeFromPendingDeletions(bookId: string): void {
     state.pendingDeletions = state.pendingDeletions.filter(id => id !== bookId);
     saveAppState(state);
 }
+
+export function getPendingUploads(): string[] {
+    return getAppState().pendingUploads || [];
+}
+
+export function removeFromPendingUploads(bookId: string): void {
+    const state = getAppState();
+    if (!state.pendingUploads) return;
+    state.pendingUploads = state.pendingUploads.filter(id => id !== bookId);
+    saveAppState(state);
+}

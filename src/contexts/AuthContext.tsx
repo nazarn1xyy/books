@@ -43,6 +43,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
+    // Realtime Sync Subscription
+    useEffect(() => {
+        if (!user) return;
+
+        let syncTimeout: NodeJS.Timeout;
+        const debouncedSync = () => {
+            clearTimeout(syncTimeout);
+            syncTimeout = setTimeout(() => {
+                console.log('Realtime update detected, syncing...');
+                syncData(user.id).then(() => {
+                    // Force refresh UI by reloading window? No, React state should handle it.
+                    // But syncData updates local storage, not React state directly.
+                    // We need to trigger a window event or use a state manager.
+                    // Since existing components read from storage on mount or use events?
+                    // MyBooks uses `useState(getMyBookIds())`. It doesn't listen to storage.
+                    // We need to dispatch a custom event 'storage-update'.
+                    window.dispatchEvent(new Event('storage-update'));
+                });
+            }, 1000); // Wait 1s for batch updates
+        };
+
+        const channel = supabase
+            .channel('db-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'user_books',
+                    filter: `user_id=eq.${user.id}`,
+                },
+                (_payload) => {
+                    debouncedSync();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user]);
+
     const signIn = async (_email: string) => {
         // Placeholder as actual sign in is handled in Auth page
         return Promise.resolve();

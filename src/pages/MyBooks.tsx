@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
@@ -19,6 +19,16 @@ export function MyBooks() {
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Refresh books when storage changes (e.g. from Realtime sync)
+    useEffect(() => {
+        const handleStorageUpdate = () => {
+            setMyBookIds(getMyBookIds());
+        };
+
+        window.addEventListener('storage-update', handleStorageUpdate);
+        return () => window.removeEventListener('storage-update', handleStorageUpdate);
+    }, []);
 
     const myBooks = useMemo(() => {
         return myBookIds

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getAppState, saveAppState, getPendingDeletions, removeFromPendingDeletions } from './storage';
+import { getAppState, saveAppState, getPendingDeletions, removeFromPendingDeletions, getPendingUploads, removeFromPendingUploads, removeFromMyBooks } from './storage';
 import { getCachedBook, cacheBook } from './cache';
 
 export async function syncData(userId: string) {
@@ -15,8 +15,44 @@ export async function syncData(userId: string) {
             }));
         }
 
-        // 1. Sync Books
-        // Fetch cloud books
+        // 0.5. Process Pending Uploads (Robustness for Offline Addition)
+        const pendingUploads = getPendingUploads();
+        if (pendingUploads && pendingUploads.length > 0) {
+            const localStateVerified = getAppState(); // get fresh state
+            await Promise.all(pendingUploads.map(async (bookId) => {
+                const book = localStateVerified.bookMetadata[bookId];
+                if (!book) {
+                    // Book vanished? remove from pending
+                    removeFromPendingUploads(bookId);
+                    return;
+                }
+
+                // Hydrate cover from cache if missing
+                let coverToUpload = book.cover;
+                if (!coverToUpload || coverToUpload === '') {
+                    const cached = await getCachedBook(book.id);
+                    if (cached?.cover) {
+                        coverToUpload = cached.cover;
+                    }
+                }
+
+                const { error } = await supabase.from('user_books').upsert({
+                    user_id: userId,
+                    book_id: book.id,
+                    title: book.title || 'Untitled',
+                    author: book.author || 'Unknown',
+                    cover: coverToUpload || '',
+                    status: 'reading',
+                    format: book.format || 'fb2'
+                }, { onConflict: 'user_id, book_id', ignoreDuplicates: true });
+
+                if (!error) {
+                    removeFromPendingUploads(bookId);
+                }
+            }));
+        }
+
+        // 1. Sync Books - Fetch Cloud Truth
         const { data: cloudBooks, error: booksError } = await supabase
             .from('user_books')
             .select('*')
@@ -25,44 +61,22 @@ export async function syncData(userId: string) {
         if (booksError) throw booksError;
 
         // Get local state
-        const localState = getAppState();
-
-        // Merge Strategy: Cloud is source of truth for presence, but if local has newer books, push them?
-        // Simple strategy: 
-        // - Allow local books to be "uploaded" (inserted) to cloud if missing
-        // - Download missing cloud books to local, UNLESS they are in pendingDeletions (race condition protection)
-
-        // A. Push local -> Cloud
+        const localState = getAppState(); // refresh again
         const localBookIds = localState.myBooks;
-        // Filter out books that we just deleted or are pending delete
-        const validCloudBooks = cloudBooks?.filter(b => !pendingDeletions.includes(b.book_id)) || [];
-        const cloudBookIds = validCloudBooks.map(b => b.book_id);
+        const cloudBookIds = cloudBooks?.map(b => b.book_id) || [];
+        const pendingUploadsStillActive = getPendingUploads();
 
-        const p1 = localBookIds.filter(id => !cloudBookIds.includes(id)).map(async (id) => {
-            const book = localState.bookMetadata[id];
-            if (!book) return;
-
-            // Hydrate cover from cache if missing (because we stripped it locally)
-            let coverToUpload = book.cover;
-            if (!coverToUpload || coverToUpload === '') {
-                const cached = await getCachedBook(book.id);
-                if (cached?.cover) {
-                    coverToUpload = cached.cover;
-                }
+        // A. Remove Local books that are NOT in Cloud (and NOT pending upload)
+        // This propagates "Cloud deletions" to the device
+        localBookIds.forEach(localId => {
+            if (!cloudBookIds.includes(localId) && !pendingUploadsStillActive.includes(localId)) {
+                // If it's not in cloud, and we are not trying to upload it -> It was deleted remotely
+                removeFromMyBooks(localId);
             }
-
-            await supabase.from('user_books').upsert({
-                user_id: userId,
-                book_id: book.id,
-                title: book.title || 'Untitled',
-                author: book.author || 'Unknown',
-                cover: coverToUpload || '',
-                status: 'reading',
-                format: book.format || 'fb2'
-            }, { onConflict: 'user_id, book_id', ignoreDuplicates: true });
         });
 
-        // B. Pull Cloud -> Local
+        // B. Pull Cloud -> Local (Download missing books)
+        // We refreshing state inside loop ideally but here we can just push to array
         const p2 = cloudBooks?.filter(b => !localBookIds.includes(b.book_id)).map(async (b) => {
             let coverToSave = b.cover;
 
@@ -78,15 +92,17 @@ export async function syncData(userId: string) {
                 title: b.title,
                 author: b.author,
                 cover: coverToSave,
-                description: '', // Cloud might not store full description yet
+                description: '',
                 genre: 'Cloud',
                 format: b.format as any || 'fb2'
             };
-            // Add to myBooks list
-            localState.myBooks.push(b.book_id);
+            // Add to myBooks list if not exists (check again to be safe)
+            if (!localState.myBooks.includes(b.book_id)) {
+                localState.myBooks.push(b.book_id);
+            }
         });
 
-        await Promise.all([...p1, ...(p2 || [])]);
+        await Promise.all(p2 || []);
         saveAppState(localState);
 
         // 2. Sync Progress
