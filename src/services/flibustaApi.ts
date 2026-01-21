@@ -145,60 +145,65 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
 
     // Extract Metadata (Title, Author, Description)
     // Use getElementsByTagName to avoid namespace issues with querySelector
-    const descriptions = doc.getElementsByTagName('description');
-    const descriptionBlock = descriptions.length > 0 ? descriptions[0] : null;
+    // Improved logic: Search globally first to handle varying structures
 
     let title = 'Без названия';
     let author = 'Неизвестный автор';
     let description = '';
 
-    if (descriptionBlock) {
-        // Title
-        // Try title-info -> book-title
-        const titleInfos = descriptionBlock.getElementsByTagName('title-info');
-        if (titleInfos.length > 0) {
-            const bookTitles = titleInfos[0].getElementsByTagName('book-title');
-            if (bookTitles.length > 0) {
-                title = bookTitles[0].textContent || title;
-            }
-
-            // Author
-            const authors = titleInfos[0].getElementsByTagName('author');
-            if (authors.length > 0) {
-                const firstNames = authors[0].getElementsByTagName('first-name');
-                const lastNames = authors[0].getElementsByTagName('last-name');
-                const middleNames = authors[0].getElementsByTagName('middle-name');
-
-                const fName = firstNames.length > 0 ? firstNames[0].textContent : '';
-                const lName = lastNames.length > 0 ? lastNames[0].textContent : '';
-                const mName = middleNames.length > 0 ? middleNames[0].textContent : '';
-
-                const fullName = [fName, mName, lName].filter(Boolean).join(' ');
-                if (fullName) author = fullName;
-            }
-
-            // Description (Annotation)
-            const annotations = titleInfos[0].getElementsByTagName('annotation');
-            if (annotations.length > 0) {
-                description = annotations[0].textContent || '';
-            }
+    // 1. Unsafe Global Search (Most robust)
+    const bookTitles = doc.getElementsByTagName('book-title');
+    if (bookTitles.length > 0) {
+        title = bookTitles[0].textContent || title;
+    } else {
+        // Fallback: simple <title> tag inside <body> (legacy structure)
+        const bodyTitles = doc.getElementsByTagName('title');
+        if (bodyTitles.length > 0) {
+            // Often title tag contains <p>
+            title = bodyTitles[0].textContent || title;
         }
     }
 
-    // Fallback if title is still missing (try body title)
-    if (title === 'Без названия') {
-        const bodyTitles = doc.querySelector('body > title > p');
-        if (bodyTitles) {
-            title = bodyTitles.textContent || title;
-        }
+    // 2. Author Global Search
+    // Try to find author in title-info first to be safe, but fallback to global
+    const titleInfos = doc.getElementsByTagName('title-info');
+    let authorContainer = titleInfos.length > 0 ? titleInfos[0] : doc;
+
+    const authors = authorContainer.getElementsByTagName('author');
+    if (authors.length > 0) {
+        // Use the first author found
+        const firstNames = authors[0].getElementsByTagName('first-name');
+        const lastNames = authors[0].getElementsByTagName('last-name');
+        const middleNames = authors[0].getElementsByTagName('middle-name');
+
+        const fName = firstNames.length > 0 ? firstNames[0].textContent : '';
+        const lName = lastNames.length > 0 ? lastNames[0].textContent : '';
+        const mName = middleNames.length > 0 ? middleNames[0].textContent : '';
+
+        const fullName = [fName, mName, lName].filter(Boolean).join(' ');
+        if (fullName) author = fullName;
+    }
+
+    // 3. Description Global Search
+    const annotations = doc.getElementsByTagName('annotation');
+    if (annotations.length > 0) {
+        description = annotations[0].textContent || '';
     }
 
     // Extract Cover
     let cover = '';
-    const binaryCover = doc.querySelector('binary[id*="cover"]');
-    if (binaryCover) {
-        const contentType = binaryCover.getAttribute('content-type') || 'image/jpeg';
-        const base64 = binaryCover.textContent;
+    // Global search for binary with id containing 'cover' OR content-type image
+    // Some books use id="cover.jpg" or similar
+    const binaries = Array.from(doc.getElementsByTagName('binary'));
+    const coverBinary = binaries.find(b => {
+        const id = b.getAttribute('id') || '';
+        const type = b.getAttribute('content-type') || '';
+        return id.toLowerCase().includes('cover') || type.startsWith('image/');
+    });
+
+    if (coverBinary) {
+        const contentType = coverBinary.getAttribute('content-type') || 'image/jpeg';
+        const base64 = coverBinary.textContent;
         cover = `data:${contentType};base64,${base64}`;
     }
 
