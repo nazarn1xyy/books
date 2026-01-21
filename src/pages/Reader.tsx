@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Footprints, Camera } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Footprints } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -66,7 +66,7 @@ export function Reader() {
     const [showTtsControls, setShowTtsControls] = useState(false);
 
     // Walk Mode (Transparent Reality)
-    const { stream, isActive: isCameraActive, startCamera, stopCamera, error: cameraError } = useCameraStream();
+    const { stream, isActive: isCameraActive, startCamera, stopCamera } = useCameraStream();
     const videoRef = useRef<HTMLVideoElement>(null);
 
     // Effect to attach stream to video element
