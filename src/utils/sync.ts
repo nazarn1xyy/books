@@ -30,7 +30,7 @@ export async function syncData(userId: string) {
             const book = localState.bookMetadata[id];
             if (!book) return;
 
-            await supabase.from('user_books').insert({
+            await supabase.from('user_books').upsert({
                 user_id: userId,
                 book_id: book.id,
                 title: book.title || 'Untitled',
@@ -38,7 +38,7 @@ export async function syncData(userId: string) {
                 cover: book.cover || '',
                 status: 'reading',
                 format: book.format || 'fb2'
-            });
+            }, { onConflict: 'user_id, book_id', ignoreDuplicates: true });
         });
 
         // B. Pull Cloud -> Local
@@ -73,12 +73,16 @@ export async function syncData(userId: string) {
         cloudProgress?.forEach(cp => {
             const lp = localState.readingProgress[cp.book_id];
             // If local doesn't exist or cloud is newer
-            if (!lp || (cp.last_read > lp.lastRead)) {
+            // Ensure we handle potentially missing lastRead in local state
+            const localLastRead = lp?.lastRead || 0;
+            const cloudLastRead = cp.last_read || 0;
+
+            if (!lp || (cloudLastRead > localLastRead)) {
                 localState.readingProgress[cp.book_id] = {
                     bookId: cp.book_id,
                     currentPage: cp.current_page,
                     totalPages: cp.total_pages,
-                    lastRead: cp.last_read, // Ensure DB has this column as numeric timestamp
+                    lastRead: cloudLastRead,
                     scrollPercentage: cp.scroll_percentage
                 };
             }
@@ -87,15 +91,18 @@ export async function syncData(userId: string) {
         // Push newer local progress to cloud
         const progressUpdates = Object.values(localState.readingProgress).map(async (lp) => {
             const cp = cloudProgress?.find(p => p.book_id === lp.bookId);
-            if (!cp || (lp.lastRead > cp.last_read)) {
+            const localLastRead = lp.lastRead || 0;
+            const cloudLastRead = cp?.last_read || 0;
+
+            if (!cp || (localLastRead > cloudLastRead)) {
                 await supabase.from('reading_progress').upsert({
                     user_id: userId,
                     book_id: lp.bookId,
                     current_page: lp.currentPage,
                     total_pages: lp.totalPages,
-                    last_read: lp.lastRead,
+                    last_read: localLastRead,
                     scroll_percentage: lp.scrollPercentage || 0
-                });
+                }, { onConflict: 'user_id, book_id' });
             }
         });
 
