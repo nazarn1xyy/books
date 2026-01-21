@@ -106,3 +106,18 @@ export async function syncData(userId: string) {
         console.error('Sync failed:', error);
     }
 }
+
+export async function removeBookFromCloud(userId: string, bookId: string) {
+    if (!userId || !bookId) return;
+
+    try {
+        const { error } = await supabase
+            .from('user_books')
+            .delete()
+            .match({ user_id: userId, book_id: bookId });
+
+        if (error) throw error;
+    } catch (error) {
+        console.error('Failed to remove book from cloud:', error);
+    }
+}

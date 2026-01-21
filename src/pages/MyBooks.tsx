@@ -9,8 +9,11 @@ import { ProgressBar } from '../components/ProgressBar';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { parseBookData } from '../services/flibustaApi';
 import { cacheBook } from '../utils/cache';
+import { useAuth } from '../contexts/AuthContext';
+import { removeBookFromCloud } from '../utils/sync';
 
 export function MyBooks() {
+    const { user } = useAuth();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -26,10 +29,13 @@ export function MyBooks() {
             .sort((a, b) => (b?.progress?.lastRead || 0) - (a?.progress?.lastRead || 0));
     }, [myBookIds]);
 
-    const handleRemove = (bookId: string) => {
+    const handleRemove = async (bookId: string) => {
         if (window.confirm('Удалить эту книгу из списка?')) {
             removeFromMyBooks(bookId);
             setMyBookIds(getMyBookIds());
+            if (user) {
+                await removeBookFromCloud(user.id, bookId);
+            }
         }
     };
 
