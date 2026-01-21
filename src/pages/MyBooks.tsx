@@ -11,6 +11,7 @@ import { parseBookData } from '../services/flibustaApi';
 import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
+import { useBookCover } from '../hooks/useBookCover';
 
 export function MyBooks() {
     const { user } = useAuth();
@@ -175,6 +176,7 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
 
     const [isDragging, setIsDragging] = useState(false);
     const [swiped, setSwiped] = useState(false);
+    const coverSrc = useBookCover(book.id, book.cover);
 
     const handleDragEnd = (_e: any, info: PanInfo) => {
         setIsDragging(false);
@@ -221,7 +223,7 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
             >
                 <div className="flex gap-4 p-4 pointer-events-none select-none">
                     <ImageWithLoader
-                        src={book.cover}
+                        src={coverSrc}
                         alt={book.title}
                         loading="lazy"
                         className="w-16 h-24 rounded-lg object-cover flex-shrink-0"

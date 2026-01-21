@@ -4,6 +4,8 @@ import { getReadingProgress } from '../utils/storage';
 import { ProgressBar } from './ProgressBar';
 import { ImageWithLoader } from './ImageWithLoader';
 
+import { useBookCover } from '../hooks/useBookCover';
+
 interface BookCardProps {
     book: Book;
     size?: 'small' | 'medium' | 'large';
@@ -13,6 +15,8 @@ interface BookCardProps {
 
 export function BookCard({ book, size = 'medium', showProgress = false, priority = false }: BookCardProps) {
     const progress = getReadingProgress(book.id);
+    const coverSrc = useBookCover(book.id, book.cover);
+
     const rawPercentage = progress && progress.totalPages > 0
         ? Math.round(((progress.currentPage + 1) / progress.totalPages) * 100)
         : 0;
@@ -38,7 +42,7 @@ export function BookCard({ book, size = 'medium', showProgress = false, priority
         >
             <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">
                 <ImageWithLoader
-                    src={book.cover || 'https://placehold.co/300x450?text=No+Cover'}
+                    src={coverSrc || 'https://placehold.co/300x450?text=No+Cover'}
                     alt={book.title}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}

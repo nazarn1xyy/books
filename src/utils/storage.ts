@@ -48,8 +48,16 @@ export function addToMyBooks(book: Book): void {
     if (!state.myBooks.includes(book.id)) {
         state.myBooks.push(book.id);
     }
-    // Always update metadata
-    state.bookMetadata[book.id] = book;
+    // Create a copy of the book to avoid mutating the original object that might be used in UI
+    const bookToSave = { ...book };
+
+    // If cover is a large Data URI, strip it from localStorage metadata
+    // It is already saved in IndexedDB via cacheBook()
+    if (bookToSave.cover && bookToSave.cover.startsWith('data:image')) {
+        bookToSave.cover = ''; // BookCard will verify cache via useBookCover
+    }
+
+    state.bookMetadata[book.id] = bookToSave;
     saveAppState(state);
 }
 
