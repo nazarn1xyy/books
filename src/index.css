@@ -142,3 +142,28 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: -8px;
   cursor: pointer;
 }
+
+/* Reader Themes */
+.theme-light {
+  --reader-bg: #FFFFFF;
+  --reader-text: #000000;
+  --reader-ui-bg: #F2F2F2;
+}
+
+.theme-dark {
+  --reader-bg: #1C1C1E;
+  --reader-text: #FFFFFF;
+  --reader-ui-bg: #2C2C2E;
+}
+
+.theme-oled {
+  --reader-bg: #000000;
+  --reader-text: #B0B0B0;
+  --reader-ui-bg: #121212;
+}
+
+.theme-sepia {
+  --reader-bg: #F8F1E3;
+  --reader-text: #5F4B32;
+  --reader-ui-bg: #E3DCCF;
+}

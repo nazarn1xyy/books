@@ -112,7 +112,7 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
 }
 
 // Shared parsing logic for both remote and local books
-export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; cover?: string; title?: string; author?: string; description?: string }> {
+export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; cover?: string; title?: string; author?: string; description?: string; series?: string; seriesNumber?: number }> {
     // 1. Use Web Worker for heavy lifting (Unzip & Decode)
     const text = await new Promise<string>((resolve, reject) => {
         const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
@@ -216,16 +216,35 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
         extractedText = Array.from(paragraphs).map(p => p.textContent).join('\n\n');
     }
 
+    // 4. Series (Sequence)
+    let series = undefined;
+    let seriesNumber = undefined;
+
+    // Look for <sequence>
+    // Example: <sequence name="Harry Potter" number="1"/>
+    const sequences = doc.getElementsByTagNameNS('*', 'sequence');
+    if (sequences.length > 0) {
+        // Often there might be publish-info sequence too, so we try to find one with a name
+        const validSeq = Array.from(sequences).find(s => s.getAttribute('name'));
+        if (validSeq) {
+            series = validSeq.getAttribute('name') || undefined;
+            const num = validSeq.getAttribute('number');
+            if (num) seriesNumber = parseInt(num, 10);
+        }
+    }
+
     return {
         text: extractedText,
         cover,
         title,
         author,
-        description
+        description,
+        series,
+        seriesNumber
     };
 }
 
-export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string }> {
+export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string; series?: string; seriesNumber?: number }> {
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {

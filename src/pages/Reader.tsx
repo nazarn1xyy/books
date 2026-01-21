@@ -47,7 +47,7 @@ export function Reader() {
 
             try {
                 // Fetch book content from Flibusta (FB2 parsed) or cache (PDF)
-                const { text, cover, pdfData, title, author } = await fetchBookContent(id);
+                const { text, cover, pdfData, title, author, series, seriesNumber } = await fetchBookContent(id);
                 setFullText(text);
                 if (pdfData) setPdfData(pdfData);
 
@@ -60,7 +60,9 @@ export function Reader() {
 
                 const bookData: Book = existingBook ? {
                     ...existingBook,
-                    cover: cover || existingBook.cover
+                    cover: cover || existingBook.cover,
+                    series: series || existingBook.series,
+                    seriesNumber: seriesNumber || existingBook.seriesNumber
                 } : {
                     id,
                     title: title || '', // Use parsed title
@@ -69,7 +71,9 @@ export function Reader() {
                     description: '',
                     genre: '',
                     contentUrl: '',
-                    format: pdfData ? 'pdf' : 'fb2'
+                    format: pdfData ? 'pdf' : 'fb2',
+                    series,
+                    seriesNumber
                 };
 
                 setBook(bookData);
@@ -165,41 +169,51 @@ export function Reader() {
         saveSettings(newSettings);
     };
 
+    const updateTheme = (theme: 'light' | 'dark' | 'sepia' | 'oled') => {
+        const newSettings = { ...settings, theme };
+        setSettings(newSettings);
+        saveSettings(newSettings);
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
+            <div className="min-h-screen bg-[var(--reader-bg)] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[var(--reader-text)]"></div>
             </div>
         );
     }
 
     if (error || !book) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center flex-col gap-4">
+            <div className="min-h-screen bg-[var(--reader-bg)] flex items-center justify-center flex-col gap-4">
                 <p className="text-gray-500">{error || 'Книга не найдена'}</p>
-                <button onClick={() => navigate(-1)} className="text-white underline">Назад</button>
+                <button onClick={() => navigate(-1)} className="text-[var(--reader-text)] underline">Назад</button>
             </div>
         );
     }
 
+    const currentTheme = settings.theme || 'dark';
+
     return (
         <div
-            className="fixed inset-0 bg-black flex flex-col"
+            className={`fixed inset-0 flex flex-col theme-${currentTheme} transition-colors duration-300`}
             style={{
+                backgroundColor: 'var(--reader-bg)',
+                color: 'var(--reader-text)',
                 filter: `brightness(${settings.brightness}%)`,
             }}
         >
             {/* Header */}
-            <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-black/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 transition-transform">
+            <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-[var(--reader-bg)]/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 transition-transform shadow-sm">
                 <button
                     onClick={() => navigate(-1)}
                     aria-label="Go back"
-                    className="p-2 -ml-2 text-white active:opacity-50 transition-opacity"
+                    className="p-2 -ml-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
                 >
                     <ChevronLeft size={28} />
                 </button>
                 <div className="flex-1 text-center overflow-hidden">
-                    <h1 className="text-sm font-medium text-white truncate px-4">
+                    <h1 className="text-sm font-medium text-[var(--reader-text)] truncate px-4">
                         {book.title}
                     </h1>
                     {book.format === 'pdf' && (
@@ -211,22 +225,22 @@ export function Reader() {
                 <button
                     onClick={() => setShowSettings(true)}
                     aria-label="Open settings"
-                    className="p-2 -mr-2 text-white active:opacity-50 transition-opacity"
+                    className="p-2 -mr-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
                 >
                     <Settings size={24} />
                 </button>
             </header>
 
             {/* Content */}
-            <main className="flex-1 relative bg-black overflow-hidden">
+            <main className="flex-1 relative overflow-hidden" style={{ backgroundColor: 'var(--reader-bg)' }}>
                 {book?.format === 'pdf' && pdfData ? (
-                    <div className="h-full w-full bg-[#1C1C1E]">
+                    <div className="h-full w-full" style={{ backgroundColor: 'var(--reader-bg)' }}>
                         <Document
                             file={pdfData}
                             onLoadSuccess={({ numPages }) => {
                                 setNumPages(numPages);
                             }}
-                            loading={<div className="flex h-full items-center justify-center text-white">Загрузка PDF...</div>}
+                            loading={<div className="flex h-full items-center justify-center text-[var(--reader-text)]">Загрузка PDF...</div>}
                             className="h-full"
                         >
                             {numPages > 0 && (
@@ -244,15 +258,6 @@ export function Reader() {
                                                 renderTextLayer={false}
                                                 renderAnnotationLayer={false}
                                                 className="shadow-xl bg-white"
-                                                loading={
-                                                    <div
-                                                        className="bg-white/10 animate-pulse rounded"
-                                                        style={{
-                                                            width: window.innerWidth > 768 ? 768 : window.innerWidth - 16,
-                                                            height: (window.innerWidth > 768 ? 768 : window.innerWidth - 16) * 1.414
-                                                        }}
-                                                    />
-                                                }
                                             />
                                         </div>
                                     )}
@@ -271,8 +276,8 @@ export function Reader() {
                         rangeChanged={handleRangeChanged}
                         itemContent={(_index, para) => (
                             <div
-                                className="px-6 py-2 text-white leading-relaxed font-serif max-w-3xl mx-auto"
-                                style={{ fontSize: `${settings.fontSize}px` }}
+                                className="px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto"
+                                style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
                             >
                                 <p>{para}</p>
                             </div>
@@ -289,7 +294,7 @@ export function Reader() {
             </main>
 
             {/* Footer - Progress Bar Only */}
-            <footer className="px-4 pb-6 pt-4 bg-black/90 backdrop-blur-xl border-t border-white/5 pb-[env(safe-area-inset-bottom)] z-10">
+            <footer className="px-4 pb-6 pt-4 bg-[var(--reader-bg)]/90 backdrop-blur-xl border-t border-white/5 pb-[env(safe-area-inset-bottom)] z-10">
                 <div className="max-w-3xl mx-auto w-full">
                     <div className="flex items-center gap-4 mb-2">
                         <div className="flex-1">
@@ -303,41 +308,66 @@ export function Reader() {
             {/* Settings Modal */}
             {showSettings && (
                 <div
-                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
                     onClick={() => setShowSettings(false)}
                 >
                     <div
-                        className="w-full max-w-lg bg-[#1C1C1E] rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up"
+                        className="w-full max-w-lg bg-[var(--reader-ui-bg)] rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up shadow-2xl"
+                        style={{ backgroundColor: 'var(--reader-ui-bg)' }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold text-white">Настройки</h2>
+                            <h2 className="text-lg font-semibold text-[var(--reader-text)]">Настройки</h2>
                             <button
                                 onClick={() => setShowSettings(false)}
                                 aria-label="Close settings"
-                                className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors"
+                                className="p-2 -mr-2 text-gray-400 hover:text-[var(--reader-text)] transition-colors"
                             >
                                 <X size={24} />
                             </button>
                         </div>
 
+                        {/* Theme Selection */}
+                        <div className="mb-6">
+                            <label className="text-sm text-gray-400 mb-3 block">Тема</label>
+                            <div className="flex gap-3 justify-between">
+                                {[
+                                    { id: 'light', name: 'Светлая', bg: '#F2F2F2', border: '#ddd', text: '#000' },
+                                    { id: 'sepia', name: 'Сепия', bg: '#F8F1E3', border: '#E3DCCF', text: '#5F4B32' },
+                                    { id: 'dark', name: 'Темная', bg: '#2C2C2E', border: '#3A3A3C', text: '#FFF' },
+                                    { id: 'oled', name: 'OLED', bg: '#000000', border: '#333', text: '#AAA' },
+                                ].map((t) => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => updateTheme(t.id as any)}
+                                        className={`flex-1 py-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${currentTheme === t.id ? 'ring-2 ring-blue-500 scale-105' : ''
+                                            }`}
+                                        style={{ backgroundColor: t.bg, borderColor: t.border }}
+                                    >
+                                        <span className="text-xs font-medium" style={{ color: t.text }}>{t.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+
                         {/* Font Size - Only for local text books */}
                         {book?.format !== 'pdf' && (
                             <div className="mb-6">
                                 <label className="text-sm text-gray-400 mb-3 block">Размер шрифта</label>
-                                <div className="flex items-center justify-between bg-[#2C2C2E] rounded-xl p-4">
+                                <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 rounded-xl p-4">
                                     <button
                                         onClick={() => updateFontSize(-2)}
                                         aria-label="Decrease font size"
-                                        className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
+                                        className="p-2 text-[var(--reader-text)] bg-black/10 dark:bg-white/10 rounded-lg active:scale-95 transition-transform"
                                     >
                                         <Minus size={20} />
                                     </button>
-                                    <span className="text-white font-medium">{settings.fontSize}px</span>
+                                    <span className="text-[var(--reader-text)] font-medium">{settings.fontSize}px</span>
                                     <button
                                         onClick={() => updateFontSize(2)}
                                         aria-label="Increase font size"
-                                        className="p-2 text-white bg-[#3A3A3C] rounded-lg active:scale-95 transition-transform"
+                                        className="p-2 text-[var(--reader-text)] bg-black/10 dark:bg-white/10 rounded-lg active:scale-95 transition-transform"
                                     >
                                         <Plus size={20} />
                                     </button>
@@ -348,7 +378,7 @@ export function Reader() {
                         {/* Brightness */}
                         <div>
                             <label className="text-sm text-gray-400 mb-3 block">Яркость</label>
-                            <div className="flex items-center gap-4 bg-[#2C2C2E] rounded-xl p-4">
+                            <div className="flex items-center gap-4 bg-black/10 dark:bg-white/5 rounded-xl p-4">
                                 <Sun size={20} className="text-gray-500" />
                                 <input
                                     type="range"
@@ -356,9 +386,9 @@ export function Reader() {
                                     max="100"
                                     value={settings.brightness}
                                     onChange={(e) => updateBrightness(Number(e.target.value))}
-                                    className="flex-1 h-1 bg-[#3A3A3C] rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                                    className="flex-1 h-1 bg-gray-600 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-[var(--reader-text)]"
                                 />
-                                <span className="text-white font-medium w-10 text-right">{settings.brightness}%</span>
+                                <span className="text-[var(--reader-text)] font-medium w-10 text-right">{settings.brightness}%</span>
                             </div>
                         </div>
                     </div>

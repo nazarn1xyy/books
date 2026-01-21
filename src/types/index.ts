@@ -9,6 +9,8 @@ export interface Book {
   content?: string[];
   contentUrl?: string;
   format?: 'fb2' | 'pdf';
+  series?: string;
+  seriesNumber?: number;
 }
 
 export interface ReadingProgress {
@@ -22,6 +24,7 @@ export interface ReadingProgress {
 export interface UserSettings {
   fontSize: number;
   brightness: number;
+  theme?: 'light' | 'dark' | 'sepia' | 'oled';
 }
 
 export interface AppState {

@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Trash2, ChevronLeft } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book } from '../types';
 import { books } from '../data/books';
@@ -13,12 +13,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
 
-
 export function MyBooks() {
     const { user } = useAuth();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
 
     // Refresh books when storage changes (e.g. from Realtime sync)
     useEffect(() => {
@@ -30,15 +30,47 @@ export function MyBooks() {
         return () => window.removeEventListener('storage-update', handleStorageUpdate);
     }, []);
 
-    const myBooks = useMemo(() => {
-        return myBookIds
-            .map((id) => {
-                const book = books.find((b) => b.id === id) || getBookMetadata(id);
-                const progress = getReadingProgress(id);
-                return book ? { book, progress } : null;
-            })
-            .filter(Boolean)
-            .sort((a, b) => (b?.progress?.lastRead || 0) - (a?.progress?.lastRead || 0));
+    const items = useMemo(() => {
+        const singles: { book: Book; progress: any }[] = [];
+        const seriesMap = new Map<string, { book: Book; progress: any }[]>();
+
+        myBookIds.forEach((id) => {
+            const book = books.find((b) => b.id === id) || getBookMetadata(id);
+            const progress = getReadingProgress(id);
+            if (!book) return;
+            const item = { book, progress };
+
+            if (book.series) {
+                if (!seriesMap.has(book.series)) {
+                    seriesMap.set(book.series, []);
+                }
+                seriesMap.get(book.series)!.push(item);
+            } else {
+                singles.push(item);
+            }
+        });
+
+        // Combine
+        const result: (({ type: 'book'; data: { book: Book; progress: any } } | { type: 'series'; name: string; books: { book: Book; progress: any }[] }))[] = [];
+
+        singles.forEach(s => result.push({ type: 'book', data: s }));
+
+        seriesMap.forEach((seriesBooks, name) => {
+            // Sort books inside series by number
+            seriesBooks.sort((a, b) => (a.book.seriesNumber || 0) - (b.book.seriesNumber || 0));
+            result.push({ type: 'series', name, books: seriesBooks });
+        });
+
+        // Sort entire list by lastRead (max of series)
+        return result.sort((a, b) => {
+            const getTimestamp = (item: typeof result[0]) => {
+                if (item.type === 'book') return item.data.progress?.lastRead || 0;
+                // For series, find the most recently read book
+                return Math.max(...item.books.map(b => b.progress?.lastRead || 0));
+            };
+            return getTimestamp(b) - getTimestamp(a);
+        });
+
     }, [myBookIds]);
 
     const handleRemove = async (bookId: string) => {
@@ -46,15 +78,9 @@ export function MyBooks() {
             // Optimistically remove locally
             removeFromMyBooks(bookId);
             setMyBookIds(getMyBookIds());
-
-            // Track as pending deletion in case network fails
             addToPendingDeletions(bookId);
-
-            // Attempt cloud removal
             if (user) {
-                removeBookFromCloud(user.id, bookId).then(() => {
-                    // Clean up pending on success (handled in sync usually, but good here too)
-                });
+                removeBookFromCloud(user.id, bookId).then(() => { });
             }
         }
     };
@@ -75,6 +101,8 @@ export function MyBooks() {
             let description = '';
             let format: 'fb2' | 'pdf' = 'fb2';
             let text = '';
+            let series = undefined;
+            let seriesNumber = undefined;
 
             if (isPdf) {
                 format = 'pdf';
@@ -94,6 +122,8 @@ export function MyBooks() {
                 author = parsed.author || author;
                 cover = parsed.cover || 'https://placehold.co/300x450?text=Wait...';
                 description = parsed.description || description;
+                series = parsed.series;
+                seriesNumber = parsed.seriesNumber;
 
                 await cacheBook(newBookId, text, cover);
             }
@@ -106,7 +136,9 @@ export function MyBooks() {
                 description,
                 genre: 'Local',
                 contentUrl: 'local',
-                format
+                format,
+                series,
+                seriesNumber
             };
 
             addToMyBooks(newBook);
@@ -121,6 +153,12 @@ export function MyBooks() {
         }
     };
 
+    // Helper to open/close series
+    const toggleSeries = (name: string) => {
+        if (expandedSeries === name) setExpandedSeries(null);
+        else setExpandedSeries(name);
+    };
+
     return (
         <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)] relative overflow-hidden">
             <div className="px-5 pt-8">
@@ -128,23 +166,71 @@ export function MyBooks() {
                 <header className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-white">Мои книги</h1>
-                        {myBooks.length > 0 && (
-                            <p className="text-gray-500 mt-1">{myBooks.length} книг</p>
+                        {myBookIds.length > 0 && (
+                            <p className="text-gray-500 mt-1">{myBookIds.length} книг</p>
                         )}
                     </div>
                 </header>
 
                 {/* Book List */}
-                {myBooks.length > 0 ? (
+                {items.length > 0 ? (
                     <div className="space-y-4">
                         <AnimatePresence mode="popLayout">
-                            {myBooks.map((item) => (
-                                <BookListItem
-                                    key={item!.book.id}
-                                    book={item!.book}
-                                    onRemove={() => handleRemove(item!.book.id)}
-                                />
-                            ))}
+                            {items.map((item) => {
+                                if (item.type === 'book') {
+                                    return (
+                                        <BookListItem
+                                            key={item.data.book.id}
+                                            book={item.data.book}
+                                            onRemove={() => handleRemove(item.data.book.id)}
+                                        />
+                                    );
+                                } else {
+                                    // Series Folder
+                                    const isExpanded = expandedSeries === item.name;
+                                    return (
+                                        <div key={`series-${item.name}`} className="space-y-4">
+                                            <div
+                                                onClick={() => toggleSeries(item.name)}
+                                                className="bg-[#1C1C1E]/50 border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer"
+                                            >
+                                                <div className="w-16 h-24 bg-[#2C2C2E] rounded-lg flex items-center justify-center text-white/20">
+                                                    <div className="flex flex-col items-center">
+                                                        {/* Stack effect */}
+                                                        <div className="w-10 h-10 border-2 border-white/20 rounded mb-1 bg-[#3A3A3C]"></div>
+                                                        <div className="w-12 h-1 bg-white/20 rounded-full"></div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold text-white text-lg">{item.name}</h3>
+                                                    <p className="text-sm text-gray-500">{item.books.length} книг</p>
+                                                </div>
+                                                <div className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                                                    <ChevronLeft size={20} className="rotate-180" />
+                                                </div>
+                                            </div>
+
+                                            {/* Expanded Content */}
+                                            {isExpanded && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    exit={{ opacity: 0, height: 0 }}
+                                                    className="pl-4 space-y-4 border-l-2 border-white/10 ml-8"
+                                                >
+                                                    {item.books.map(b => (
+                                                        <BookListItem
+                                                            key={b.book.id}
+                                                            book={b.book}
+                                                            onRemove={() => handleRemove(b.book.id)}
+                                                        />
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    );
+                                }
+                            })}
                         </AnimatePresence>
                     </div>
                 ) : (
@@ -203,13 +289,6 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
             setSwiped(true);
             // Trigger remove logic
             onRemove();
-
-            // If user cancels, we need to reset, 
-            // but the parent handles confirmation.
-            // If we didn't remove (cancelled), 
-            // we should probably reset the drag position.
-            // Since framer-motion 'layout' animation handles removing, 
-            // we rely on parent to remount or update list.
         } else {
             setSwiped(false);
         }

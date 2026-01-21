@@ -9,6 +9,7 @@ const defaultState: AppState = {
     settings: {
         fontSize: 18,
         brightness: 100,
+        theme: 'dark',
     },
     pendingDeletions: [],
 };
