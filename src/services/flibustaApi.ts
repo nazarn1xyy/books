@@ -146,8 +146,21 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/xml');
 
-    if (doc.querySelector('parsererror')) {
-        throw new Error('Failed to parse FB2 XML');
+    // Check for parser errors with detailed diagnostics
+    const parserError = doc.querySelector('parsererror');
+    if (parserError) {
+        const errorText = parserError.textContent || 'Unknown XML error';
+        console.error('XML Parse Error:', errorText);
+        console.error('Text preview (first 500 chars):', text.substring(0, 500));
+        throw new Error(`Failed to parse FB2 XML: ${errorText.substring(0, 200)}`);
+    }
+
+    // Validate that it's actually an FB2 document
+    const fb2Root = doc.querySelector('FictionBook') || doc.getElementsByTagName('FictionBook')[0];
+    if (!fb2Root) {
+        console.error('Not a valid FB2 document. Root element:', doc.documentElement?.tagName);
+        console.error('Text preview:', text.substring(0, 300));
+        throw new Error('Not a valid FB2 document - missing FictionBook root element');
     }
 
     // Extract Metadata (Title, Author, Description)

@@ -42,8 +42,16 @@ self.onmessage = async (e: MessageEvent) => {
         } else {
             const fileData = new Uint8Array(arrayBuffer);
             const encoding = detectEncoding(fileData);
-            const decoder = new TextDecoder(encoding);
-            xmlText = decoder.decode(fileData);
+
+            // Try to decode with detected encoding, fallback to UTF-8 if it fails
+            try {
+                const decoder = new TextDecoder(encoding);
+                xmlText = decoder.decode(fileData);
+            } catch (encodingError) {
+                console.warn(`Failed to decode with ${encoding}, trying UTF-8`, encodingError);
+                const decoder = new TextDecoder('utf-8');
+                xmlText = decoder.decode(fileData);
+            }
         }
 
         self.postMessage({ type: 'SUCCESS', text: xmlText });
