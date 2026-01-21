@@ -28,6 +28,75 @@
   <meta name="twitter:description" content="Удобная читалка книг с доступом к Flibusta." />
   <meta name="twitter:image" content="/pwa-512x512.png" />
 
+  <!-- Schema.org Structured Data for SEO and Sitelinks -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://libify.store/#website",
+        "url": "https://libify.store/",
+        "name": "Libify",
+        "description": "Библиотека - читайте книги онлайн бесплатно",
+        "publisher": {
+          "@id": "https://libify.store/#organization"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://libify.store/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        },
+        "inLanguage": "ru-RU"
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://libify.store/#organization",
+        "name": "Libify",
+        "url": "https://libify.store/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://libify.store/pwa-512x512.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://libify.store/#webpage",
+        "url": "https://libify.store/",
+        "name": "Libify - Библиотека книг онлайн",
+        "isPartOf": {
+          "@id": "https://libify.store/#website"
+        },
+        "about": {
+          "@id": "https://libify.store/#organization"
+        },
+        "description": "Читайте любимые книги в удобном формате. Бесплатная библиотека с доступом к тысячам произведений.",
+        "inLanguage": "ru-RU"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "name": "Главная",
+        "url": "https://libify.store/"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "name": "Поиск книг",
+        "url": "https://libify.store/search"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "name": "Мои книги",
+        "url": "https://libify.store/my-books"
+      }
+    ]
+  }
+  </script>
+
   <title>Библиотека - Читалка книг</title>
   <link rel="preconnect" href="https://images.unsplash.com" />
   <link rel="dns-prefetch" href="https://images.unsplash.com" />
