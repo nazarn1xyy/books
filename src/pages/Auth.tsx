@@ -47,7 +47,13 @@ export function Auth() {
             }
         } catch (err: any) {
             console.error('Auth error:', err);
-            setError(err.message || 'Ошибка авторизации');
+            let message = err.message || 'Ошибка авторизации';
+
+            if (message === 'Load failed' || message === 'Failed to fetch') {
+                message = 'Ошибка соединения. Проверьте интернет или отключите AdBlock/VPN.';
+            }
+
+            setError(message);
         } finally {
             setLoading(false);
         }
