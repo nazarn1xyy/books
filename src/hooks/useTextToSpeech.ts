@@ -22,7 +22,6 @@ export function useTextToSpeech() {
         voices: []
     });
 
-    const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
     const synthesis = useRef(window.speechSynthesis);
 
     useEffect(() => {
@@ -41,10 +40,7 @@ export function useTextToSpeech() {
         }
 
         return () => {
-            // Cleanup on unmount not strictly necessary here as we might want persistence, 
-            // but good practice to cancel if component unmounts while speaking? 
-            // Ideally we want global persistence, but for now local to component logic is fine.
-            // We won't cancel on unmount to allow background playing if possible (though browsers restrict this).
+            // Optional cleanup
         };
     }, [state.hasBrowserSupport]);
 
@@ -81,7 +77,6 @@ export function useTextToSpeech() {
             setState(prev => ({ ...prev, isSpeaking: false, isPaused: false }));
         };
 
-        setCurrentUtterance(utterance);
         synthesis.current.speak(utterance);
     }, [state.hasBrowserSupport, state.voices]);
 

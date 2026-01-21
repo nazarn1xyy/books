@@ -59,7 +59,7 @@ export function Reader() {
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
     // Text-to-Speech
-    const { speak, pause, resume, cancel, isSpeaking, isPaused, hasBrowserSupport } = useTextToSpeech();
+    const { speak, pause, resume, cancel, isSpeaking, isPaused } = useTextToSpeech();
     const [ttsActiveParagraph, setTtsActiveParagraph] = useState<number | null>(null);
     const [ttsRate, setTtsRate] = useState(1);
     const [showTtsControls, setShowTtsControls] = useState(false);
@@ -309,10 +309,7 @@ export function Reader() {
         }
     };
 
-    const handleTtsStop = () => {
-        cancel();
-        setTtsActiveParagraph(null);
-    };
+
 
     const handleTtsNext = () => {
         cancel();
