@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search as SearchIcon, X, Loader2 } from 'lucide-react';
 import { fetchBooks } from '../services/flibustaApi';
 import { BookCard } from '../components/BookCard';
 import type { Book } from '../types';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 
 export function Search() {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Book[]>([]);
     const [loading, setLoading] = useState(false);
     const [debouncedQuery, setDebouncedQuery] = useState('');
-
+    const { isKeyboardOpen } = useKeyboardHeight();
+    const containerRef = useRef<HTMLDivElement>(null);
     // Debounce search query
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -55,7 +57,16 @@ export function Search() {
     }, [debouncedQuery]);
 
     return (
-        <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)]">
+        <div
+            ref={containerRef}
+            className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)]"
+            style={{
+                overflow: isKeyboardOpen ? 'hidden' : 'auto',
+                height: isKeyboardOpen ? '100vh' : 'auto',
+                position: isKeyboardOpen ? 'fixed' : 'relative',
+                width: '100%'
+            }}
+        >
             <div className="px-5 pt-8">
                 {/* Search Header */}
                 <header className="sticky top-0 z-10 bg-black pb-4 -mx-5 px-5 pt-8">

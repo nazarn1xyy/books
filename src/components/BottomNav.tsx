@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Search, BookOpen } from 'lucide-react';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 
 const navItems = [
     { to: '/', icon: Home, label: 'Главная' },
@@ -8,8 +9,16 @@ const navItems = [
 ];
 
 export function BottomNav() {
+    const { keyboardHeight, isKeyboardOpen } = useKeyboardHeight();
+
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
+        <nav
+            className="fixed left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10 transition-all duration-200"
+            style={{
+                bottom: isKeyboardOpen ? keyboardHeight : 0,
+                paddingBottom: isKeyboardOpen ? 0 : 'env(safe-area-inset-bottom)'
+            }}
+        >
             <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
                 {navItems.map(({ to, icon: Icon, label }) => (
                     <NavLink
