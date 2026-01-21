@@ -336,13 +336,35 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
 
     try {
         const url = `${FLIBUSTA_BASE}/b/${bookId}/fb2`;
-
+        console.log('Fetching book from:', url);
 
         // Fetch as ArrayBuffer to handle ZIP
         const data = await fetchViaProxy(url, 'arraybuffer') as ArrayBuffer;
 
+        console.log('Received data size:', data.byteLength, 'bytes');
+
+        // Check if we got an empty response
+        if (!data || data.byteLength === 0) {
+            throw new Error('Empty response from Flibusta - book may not exist');
+        }
+
+        // Check if it's HTML (error page) instead of FB2/ZIP
+        const firstBytes = new Uint8Array(data.slice(0, 100));
+        const headerText = new TextDecoder('utf-8', { fatal: false }).decode(firstBytes);
+
+        if (headerText.includes('<!DOCTYPE') || headerText.includes('<html') || headerText.includes('<HTML')) {
+            console.error('Received HTML instead of FB2. First 100 chars:', headerText);
+            throw new Error('Flibusta returned HTML error page - book may be unavailable');
+        }
+
         // Use shared parsing logic
         const parsedData = await parseBookData(data);
+
+        console.log('Parsed data result:', {
+            textLength: parsedData.text?.length || 0,
+            hasText: !!parsedData.text,
+            title: parsedData.title
+        });
 
         // 2. Cache the result
         if (parsedData.text) {
