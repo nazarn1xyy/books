@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Settings, X, Minus, Plus, Sun } from 'lucide-react';
+import { ChevronLeft, Settings, X, Minus, Plus, Sun, Sparkles, Brain } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -8,6 +8,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import { fetchBookContent } from '../services/flibustaApi';
 import { ProgressBar } from '../components/ProgressBar';
 import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, addToMyBooks, getBookMetadata } from '../utils/storage';
+import { summarizeText } from '../services/ai';
 import type { Book } from '../types';
 
 // Setup PDF worker
@@ -31,9 +32,17 @@ export function Reader() {
     const [error, setError] = useState<string | null>(null);
     const [scrollProgress, setScrollProgress] = useState(0);
 
+    // Context tracking for AI
+    const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
+
     // UI State
     const [showSettings, setShowSettings] = useState(false);
     const [settings, setSettings] = useState(getSettings);
+
+    // AI Summary State
+    const [showSummary, setShowSummary] = useState(false);
+    const [summaryContent, setSummaryContent] = useState('');
+    const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
     // Refs
     const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -124,6 +133,8 @@ export function Reader() {
     const handleRangeChanged = (range: { startIndex: number, endIndex: number }) => {
         if (!id) return;
 
+        setVisibleRange(range);
+
         const isPdf = book?.format === 'pdf';
         const total = isPdf ? numPages : paragraphs.length;
         if (total === 0) return;
@@ -175,6 +186,49 @@ export function Reader() {
         saveSettings(newSettings);
     };
 
+    const handleSummarize = async () => {
+        if (book?.format === 'pdf') {
+            alert('AI справка пока не поддерживается для PDF.');
+            return;
+        }
+
+        setShowSummary(true);
+        if (summaryContent) return; // Don't regenerate if already there (could reset on close though)
+
+        // Always regenerate for new context actually, but for now let's keep it simple.
+        // Or regenerate every time they open it?
+        // Let's regenerate.
+        setSummaryContent('');
+        setIsGeneratingSummary(true);
+
+        try {
+            // Take roughly 15 paragraphs starting from current view
+            // to catch "what is happening now"
+            // We might want to look BACK a bit too?
+            // "Summarize what led to this content and what is happening" requires previous context.
+            // Let's take 5 paragraphs BEFORE and 15 AFTER.
+
+            const start = Math.max(0, visibleRange.startIndex - 5);
+            const end = Math.min(paragraphs.length, visibleRange.startIndex + 20);
+            const textChunk = paragraphs.slice(start, end).join('\n\n');
+
+            if (!textChunk.trim()) {
+                throw new Error('Недостаточно текста для анализа.');
+            }
+
+            const result = await summarizeText(textChunk);
+            if (result.error) {
+                setSummaryContent(`Ошибка: ${result.error}`);
+            } else {
+                setSummaryContent(result.summary);
+            }
+        } catch (e) {
+            setSummaryContent('Не удалось создать пересказ. Проверьте интернет.');
+        } finally {
+            setIsGeneratingSummary(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[var(--reader-bg)] flex items-center justify-center">
@@ -212,23 +266,34 @@ export function Reader() {
                 >
                     <ChevronLeft size={28} />
                 </button>
-                <div className="flex-1 text-center overflow-hidden">
-                    <h1 className="text-sm font-medium text-[var(--reader-text)] truncate px-4">
-                        {book.title}
-                    </h1>
-                    {book.format === 'pdf' && (
-                        <p className="text-xs text-gray-400">
-                            Стр. {displayPageNumber} из {numPages}
-                        </p>
-                    )}
+                <div className="flex-1 text-center overflow-hidden flex items-center justify-center gap-2">
+                    <div className="truncate px-1">
+                        <h1 className="text-sm font-medium text-[var(--reader-text)] truncate">
+                            {book.title}
+                        </h1>
+                        {book.format === 'pdf' && (
+                            <p className="text-xs text-gray-400">
+                                Стр. {displayPageNumber} из {numPages}
+                            </p>
+                        )}
+                    </div>
                 </div>
-                <button
-                    onClick={() => setShowSettings(true)}
-                    aria-label="Open settings"
-                    className="p-2 -mr-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
-                >
-                    <Settings size={24} />
-                </button>
+                <div className="flex items-center -mr-2 gap-1">
+                    <button
+                        onClick={handleSummarize}
+                        aria-label="AI Summary"
+                        className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                    >
+                        <Sparkles size={22} className="text-yellow-400" />
+                    </button>
+                    <button
+                        onClick={() => setShowSettings(true)}
+                        aria-label="Open settings"
+                        className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                    >
+                        <Settings size={24} />
+                    </button>
+                </div>
             </header>
 
             {/* Content */}
@@ -305,6 +370,52 @@ export function Reader() {
                 </div>
             </footer>
 
+            {/* AI Summary Modal */}
+            {showSummary && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
+                    onClick={() => setShowSummary(false)}
+                >
+                    <div
+                        className="w-full max-w-lg bg-[var(--reader-ui-bg)] rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up shadow-2xl h-[60vh] flex flex-col"
+                        style={{ backgroundColor: 'var(--reader-ui-bg)' }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Brain className="text-purple-400" size={24} />
+                                <h2 className="text-lg font-semibold text-[var(--reader-text)]">Краткий пересказ</h2>
+                            </div>
+                            <button
+                                onClick={() => setShowSummary(false)}
+                                className="p-2 -mr-2 text-gray-400 hover:text-[var(--reader-text)]"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                            {isGeneratingSummary ? (
+                                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                                    <Sparkles className="animate-spin text-purple-400" size={32} />
+                                    <p className="text-gray-400 text-sm animate-pulse">Анализ контекста и генерация пересказа...</p>
+                                </div>
+                            ) : (
+                                <div className="prose prose-invert prose-sm max-w-none text-[var(--reader-text)] leading-relaxed">
+                                    {summaryContent.split('\n').map((line, i) => (
+                                        <p key={i} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-white/10 flex justify-center">
+                            <p className="text-xs text-gray-500">Генерируется с помощью AI. Может содержать неточности.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Settings Modal */}
             {showSettings && (
                 <div
@@ -316,6 +427,7 @@ export function Reader() {
                         style={{ backgroundColor: 'var(--reader-ui-bg)' }}
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* Settings Content... */}
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-lg font-semibold text-[var(--reader-text)]">Настройки</h2>
                             <button
