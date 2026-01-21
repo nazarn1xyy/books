@@ -115,24 +115,31 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
 export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; cover?: string; title?: string; author?: string; description?: string; series?: string; seriesNumber?: number }> {
     // 1. Use Web Worker for heavy lifting (Unzip & Decode)
     const text = await new Promise<string>((resolve, reject) => {
-        const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
+        try {
+            const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
 
-        worker.onmessage = (e) => {
-            if (e.data.type === 'SUCCESS') {
-                resolve(e.data.text);
-            } else {
-                reject(new Error(e.data.error));
-            }
-            worker.terminate();
-        };
+            worker.onmessage = (e) => {
+                if (e.data.type === 'SUCCESS') {
+                    resolve(e.data.text);
+                } else {
+                    reject(new Error(`Worker error: ${e.data.error || 'Unknown'}`));
+                }
+                worker.terminate();
+            };
 
-        worker.onerror = (err) => {
-            reject(err);
-            worker.terminate();
-        };
+            worker.onerror = (err) => {
+                console.error('Worker initialization error:', err);
+                reject(new Error(`Worker failed: ${err.message || 'Cannot start worker'}`));
+                worker.terminate();
+            };
 
-        // Transfer buffer to worker
-        worker.postMessage({ arrayBuffer: data }, [data]);
+            // Transfer buffer to worker
+            worker.postMessage({ arrayBuffer: data }, [data]);
+        } catch (workerError) {
+            // Worker creation failed (iOS/Safari issue)
+            console.error('Failed to create worker:', workerError);
+            reject(new Error(`Worker not supported: ${workerError instanceof Error ? workerError.message : 'Unknown'}`));
+        }
     });
 
     // 2. Parse XML for metadata and body

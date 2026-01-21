@@ -90,8 +90,10 @@ export function Reader() {
                 addToMyBooks(bookData);
 
             } catch (err) {
-                console.error(err);
-                setError('Failed to load book content');
+                console.error('Book loading error:', err);
+                const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+                const errorDetails = err instanceof Error && err.stack ? `\n${err.stack.substring(0, 200)}` : '';
+                setError(`Failed to load book: ${errorMessage}${errorDetails}`);
             } finally {
                 setLoading(false);
             }
