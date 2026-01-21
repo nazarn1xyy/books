@@ -17,10 +17,17 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { text } = req.body;
+    let text;
+    try {
+        // Handle cases where body might be a string (sometimes happens if content-type isn't perfect)
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        text = body?.text;
+    } catch (e) {
+        return res.status(400).json({ error: 'Invalid JSON body', details: e.message });
+    }
 
     if (!text) {
-        return res.status(400).json({ error: 'No text provided' });
+        return res.status(400).json({ error: 'No text provided', body: req.body });
     }
 
     // Use environment variable or fallback to the provided key
@@ -28,6 +35,7 @@ export default async function handler(req, res) {
     const BASE_URL = 'https://glhf.chat/api/openai/v1';
 
     try {
+        console.log('Sending request to GLHF...');
         const response = await fetch(`${BASE_URL}/chat/completions`, {
             method: 'POST',
             headers: {
@@ -53,17 +61,30 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Upstream API Error:', errorText);
-            throw new Error(`Upstream API error: ${response.status}`);
+            console.error('Upstream API Error:', response.status, errorText);
+            // Return the actual error to the client for debugging
+            return res.status(response.status).json({
+                error: 'Upstream API Error',
+                status: response.status,
+                details: errorText
+            });
         }
 
         const data = await response.json();
-        const summary = data.choices[0]?.message?.content;
+        const summary = data.choices?.[0]?.message?.content;
+
+        if (!summary) {
+            return res.status(502).json({ error: 'Invalid response from AI provider', data });
+        }
 
         return res.status(200).json({ summary });
 
     } catch (error) {
         console.error('AI Proxy Error:', error);
-        return res.status(500).json({ error: 'Failed to generate summary' });
+        return res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message,
+            stack: error.stack
+        });
     }
 }
