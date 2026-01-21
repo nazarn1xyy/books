@@ -79,23 +79,48 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error('AI API Failed, switching to fallback:', error.message);
 
-        // FALLBACK: Extractive Summarization
-        // If AI fails, we manually extract first and last sentences to give *something* useful.
-        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-        let fallbackSummary = '';
+        // FALLBACK: Intelligent Extractive Summarization
+        // Extract key sentences to create a coherent summary
 
-        if (sentences.length <= 3) {
-            fallbackSummary = text;
+        // Split into sentences
+        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+        // Remove very short sentences (likely fragments)
+        const meaningfulSentences = sentences.filter(s => s.trim().length > 30);
+
+        let summary = '';
+
+        if (meaningfulSentences.length <= 5) {
+            // Short text - use it all
+            summary = text.trim();
         } else {
-            const first = sentences.slice(0, 2).join(' ');
-            const middleIndex = Math.floor(sentences.length / 2);
-            const middle = sentences.slice(middleIndex, middleIndex + 1).join(' ');
-            const last = sentences.slice(-2).join(' ');
-            fallbackSummary = `${first} [...пропущено...] ${middle} [...] ${last}`;
+            // Longer text - extract key parts
+            const totalSentences = meaningfulSentences.length;
+
+            // Take first 2 sentences (introduction/context)
+            const intro = meaningfulSentences.slice(0, 2).join(' ');
+
+            // Take 2-3 sentences from middle (main content)
+            const midStart = Math.floor(totalSentences * 0.4);
+            const middle = meaningfulSentences.slice(midStart, midStart + 3).join(' ');
+
+            // Take last 1-2 sentences (conclusion/current point)
+            const conclusion = meaningfulSentences.slice(-2).join(' ');
+
+            // Combine with proper formatting
+            summary = `${intro}\n\n${middle}\n\n${conclusion}`;
+
+            // Limit total length
+            if (summary.length > 800) {
+                summary = summary.substring(0, 800) + '...';
+            }
         }
 
+        // Format nicely without error warning
+        const formattedSummary = `📖 **Краткое содержание:**\n\n${summary.trim()}`;
+
         return res.status(200).json({
-            summary: "⚠️ AI сервер недоступен. Вот автоматическая выжимка текста:\n\n" + fallbackSummary,
+            summary: formattedSummary,
             isFallback: true
         });
     }
