@@ -1,5 +1,20 @@
 import JSZip from 'jszip';
 
+function detectEncoding(buffer: Uint8Array): string {
+    try {
+        // Read the first 1024 bytes as ASCII to find the XML encoding declaration
+        const header = new TextDecoder('ascii').decode(buffer.slice(0, 1024));
+        const match = header.match(/encoding=["']([a-zA-Z0-9-_]+)["']/i);
+        if (match && match[1]) {
+            console.log('Detected encoding:', match[1]);
+            return match[1];
+        }
+    } catch (e) {
+        // Ignore errors, fallback to utf-8
+    }
+    return 'utf-8';
+}
+
 self.onmessage = async (e: MessageEvent) => {
     const { arrayBuffer } = e.data;
 
@@ -15,26 +30,21 @@ self.onmessage = async (e: MessageEvent) => {
             const fb2File = Object.values(zip.files).find(file => file.name.endsWith('.fb2'));
 
             if (fb2File) {
-                xmlText = await fb2File.async('string');
+                // Determine encoding from the raw bytes of the internal file
+                // JSZip gives us a helper to get Uint8Array
+                const fileData = await fb2File.async('uint8array');
+                const encoding = detectEncoding(fileData);
+                const decoder = new TextDecoder(encoding);
+                xmlText = decoder.decode(fileData);
             } else {
                 throw new Error('No .fb2 file found in the archive');
             }
         } else {
-            const decoder = new TextDecoder('utf-8');
-            xmlText = decoder.decode(arrayBuffer);
+            const fileData = new Uint8Array(arrayBuffer);
+            const encoding = detectEncoding(fileData);
+            const decoder = new TextDecoder(encoding);
+            xmlText = decoder.decode(fileData);
         }
-
-        // We can't use DOMParser in a Worker easily without polyfills or manual regex parsing
-        // deeply. However, simple extraction is possible.
-        // Or we pass the text back and parse DOM on main thread, but at least ZIP is offloaded.
-        // Actually, for maximum speed, let's just return the text. 
-        // Parsing DOM is fast, it's the large string decoding and unzipping that hurts.
-
-        // Let's create a lightweight parser here to avoid sending huge XML string back if we can avoid it.
-        // But we need the structure. 
-
-        // Optimization: Just extracting body text paragraphs using Regex to avoid DOM overhead on main thread?
-        // No, we might lose structure. Let's send back the XML text. The unzipping is the heaviest part.
 
         self.postMessage({ type: 'SUCCESS', text: xmlText });
 
