@@ -1,8 +1,8 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library } from 'lucide-react';
+import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import type { Book, Quote, Favorite } from '../types';
+import type { Book, Quote, Favorite, Bookmark as BookmarkType } from '../types';
 import { books } from '../data/books';
 import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
@@ -13,9 +13,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
 import { exportAllBooks } from '../utils/export';
-import { getFavorites, getQuotes, removeFavorite, deleteQuote } from '../services/db';
+import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
 
-type TabType = 'books' | 'favorites' | 'quotes';
+type TabType = 'books' | 'favorites' | 'quotes' | 'bookmarks';
 
 export function MyBooks() {
     const { user } = useAuth();
@@ -31,6 +31,7 @@ export function MyBooks() {
     const [activeTab, setActiveTab] = useState<TabType>('books');
     const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [bookmarks, setBookmarks] = useState<BookmarkType[]>([]);
     const [loadingData, setLoadingData] = useState(false);
 
     // Refresh books when storage changes (e.g. from Realtime sync)
@@ -43,25 +44,28 @@ export function MyBooks() {
         return () => window.removeEventListener('storage-update', handleStorageUpdate);
     }, []);
 
-    // Fetch favorites and quotes when user is logged in
+    // Fetch favorites, quotes, and bookmarks when user is logged in
     useEffect(() => {
         if (!user) {
             setFavorites([]);
             setQuotes([]);
+            setBookmarks([]);
             return;
         }
 
         const fetchData = async () => {
             setLoadingData(true);
             try {
-                const [favs, qs] = await Promise.all([
+                const [favs, qs, bms] = await Promise.all([
                     getFavorites(),
-                    getQuotes()
+                    getQuotes(),
+                    getBookmarks()
                 ]);
                 setFavorites(favs);
                 setQuotes(qs);
+                setBookmarks(bms);
             } catch (err) {
-                console.error('Failed to fetch favorites/quotes:', err);
+                console.error('Failed to fetch data:', err);
             } finally {
                 setLoadingData(false);
             }
@@ -89,6 +93,17 @@ export function MyBooks() {
             setFavorites(prev => prev.filter(f => f.book_id !== bookId));
         } catch (err) {
             console.error('Failed to remove favorite:', err);
+        }
+    };
+
+    // Handle delete bookmark
+    const handleDeleteBookmark = async (id: string) => {
+        if (!window.confirm('Удалить закладку?')) return;
+        try {
+            await deleteBookmark(id);
+            setBookmarks(prev => prev.filter(b => b.id !== id));
+        } catch (err) {
+            console.error('Failed to delete bookmark:', err);
         }
     };
 
@@ -306,6 +321,16 @@ export function MyBooks() {
                             <MessageSquareQuote size={18} />
                             <span className="font-medium">Цитаты</span>
                         </button>
+                        <button
+                            onClick={() => setActiveTab('bookmarks')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'bookmarks'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white/10 text-white hover:bg-white/20'
+                                }`}
+                        >
+                            <Bookmark size={18} />
+                            <span className="font-medium">Закладки</span>
+                        </button>
                     </div>
                 )}
 
@@ -495,6 +520,58 @@ export function MyBooks() {
                                 <p className="text-gray-500 text-center">
                                     Здесь пока пусто<br />
                                     Выделяйте текст в книгах и сохраняйте цитаты
+                                </p>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* Bookmarks List */}
+                {activeTab === 'bookmarks' && (
+                    <>
+                        {loadingData ? (
+                            <div className="flex justify-center py-16">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
+                            </div>
+                        ) : bookmarks.length > 0 ? (
+                            <div className="space-y-4">
+                                {bookmarks.map((bm) => (
+                                    <div
+                                        key={bm.id}
+                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-4"
+                                    >
+                                        <div
+                                            className="cursor-pointer"
+                                            onClick={() => navigate(`/reader/${bm.book_id}?p=${bm.paragraph_index}`)}
+                                        >
+                                            <h3 className="text-white font-medium text-sm mb-1">
+                                                {bm.book_title || 'Книга'}
+                                            </h3>
+                                            <p className="text-gray-400 text-xs line-clamp-2 italic">
+                                                "{bm.preview_text || '...'}"
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-3">
+                                            <span className="text-gray-500 text-xs">
+                                                Абзац {bm.paragraph_index + 1}
+                                            </span>
+                                            <button
+                                                onClick={() => handleDeleteBookmark(bm.id)}
+                                                className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                aria-label="Удалить закладку"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16">
+                                <Bookmark size={48} className="text-gray-600 mb-4" />
+                                <p className="text-gray-500 text-center">
+                                    Здесь пока пусто<br />
+                                    Добавляйте закладки, нажав 🔖 в читалке
                                 </p>
                             </div>
                         )}

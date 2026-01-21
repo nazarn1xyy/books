@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Share2 } from 'lucide-react';
+import { Heart, Share2, Download, Check } from 'lucide-react';
 import type { Book } from '../types';
 import { getReadingProgress } from '../utils/storage';
 import { ProgressBar } from './ProgressBar';
 import { ImageWithLoader } from './ImageWithLoader';
 import { useBookCover } from '../hooks/useBookCover';
 import { addFavorite, removeFavorite, isBookFavorite } from '../services/db';
+import { isBookCached, cacheBook } from '../utils/cache';
+import { fetchBookContent } from '../services/flibustaApi';
 import { useAuth } from '../contexts/AuthContext';
 
 interface BookCardProps {
@@ -31,6 +33,8 @@ export function BookCard({
     const coverSrc = useBookCover(book.id, book.cover);
     const [isFavorite, setIsFavorite] = useState(initialFavorite ?? false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isOffline, setIsOffline] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     // Check favorite status on mount if user is logged in and showActions is true
     useEffect(() => {
@@ -38,6 +42,11 @@ export function BookCard({
             isBookFavorite(book.id).then(setIsFavorite).catch(console.error);
         }
     }, [book.id, user, showActions, initialFavorite]);
+
+    // Check if book is cached (offline)
+    useEffect(() => {
+        isBookCached(book.id).then(setIsOffline).catch(() => setIsOffline(false));
+    }, [book.id]);
 
     const rawPercentage = progress && progress.totalPages > 0
         ? Math.round(((progress.currentPage + 1) / progress.totalPages) * 100)
@@ -107,6 +116,31 @@ export function BookCard({
         }
     };
 
+    const handleDownloadClick = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isDownloading || isOffline) return;
+
+        setIsDownloading(true);
+        try {
+            const bookData = await fetchBookContent(book.id);
+            if (bookData) {
+                await cacheBook(
+                    book.id,
+                    bookData.text || '',
+                    coverSrc || '',
+                    bookData.pdfData
+                );
+                setIsOffline(true);
+            }
+        } catch (err) {
+            console.error('Failed to download book:', err);
+            alert('Не удалось скачать книгу');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     return (
         <Link
             to={`/reader/${book.id}`}
@@ -128,11 +162,26 @@ export function BookCard({
                 {showActions && user && (
                     <div className="absolute top-2 right-2 flex gap-1.5 z-10">
                         <button
+                            onClick={handleDownloadClick}
+                            disabled={isDownloading || isOffline}
+                            className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 ${isOffline
+                                    ? 'bg-green-500/90 text-white'
+                                    : 'bg-black/50 text-white/80 hover:bg-black/70'
+                                }`}
+                            aria-label={isOffline ? 'Доступно офлайн' : 'Скачать для офлайн'}
+                        >
+                            {isOffline ? (
+                                <Check size={16} />
+                            ) : (
+                                <Download size={16} className={isDownloading ? 'animate-pulse' : ''} />
+                            )}
+                        </button>
+                        <button
                             onClick={handleFavoriteClick}
                             disabled={isLoading}
                             className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 ${isFavorite
-                                    ? 'bg-red-500/90 text-white'
-                                    : 'bg-black/50 text-white/80 hover:bg-black/70'
+                                ? 'bg-red-500/90 text-white'
+                                : 'bg-black/50 text-white/80 hover:bg-black/70'
                                 }`}
                             aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
                         >
@@ -149,6 +198,13 @@ export function BookCard({
                         >
                             <Share2 size={16} />
                         </button>
+                    </div>
+                )}
+
+                {/* Offline Badge (non-actions mode) */}
+                {!showActions && isOffline && (
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-green-500/90 backdrop-blur-md rounded-full z-10">
+                        <span className="text-xs text-white font-medium">✓ Офлайн</span>
                     </div>
                 )}
 

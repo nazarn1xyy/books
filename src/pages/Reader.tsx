@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Settings, X, Minus, Plus, Sun, Sparkles, Brain } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -10,7 +10,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { QuoteMenu } from '../components/QuoteMenu';
 import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, addToMyBooks, getBookMetadata } from '../utils/storage';
 import { summarizeText } from '../services/ai';
-import { addQuote } from '../services/db';
+import { addQuote, addBookmark } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import type { Book } from '../types';
 
@@ -42,6 +42,10 @@ export function Reader() {
     // UI State
     const [showSettings, setShowSettings] = useState(false);
     const [settings, setSettings] = useState(getSettings);
+
+    // Page Flip Mode State
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const PARAGRAPHS_PER_PAGE = 10;
 
     // AI Summary State
     const [showSummary, setShowSummary] = useState(false);
@@ -209,6 +213,47 @@ export function Reader() {
         saveSettings(newSettings);
     };
 
+    const updateReaderMode = (mode: 'scroll' | 'page') => {
+        const newSettings = { ...settings, readerMode: mode };
+        setSettings(newSettings);
+        saveSettings(newSettings);
+
+        // Sync page index when switching to page mode
+        if (mode === 'page') {
+            setCurrentPageIndex(Math.floor(visibleRange.startIndex / PARAGRAPHS_PER_PAGE));
+        }
+    };
+
+    // Page flip navigation
+    const totalFlipPages = Math.ceil(paragraphs.length / PARAGRAPHS_PER_PAGE);
+
+    const goToNextPage = () => {
+        if (currentPageIndex < totalFlipPages - 1) {
+            const newIndex = currentPageIndex + 1;
+            setCurrentPageIndex(newIndex);
+            // Save progress
+            saveReadingProgress({
+                bookId: id!,
+                currentPage: newIndex * PARAGRAPHS_PER_PAGE,
+                totalPages: paragraphs.length,
+                lastRead: Date.now(),
+                scrollPercentage: Math.round((newIndex / totalFlipPages) * 100)
+            });
+        }
+    };
+
+    const goToPrevPage = () => {
+        if (currentPageIndex > 0) {
+            setCurrentPageIndex(currentPageIndex - 1);
+        }
+    };
+
+    // Get current page paragraphs for page mode
+    const currentPageParagraphs = useMemo(() => {
+        const start = currentPageIndex * PARAGRAPHS_PER_PAGE;
+        return paragraphs.slice(start, start + PARAGRAPHS_PER_PAGE);
+    }, [paragraphs, currentPageIndex]);
+
     const handleSummarize = async () => {
         if (book?.format === 'pdf') {
             alert('AI справка пока не поддерживается для PDF.');
@@ -318,6 +363,27 @@ export function Reader() {
         };
     }, [handleTextSelection]);
 
+    // Add bookmark at current position
+    const handleAddBookmark = async () => {
+        if (!user || !book || book.format === 'pdf') return;
+
+        const paragraphIndex = visibleRange.startIndex;
+        const previewText = paragraphs[paragraphIndex]?.slice(0, 100) || '';
+
+        try {
+            await addBookmark({
+                book_id: book.id,
+                book_title: book.title,
+                paragraph_index: paragraphIndex,
+                preview_text: previewText
+            });
+            alert('🔖 Закладка добавлена!');
+        } catch (err) {
+            console.error('Failed to add bookmark:', err);
+            alert('Не удалось добавить закладку');
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[var(--reader-bg)] flex items-center justify-center">
@@ -368,6 +434,15 @@ export function Reader() {
                     </div>
                 </div>
                 <div className="flex items-center -mr-2 gap-1">
+                    {user && book?.format !== 'pdf' && (
+                        <button
+                            onClick={handleAddBookmark}
+                            aria-label="Добавить закладку"
+                            className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                        >
+                            <BookmarkPlus size={22} className="text-blue-400" />
+                        </button>
+                    )}
                     <button
                         onClick={handleSummarize}
                         aria-label="AI Summary"
@@ -423,23 +498,70 @@ export function Reader() {
                         </Document>
                     </div>
                 ) : fullText && paragraphs.length > 0 ? (
-                    <Virtuoso
-                        ref={virtuosoRef}
-                        style={{ height: '100%' }}
-                        data={paragraphs}
-                        rangeChanged={handleRangeChanged}
-                        itemContent={(_index, para) => (
+                    settings.readerMode === 'page' ? (
+                        /* Page Flip Mode */
+                        <div className="h-full flex flex-col relative">
+                            {/* Page Content */}
                             <div
-                                className="px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto"
-                                style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
+                                className="flex-1 overflow-y-auto px-6 py-4"
+                                style={{ backgroundColor: 'var(--reader-bg)' }}
                             >
-                                <p>{para}</p>
+                                <div className="max-w-3xl mx-auto">
+                                    {currentPageParagraphs.map((para, idx) => (
+                                        <p
+                                            key={currentPageIndex * PARAGRAPHS_PER_PAGE + idx}
+                                            className="py-2 leading-relaxed font-serif"
+                                            style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
+                                        >
+                                            {para}
+                                        </p>
+                                    ))}
+                                </div>
                             </div>
-                        )}
-                        components={{
-                            Footer: () => <div className="h-24" />,
-                        }}
-                    />
+
+                            {/* Page Navigation */}
+                            <div className="flex items-center justify-between px-6 py-4 bg-[var(--reader-bg)]/90 border-t border-white/5">
+                                <button
+                                    onClick={goToPrevPage}
+                                    disabled={currentPageIndex === 0}
+                                    className="p-3 text-[var(--reader-text)] disabled:opacity-30 active:scale-95 transition-all"
+                                    aria-label="Предыдущая страница"
+                                >
+                                    <ChevronLeft size={28} />
+                                </button>
+                                <span className="text-[var(--reader-text)] text-sm">
+                                    {currentPageIndex + 1} / {totalFlipPages}
+                                </span>
+                                <button
+                                    onClick={goToNextPage}
+                                    disabled={currentPageIndex >= totalFlipPages - 1}
+                                    className="p-3 text-[var(--reader-text)] disabled:opacity-30 active:scale-95 transition-all"
+                                    aria-label="Следующая страница"
+                                >
+                                    <ChevronRight size={28} />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Scroll Mode (default) */
+                        <Virtuoso
+                            ref={virtuosoRef}
+                            style={{ height: '100%' }}
+                            data={paragraphs}
+                            rangeChanged={handleRangeChanged}
+                            itemContent={(_index, para) => (
+                                <div
+                                    className="px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto"
+                                    style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
+                                >
+                                    <p>{para}</p>
+                                </div>
+                            )}
+                            components={{
+                                Footer: () => <div className="h-24" />,
+                            }}
+                        />
+                    )
                 ) : (
                     <div className="h-full flex items-center justify-center text-gray-500 p-8 text-center">
                         {loading ? 'Загрузка книги...' : 'Не удалось отобразить текст книги. Попробуйте обновить страницу или выбрать другую книгу.'}
@@ -571,6 +693,35 @@ export function Reader() {
                                         className="p-2 text-[var(--reader-text)] bg-black/10 dark:bg-white/10 rounded-lg active:scale-95 transition-transform"
                                     >
                                         <Plus size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Reader Mode Toggle */}
+                        {book?.format !== 'pdf' && (
+                            <div>
+                                <label className="text-sm text-gray-400 mb-3 block">Режим чтения</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => updateReaderMode('scroll')}
+                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all ${settings.readerMode !== 'page'
+                                            ? 'bg-white/20 text-[var(--reader-text)]'
+                                            : 'bg-black/10 dark:bg-white/5 text-gray-400'
+                                            }`}
+                                    >
+                                        <AlignLeft size={18} />
+                                        <span className="text-sm font-medium">Скролл</span>
+                                    </button>
+                                    <button
+                                        onClick={() => updateReaderMode('page')}
+                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all ${settings.readerMode === 'page'
+                                            ? 'bg-white/20 text-[var(--reader-text)]'
+                                            : 'bg-black/10 dark:bg-white/5 text-gray-400'
+                                            }`}
+                                    >
+                                        <Layers size={18} />
+                                        <span className="text-sm font-medium">Страницы</span>
                                     </button>
                                 </div>
                             </div>

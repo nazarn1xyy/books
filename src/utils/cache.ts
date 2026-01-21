@@ -80,3 +80,12 @@ export async function clearCache(): Promise<void> {
         console.error('Failed to clear cache:', error);
     }
 }
+
+export async function isBookCached(id: string): Promise<boolean> {
+    try {
+        const cached = await getCachedBook(id);
+        return !!cached;
+    } catch {
+        return false;
+    }
+}

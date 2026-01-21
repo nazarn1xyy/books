@@ -115,6 +115,24 @@ create policy "Users can crud their own quotes" on public.quotes
 create policy "Users can crud their own favorites" on public.favorites
   for all using (auth.uid() = user_id);
 
+-- Bookmarks Table
+create table public.bookmarks (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  book_id text not null,
+  book_title text,
+  paragraph_index int not null,
+  preview_text text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, book_id, paragraph_index)
+);
+
+-- Enable RLS for bookmarks
+alter table public.bookmarks enable row level security;
+
+-- Policies for bookmarks
+create policy "Users can crud their own bookmarks" on public.bookmarks
+  for all using (auth.uid() = user_id);
 
 -- Function to handle new user signup (auto-create profile)
 create or replace function public.handle_new_user()

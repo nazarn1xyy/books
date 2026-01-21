@@ -1,6 +1,6 @@
 
 import { supabase } from '../lib/supabase';
-import type { Quote, Favorite } from '../types';
+import type { Quote, Favorite, Bookmark } from '../types';
 
 // --- Quotes Service ---
 
@@ -105,3 +105,50 @@ export async function isBookFavorite(bookId: string) {
     if (error) throw error;
     return !!data;
 }
+
+// --- Bookmarks Service ---
+
+export async function addBookmark(bookmark: { book_id: string, book_title?: string, paragraph_index: number, preview_text?: string }) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error('User not logged in');
+
+    const { data, error } = await supabase
+        .from('bookmarks')
+        .upsert({
+            user_id: userData.user.id,
+            book_id: bookmark.book_id,
+            book_title: bookmark.book_title,
+            paragraph_index: bookmark.paragraph_index,
+            preview_text: bookmark.preview_text
+        }, { onConflict: 'user_id,book_id,paragraph_index' })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as Bookmark;
+}
+
+export async function deleteBookmark(id: string) {
+    const { error } = await supabase
+        .from('bookmarks')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+}
+
+export async function getBookmarks(bookId?: string) {
+    let query = supabase
+        .from('bookmarks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (bookId) {
+        query = query.eq('book_id', bookId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as Bookmark[];
+}
+

@@ -25,6 +25,7 @@ export interface UserSettings {
   fontSize: number;
   brightness: number;
   theme?: 'light' | 'dark' | 'sepia' | 'oled';
+  readerMode?: 'scroll' | 'page';
 }
 
 export interface AppState {
@@ -55,5 +56,15 @@ export interface Favorite {
   book_title?: string;
   book_author?: string;
   book_cover?: string;
+  created_at: string;
+}
+
+export interface Bookmark {
+  id: string;
+  user_id: string;
+  book_id: string;
+  book_title?: string;
+  paragraph_index: number;
+  preview_text?: string;
   created_at: string;
 }
