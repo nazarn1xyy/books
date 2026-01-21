@@ -19,7 +19,6 @@ export default async function handler(req, res) {
 
     let text;
     try {
-        // Handle cases where body might be a string (sometimes happens if content-type isn't perfect)
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
         text = body?.text;
     } catch (e) {
@@ -36,6 +35,9 @@ export default async function handler(req, res) {
 
     try {
         console.log('Sending request to GLHF...');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
         const response = await fetch(`${BASE_URL}/chat/completions`, {
             method: 'POST',
             headers: {
@@ -57,35 +59,44 @@ export default async function handler(req, res) {
                 ],
                 temperature: 0.7,
                 max_tokens: 300
-            })
+            }),
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Upstream API Error:', response.status, errorText);
-            // Return the actual error to the client for debugging
-            return res.status(response.status).json({
-                error: 'Upstream API Error',
-                status: response.status,
-                details: errorText
-            });
+            throw new Error(`Upstream API status: ${response.status}`);
         }
 
         const data = await response.json();
         const summary = data.choices?.[0]?.message?.content;
 
-        if (!summary) {
-            return res.status(502).json({ error: 'Invalid response from AI provider', data });
-        }
+        if (!summary) throw new Error('No summary in response');
 
         return res.status(200).json({ summary });
 
     } catch (error) {
-        console.error('AI Proxy Error:', error);
-        return res.status(500).json({
-            error: 'Internal Server Error',
-            message: error.message,
-            stack: error.stack
+        console.error('AI API Failed, switching to fallback:', error.message);
+
+        // FALLBACK: Extractive Summarization
+        // If AI fails, we manually extract first and last sentences to give *something* useful.
+        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+        let fallbackSummary = '';
+
+        if (sentences.length <= 3) {
+            fallbackSummary = text;
+        } else {
+            const first = sentences.slice(0, 2).join(' ');
+            const middleIndex = Math.floor(sentences.length / 2);
+            const middle = sentences.slice(middleIndex, middleIndex + 1).join(' ');
+            const last = sentences.slice(-2).join(' ');
+            fallbackSummary = `${first} [...пропущено...] ${middle} [...] ${last}`;
+        }
+
+        return res.status(200).json({
+            summary: "⚠️ AI сервер недоступен. Вот автоматическая выжимка текста:\n\n" + fallbackSummary,
+            isFallback: true
         });
     }
 }
