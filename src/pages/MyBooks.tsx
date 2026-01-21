@@ -4,7 +4,7 @@ import { BookOpen, Plus, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book } from '../types';
 import { books } from '../data/books';
-import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks } from '../utils/storage';
+import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { parseBookData } from '../services/flibustaApi';
@@ -12,6 +12,7 @@ import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
+
 
 export function MyBooks() {
     const { user } = useAuth();
@@ -32,10 +33,18 @@ export function MyBooks() {
 
     const handleRemove = async (bookId: string) => {
         if (window.confirm('Удалить эту книгу из списка?')) {
+            // Optimistically remove locally
             removeFromMyBooks(bookId);
             setMyBookIds(getMyBookIds());
+
+            // Track as pending deletion in case network fails
+            addToPendingDeletions(bookId);
+
+            // Attempt cloud removal
             if (user) {
-                await removeBookFromCloud(user.id, bookId);
+                removeBookFromCloud(user.id, bookId).then(() => {
+                    // Clean up pending on success (handled in sync usually, but good here too)
+                });
             }
         }
     };

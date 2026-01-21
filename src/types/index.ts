@@ -29,4 +29,5 @@ export interface AppState {
   bookMetadata: Record<string, Book>;
   readingProgress: Record<string, ReadingProgress>;
   settings: UserSettings;
+  pendingDeletions?: string[];
 }

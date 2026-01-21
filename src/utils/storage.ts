@@ -10,6 +10,7 @@ const defaultState: AppState = {
         fontSize: 18,
         brightness: 100,
     },
+    pendingDeletions: [],
 };
 
 export function getAppState(): AppState {
@@ -90,5 +91,25 @@ export function getSettings(): UserSettings {
 export function saveSettings(settings: UserSettings): void {
     const state = getAppState();
     state.settings = settings;
+    saveAppState(state);
+}
+
+export function getPendingDeletions(): string[] {
+    return getAppState().pendingDeletions || [];
+}
+
+export function addToPendingDeletions(bookId: string): void {
+    const state = getAppState();
+    if (!state.pendingDeletions) state.pendingDeletions = [];
+    if (!state.pendingDeletions.includes(bookId)) {
+        state.pendingDeletions.push(bookId);
+    }
+    saveAppState(state);
+}
+
+export function removeFromPendingDeletions(bookId: string): void {
+    const state = getAppState();
+    if (!state.pendingDeletions) return;
+    state.pendingDeletions = state.pendingDeletions.filter(id => id !== bookId);
     saveAppState(state);
 }

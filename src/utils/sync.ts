@@ -1,11 +1,20 @@
 import { supabase } from '../lib/supabase';
-import { getAppState, saveAppState } from './storage';
+import { getAppState, saveAppState, getPendingDeletions, removeFromPendingDeletions } from './storage';
 import { getCachedBook, cacheBook } from './cache';
 
 export async function syncData(userId: string) {
     if (!userId) return;
 
     try {
+        // 0. Process Pending Deletions (Robustness for Offline/Mobile)
+        const pendingDeletions = getPendingDeletions();
+        if (pendingDeletions && pendingDeletions.length > 0) {
+            await Promise.all(pendingDeletions.map(async (bookId) => {
+                await removeBookFromCloud(userId, bookId);
+                removeFromPendingDeletions(bookId);
+            }));
+        }
+
         // 1. Sync Books
         // Fetch cloud books
         const { data: cloudBooks, error: booksError } = await supabase
@@ -21,11 +30,13 @@ export async function syncData(userId: string) {
         // Merge Strategy: Cloud is source of truth for presence, but if local has newer books, push them?
         // Simple strategy: 
         // - Allow local books to be "uploaded" (inserted) to cloud if missing
-        // - Download missing cloud books to local
+        // - Download missing cloud books to local, UNLESS they are in pendingDeletions (race condition protection)
 
         // A. Push local -> Cloud
         const localBookIds = localState.myBooks;
-        const cloudBookIds = cloudBooks?.map(b => b.book_id) || [];
+        // Filter out books that we just deleted or are pending delete
+        const validCloudBooks = cloudBooks?.filter(b => !pendingDeletions.includes(b.book_id)) || [];
+        const cloudBookIds = validCloudBooks.map(b => b.book_id);
 
         const p1 = localBookIds.filter(id => !cloudBookIds.includes(id)).map(async (id) => {
             const book = localState.bookMetadata[id];
