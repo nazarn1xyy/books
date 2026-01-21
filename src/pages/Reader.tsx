@@ -57,11 +57,23 @@ export function Reader() {
             try {
                 // Fetch book content from Flibusta (FB2 parsed) or cache (PDF)
                 const { text, cover, pdfData, title, author, series, seriesNumber } = await fetchBookContent(id);
+
+                console.log('Book fetch result:', {
+                    textLength: text?.length || 0,
+                    hasPdf: !!pdfData,
+                    title,
+                    author
+                });
+
                 setFullText(text);
                 if (pdfData) setPdfData(pdfData);
 
                 if (!text && !pdfData) {
-                    throw new Error('No text content available');
+                    throw new Error('No text content available - book data is empty');
+                }
+
+                if (text && text.trim().length === 0) {
+                    throw new Error('Book text is empty - parsing may have failed');
                 }
 
                 // Try to get existing metadata to preserve title/author
