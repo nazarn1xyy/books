@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -11,6 +11,7 @@ import { QuoteMenu } from '../components/QuoteMenu';
 import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, addToMyBooks, getBookMetadata } from '../utils/storage';
 import { summarizeText } from '../services/ai';
 import { addQuote, addBookmark } from '../services/db';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useAuth } from '../contexts/AuthContext';
 import type { Book } from '../types';
 
@@ -56,6 +57,12 @@ export function Reader() {
     const [quoteMenuPosition, setQuoteMenuPosition] = useState({ x: 0, y: 0 });
     const [selectedText, setSelectedText] = useState('');
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+    // Text-to-Speech
+    const { speak, pause, resume, cancel, isSpeaking, isPaused, hasBrowserSupport } = useTextToSpeech();
+    const [ttsActiveParagraph, setTtsActiveParagraph] = useState<number | null>(null);
+    const [ttsRate, setTtsRate] = useState(1);
+    const [showTtsControls, setShowTtsControls] = useState(false);
 
     // Refs
     const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -254,6 +261,69 @@ export function Reader() {
         return paragraphs.slice(start, start + PARAGRAPHS_PER_PAGE);
     }, [paragraphs, currentPageIndex]);
 
+    // TTS Logic
+    const speakParagraph = useCallback((index: number) => {
+        if (index >= paragraphs.length) {
+            setTtsActiveParagraph(null);
+            return;
+        }
+
+        const text = paragraphs[index];
+        if (!text.trim()) {
+            setTtsActiveParagraph(index + 1); // Skip empty
+            return;
+        }
+
+        speak(text, { rate: ttsRate }, () => {
+            // onEnd callback - move to next
+            // We use a functional update in a separate effect or just here?
+            // Since speak is a callback, using state here works effectively as recursion via state change
+            setTtsActiveParagraph(prev => (prev === index ? prev + 1 : prev));
+        });
+    }, [paragraphs, speak, ttsRate]);
+
+    // Effect to trigger speech when active paragraph changes
+    useEffect(() => {
+        if (ttsActiveParagraph !== null && !isPaused && !isSpeaking) {
+            speakParagraph(ttsActiveParagraph);
+
+            // Auto-scroll to paragraph
+            virtuosoRef.current?.scrollIntoView({
+                index: ttsActiveParagraph,
+                behavior: 'smooth',
+                align: 'center'
+            });
+        }
+    }, [ttsActiveParagraph, speakParagraph, isPaused, isSpeaking]);
+
+    const handleTtsPlay = () => {
+        if (isPaused) {
+            resume();
+        } else if (isSpeaking) {
+            pause();
+        } else {
+            // Start new
+            const startIndex = visibleRange.startIndex;
+            setTtsActiveParagraph(startIndex);
+            setShowTtsControls(true);
+        }
+    };
+
+    const handleTtsStop = () => {
+        cancel();
+        setTtsActiveParagraph(null);
+    };
+
+    const handleTtsNext = () => {
+        cancel();
+        setTtsActiveParagraph(prev => (prev !== null && prev < paragraphs.length - 1 ? prev + 1 : prev));
+    };
+
+    const handleTtsPrev = () => {
+        cancel();
+        setTtsActiveParagraph(prev => (prev !== null && prev > 0 ? prev - 1 : prev));
+    };
+
     const handleSummarize = async () => {
         if (book?.format === 'pdf') {
             alert('AI справка пока не поддерживается для PDF.');
@@ -435,13 +505,23 @@ export function Reader() {
                 </div>
                 <div className="flex items-center -mr-2 gap-1">
                     {user && book?.format !== 'pdf' && (
-                        <button
-                            onClick={handleAddBookmark}
-                            aria-label="Добавить закладку"
-                            className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
-                        >
-                            <BookmarkPlus size={22} className="text-blue-400" />
-                        </button>
+                        <>
+                            <button
+                                onClick={handleTtsPlay}
+                                className={`p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity ${showTtsControls ? 'text-blue-400 bg-blue-400/10 rounded-full' : ''
+                                    }`}
+                                aria-label="Озвучить"
+                            >
+                                <Play size={22} fill={showTtsControls ? "currentColor" : "none"} />
+                            </button>
+                            <button
+                                onClick={handleAddBookmark}
+                                aria-label="Добавить закладку"
+                                className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                            >
+                                <BookmarkPlus size={22} className="text-blue-400" />
+                            </button>
+                        </>
                     )}
                     <button
                         onClick={handleSummarize}
@@ -507,15 +587,20 @@ export function Reader() {
                                 style={{ backgroundColor: 'var(--reader-bg)' }}
                             >
                                 <div className="max-w-3xl mx-auto">
-                                    {currentPageParagraphs.map((para, idx) => (
-                                        <p
-                                            key={currentPageIndex * PARAGRAPHS_PER_PAGE + idx}
-                                            className="py-2 leading-relaxed font-serif"
-                                            style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
-                                        >
-                                            {para}
-                                        </p>
-                                    ))}
+                                    {currentPageParagraphs.map((para, idx) => {
+                                        const actualIndex = currentPageIndex * PARAGRAPHS_PER_PAGE + idx;
+                                        const isActive = actualIndex === ttsActiveParagraph;
+                                        return (
+                                            <p
+                                                key={actualIndex}
+                                                className={`py-2 leading-relaxed font-serif transition-all duration-300 ${isActive ? 'bg-yellow-500/20 dark:bg-yellow-500/10 -mx-2 px-2 rounded-lg text-lg' : ''
+                                                    }`}
+                                                style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
+                                            >
+                                                {para}
+                                            </p>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -549,16 +634,17 @@ export function Reader() {
                             style={{ height: '100%' }}
                             data={paragraphs}
                             rangeChanged={handleRangeChanged}
-                            itemContent={(_index, para) => (
+                            itemContent={(index, para) => (
                                 <div
-                                    className="px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto"
+                                    className={`px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto transition-all duration-300 ${index === ttsActiveParagraph ? 'bg-yellow-500/20 dark:bg-yellow-500/10 -mx-2 px-8 rounded-lg' : ''
+                                        }`}
                                     style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
                                 >
                                     <p>{para}</p>
                                 </div>
                             )}
                             components={{
-                                Footer: () => <div className="h-24" />,
+                                Footer: () => <div className="h-48" />, // Extra space for controls
                             }}
                         />
                     )
@@ -623,6 +709,50 @@ export function Reader() {
                         <div className="mt-4 pt-4 border-t border-white/10 flex justify-center">
                             <p className="text-xs text-gray-500">Генерируется с помощью AI. Может содержать неточности.</p>
                         </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* TTS Floating Controls */}
+            {showTtsControls && (
+                <div className="fixed bottom-24 left-4 right-4 z-40 flex justify-center animate-slide-up">
+                    <div className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-4 max-w-md w-full justify-between px-6">
+                        <button
+                            onClick={() => setTtsRate(r => r >= 2 ? 0.75 : r + 0.25)}
+                            className="text-gray-400 text-xs font-bold w-10 text-center flex flex-col items-center"
+                        >
+                            <span className="text-white text-sm">{ttsRate}x</span>
+                            <span className="text-[10px]">Скорость</span>
+                        </button>
+
+                        <div className="flex items-center gap-6">
+                            <button onClick={handleTtsPrev} className="text-white active:scale-95 active:opacity-70 transition-all p-2">
+                                <Play size={24} className="rotate-180" fill="currentColor" />
+                            </button>
+
+                            <button
+                                onClick={handleTtsPlay}
+                                className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center active:scale-95 shadow-lg active:opacity-90 transition-all"
+                            >
+                                {isSpeaking && !isPaused ? (
+                                    <Pause size={28} fill="currentColor" />
+                                ) : (
+                                    <Play size={28} fill="currentColor" className="ml-1" />
+                                )}
+                            </button>
+
+                            <button onClick={handleTtsNext} className="text-white active:scale-95 active:opacity-70 transition-all p-2">
+                                <Play size={24} fill="currentColor" />
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => setShowTtsControls(false)}
+                            className="text-gray-400 active:text-white p-2"
+                        >
+                            <X size={24} />
+                        </button>
                     </div>
                 </div>
             )}
