@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { BookOpen, User, Mail, Lock, Loader2 } from 'lucide-react';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 
 export function Auth() {
     const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,7 @@ export function Auth() {
     const [nickname, setNickname] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { isKeyboardOpen } = useKeyboardHeight();
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,7 +62,15 @@ export function Auth() {
     };
 
     return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div
+            className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden"
+            style={{
+                position: isKeyboardOpen ? 'fixed' : 'relative',
+                width: '100%',
+                height: isKeyboardOpen ? '100vh' : 'auto',
+                overflow: isKeyboardOpen ? 'hidden' : 'visible'
+            }}
+        >
             {/* Background Decorations */}
             <div className="absolute top-[-20%] left-[-20%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-20%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none" />
