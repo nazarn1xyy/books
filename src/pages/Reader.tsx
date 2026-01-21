@@ -47,7 +47,7 @@ export function Reader() {
 
             try {
                 // Fetch book content from Flibusta (FB2 parsed) or cache (PDF)
-                const { text, cover, pdfData } = await fetchBookContent(id);
+                const { text, cover, pdfData, title, author } = await fetchBookContent(id);
                 setFullText(text);
                 if (pdfData) setPdfData(pdfData);
 
@@ -63,8 +63,8 @@ export function Reader() {
                     cover: cover || existingBook.cover
                 } : {
                     id,
-                    title: '', // Placeholder, ideally we'd parse this from FB2
-                    author: '',
+                    title: title || '', // Use parsed title
+                    author: author || '', // Use parsed author
                     cover: cover || 'https://placehold.co/300x450?text=No+Cover',
                     description: '',
                     genre: '',

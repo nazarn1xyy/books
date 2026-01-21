@@ -225,7 +225,7 @@ export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; 
     };
 }
 
-export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer }> {
+export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string }> {
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {
@@ -251,7 +251,12 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
             await cacheBook(bookId, parsedData.text, parsedData.cover || '');
         }
 
-        return { text: parsedData.text, cover: parsedData.cover };
+        return {
+            text: parsedData.text,
+            cover: parsedData.cover,
+            title: parsedData.title,
+            author: parsedData.author
+        };
     } catch (error) {
         console.error('Failed to fetch FB2:', error);
         throw error;
