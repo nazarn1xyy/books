@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Footprints, Camera } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -12,6 +12,7 @@ import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, add
 import { summarizeText } from '../services/ai';
 import { addQuote, addBookmark } from '../services/db';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { useCameraStream } from '../hooks/useCameraStream';
 import { useAuth } from '../contexts/AuthContext';
 import type { Book } from '../types';
 
@@ -63,6 +64,25 @@ export function Reader() {
     const [ttsActiveParagraph, setTtsActiveParagraph] = useState<number | null>(null);
     const [ttsRate, setTtsRate] = useState(1);
     const [showTtsControls, setShowTtsControls] = useState(false);
+
+    // Walk Mode (Transparent Reality)
+    const { stream, isActive: isCameraActive, startCamera, stopCamera, error: cameraError } = useCameraStream();
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    // Effect to attach stream to video element
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
+        }
+    }, [stream]);
+
+    const toggleWalkMode = async () => {
+        if (isCameraActive) {
+            stopCamera();
+        } else {
+            await startCamera();
+        }
+    };
 
     // Refs
     const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -474,11 +494,25 @@ export function Reader() {
         <div
             className={`fixed inset-0 flex flex-col theme-${currentTheme} transition-colors duration-300`}
             style={{
-                backgroundColor: 'var(--reader-bg)',
-                color: 'var(--reader-text)',
-                filter: `brightness(${settings.brightness}%)`,
+                backgroundColor: isCameraActive ? 'transparent' : 'var(--reader-bg)',
+                color: isCameraActive ? '#ffffff' : 'var(--reader-text)',
+                filter: isCameraActive ? undefined : `brightness(${settings.brightness}%)`,
+                textShadow: isCameraActive ? '0 1px 3px rgba(0,0,0,0.8)' : 'none'
             }}
         >
+            {/* Walk Mode Video Background */}
+            {isCameraActive && (
+                <div className="fixed inset-0 z-[-1] overflow-hidden bg-black">
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="absolute inset-0 w-full h-full object-cover opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+                </div>
+            )}
             {/* Header */}
             <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-[var(--reader-bg)]/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 transition-transform shadow-sm">
                 <button
@@ -503,6 +537,14 @@ export function Reader() {
                 <div className="flex items-center -mr-2 gap-1">
                     {user && book?.format !== 'pdf' && (
                         <>
+                            <button
+                                onClick={toggleWalkMode}
+                                className={`p-2 active:opacity-50 transition-all ${isCameraActive ? 'text-green-400 bg-green-400/20 rounded-full' : 'text-[var(--reader-text)]'
+                                    }`}
+                                aria-label="Режим прогулки"
+                            >
+                                <Footprints size={22} />
+                            </button>
                             <button
                                 onClick={handleTtsPlay}
                                 className={`p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity ${showTtsControls ? 'text-blue-400 bg-blue-400/10 rounded-full' : ''
