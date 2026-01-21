@@ -35,3 +35,25 @@ export interface AppState {
   pendingDeletions?: string[];
   pendingUploads?: string[];
 }
+
+export interface Quote {
+  id: string;
+  user_id: string;
+  book_id: string;
+  book_title?: string;
+  book_author?: string;
+  text: string;
+  note?: string;
+  color?: string;
+  created_at: string;
+}
+
+export interface Favorite {
+  id: string;
+  user_id: string;
+  book_id: string;
+  book_title?: string;
+  book_author?: string;
+  book_cover?: string;
+  created_at: string;
+}

@@ -1,8 +1,8 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Trash2, ChevronLeft, Download } from 'lucide-react';
+import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import type { Book } from '../types';
+import type { Book, Quote, Favorite } from '../types';
 import { books } from '../data/books';
 import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
@@ -13,15 +13,25 @@ import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
 import { exportAllBooks } from '../utils/export';
+import { getFavorites, getQuotes, removeFavorite, deleteQuote } from '../services/db';
+
+type TabType = 'books' | 'favorites' | 'quotes';
 
 export function MyBooks() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
     const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, bookTitle: '' });
+
+    // Tabs
+    const [activeTab, setActiveTab] = useState<TabType>('books');
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
 
     // Refresh books when storage changes (e.g. from Realtime sync)
     useEffect(() => {
@@ -32,6 +42,55 @@ export function MyBooks() {
         window.addEventListener('storage-update', handleStorageUpdate);
         return () => window.removeEventListener('storage-update', handleStorageUpdate);
     }, []);
+
+    // Fetch favorites and quotes when user is logged in
+    useEffect(() => {
+        if (!user) {
+            setFavorites([]);
+            setQuotes([]);
+            return;
+        }
+
+        const fetchData = async () => {
+            setLoadingData(true);
+            try {
+                const [favs, qs] = await Promise.all([
+                    getFavorites(),
+                    getQuotes()
+                ]);
+                setFavorites(favs);
+                setQuotes(qs);
+            } catch (err) {
+                console.error('Failed to fetch favorites/quotes:', err);
+            } finally {
+                setLoadingData(false);
+            }
+        };
+
+        fetchData();
+    }, [user]);
+
+    // Handle delete quote
+    const handleDeleteQuote = async (id: string) => {
+        if (!window.confirm('Удалить эту цитату?')) return;
+        try {
+            await deleteQuote(id);
+            setQuotes(prev => prev.filter(q => q.id !== id));
+        } catch (err) {
+            console.error('Failed to delete quote:', err);
+        }
+    };
+
+    // Handle remove favorite
+    const handleRemoveFavorite = async (bookId: string) => {
+        if (!window.confirm('Удалить из избранного?')) return;
+        try {
+            await removeFavorite(bookId);
+            setFavorites(prev => prev.filter(f => f.book_id !== bookId));
+        } catch (err) {
+            console.error('Failed to remove favorite:', err);
+        }
+    };
 
     const items = useMemo(() => {
         const singles: { book: Book; progress: any }[] = [];
@@ -186,14 +245,22 @@ export function MyBooks() {
         <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)] relative overflow-hidden">
             <div className="px-5 pt-8">
                 {/* Header */}
-                <header className="mb-6 flex items-center justify-between">
+                <header className="mb-4 flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Мои книги</h1>
-                        {myBookIds.length > 0 && (
+                        <h1 className="text-3xl font-bold text-white">
+                            {activeTab === 'books' ? 'Мои книги' : activeTab === 'favorites' ? 'Избранное' : 'Цитаты'}
+                        </h1>
+                        {activeTab === 'books' && myBookIds.length > 0 && (
                             <p className="text-gray-500 mt-1">{myBookIds.length} книг</p>
                         )}
+                        {activeTab === 'favorites' && (
+                            <p className="text-gray-500 mt-1">{favorites.length} книг</p>
+                        )}
+                        {activeTab === 'quotes' && (
+                            <p className="text-gray-500 mt-1">{quotes.length} цитат</p>
+                        )}
                     </div>
-                    {myBookIds.length > 0 && (
+                    {activeTab === 'books' && myBookIds.length > 0 && (
                         <button
                             onClick={handleExportAll}
                             disabled={isExporting}
@@ -205,6 +272,42 @@ export function MyBooks() {
                         </button>
                     )}
                 </header>
+
+                {/* Tab Bar */}
+                {user && (
+                    <div className="flex gap-2 mb-6 overflow-x-auto py-1 -mx-1 px-1">
+                        <button
+                            onClick={() => setActiveTab('books')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'books'
+                                ? 'bg-white text-black'
+                                : 'bg-white/10 text-white hover:bg-white/20'
+                                }`}
+                        >
+                            <Library size={18} />
+                            <span className="font-medium">Книги</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('favorites')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'favorites'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-white/10 text-white hover:bg-white/20'
+                                }`}
+                        >
+                            <Heart size={18} fill={activeTab === 'favorites' ? 'currentColor' : 'none'} />
+                            <span className="font-medium">Избранное</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('quotes')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'quotes'
+                                ? 'bg-purple-500 text-white'
+                                : 'bg-white/10 text-white hover:bg-white/20'
+                                }`}
+                        >
+                            <MessageSquareQuote size={18} />
+                            <span className="font-medium">Цитаты</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Export Progress Modal */}
                 {isExporting && (
@@ -227,8 +330,8 @@ export function MyBooks() {
                     </div>
                 )}
 
-                {/* Book List */}
-                {items.length > 0 ? (
+                {/* Book List - only show when books tab is active */}
+                {activeTab === 'books' && items.length > 0 && (
                     <div className="space-y-4">
                         <AnimatePresence mode="popLayout">
                             {items.map((item) => {
@@ -288,7 +391,9 @@ export function MyBooks() {
                             })}
                         </AnimatePresence>
                     </div>
-                ) : (
+                )}
+
+                {activeTab === 'books' && items.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-16">
                         <BookOpen size={48} className="text-gray-600 mb-4" />
                         <p className="text-gray-500 text-center">
@@ -296,6 +401,104 @@ export function MyBooks() {
                             Начните читать книгу или добавьте свою
                         </p>
                     </div>
+                )}
+
+                {/* Favorites List */}
+                {activeTab === 'favorites' && (
+                    <>
+                        {loadingData ? (
+                            <div className="flex justify-center py-16">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
+                            </div>
+                        ) : favorites.length > 0 ? (
+                            <div className="space-y-4">
+                                {favorites.map((fav) => (
+                                    <div
+                                        key={fav.id}
+                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-4 flex items-center gap-4"
+                                    >
+                                        <div
+                                            className="w-16 h-20 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer"
+                                            onClick={() => navigate(`/reader/${fav.book_id}`)}
+                                        >
+                                            <img
+                                                src={fav.book_cover || 'https://placehold.co/300x450?text=No+Cover'}
+                                                alt={fav.book_title || ''}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/reader/${fav.book_id}`)}>
+                                            <h3 className="text-white font-semibold truncate">{fav.book_title || 'Без названия'}</h3>
+                                            <p className="text-gray-500 text-sm truncate">{fav.book_author || 'Неизвестный автор'}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveFavorite(fav.book_id)}
+                                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                            aria-label="Удалить из избранного"
+                                        >
+                                            <Heart size={20} fill="currentColor" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16">
+                                <Heart size={48} className="text-gray-600 mb-4" />
+                                <p className="text-gray-500 text-center">
+                                    Здесь пока пусто<br />
+                                    Добавляйте книги в избранное
+                                </p>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* Quotes List */}
+                {activeTab === 'quotes' && (
+                    <>
+                        {loadingData ? (
+                            <div className="flex justify-center py-16">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
+                            </div>
+                        ) : quotes.length > 0 ? (
+                            <div className="space-y-4">
+                                {quotes.map((quote) => (
+                                    <div
+                                        key={quote.id}
+                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-4"
+                                    >
+                                        <p className="text-white text-sm leading-relaxed mb-3 italic">
+                                            "{quote.text}"
+                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <div
+                                                className="text-gray-500 text-xs cursor-pointer hover:text-gray-300"
+                                                onClick={() => navigate(`/reader/${quote.book_id}`)}
+                                            >
+                                                <span className="font-medium">{quote.book_title || 'Книга'}</span>
+                                                {quote.book_author && ` — ${quote.book_author}`}
+                                            </div>
+                                            <button
+                                                onClick={() => handleDeleteQuote(quote.id)}
+                                                className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                aria-label="Удалить цитату"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16">
+                                <MessageSquareQuote size={48} className="text-gray-600 mb-4" />
+                                <p className="text-gray-500 text-center">
+                                    Здесь пока пусто<br />
+                                    Выделяйте текст в книгах и сохраняйте цитаты
+                                </p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, X, Minus, Plus, Sun, Sparkles, Brain } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
@@ -7,8 +7,11 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { fetchBookContent } from '../services/flibustaApi';
 import { ProgressBar } from '../components/ProgressBar';
+import { QuoteMenu } from '../components/QuoteMenu';
 import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, addToMyBooks, getBookMetadata } from '../utils/storage';
 import { summarizeText } from '../services/ai';
+import { addQuote } from '../services/db';
+import { useAuth } from '../contexts/AuthContext';
 import type { Book } from '../types';
 
 // Setup PDF worker
@@ -20,6 +23,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 export function Reader() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     // State
     const [book, setBook] = useState<Book | null>(null);
@@ -42,6 +46,11 @@ export function Reader() {
     // AI Summary State
     const [showSummary, setShowSummary] = useState(false);
     const [summaryContent, setSummaryContent] = useState('');
+
+    // Quote Selection State
+    const [quoteMenuVisible, setQuoteMenuVisible] = useState(false);
+    const [quoteMenuPosition, setQuoteMenuPosition] = useState({ x: 0, y: 0 });
+    const [selectedText, setSelectedText] = useState('');
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
     // Refs
@@ -242,6 +251,72 @@ export function Reader() {
             setIsGeneratingSummary(false);
         }
     };
+
+    // Handle text selection for quotes
+    const handleTextSelection = useCallback(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim() || '';
+
+        if (text.length < 10) {
+            setQuoteMenuVisible(false);
+            return;
+        }
+
+        // Get selection position
+        const range = selection?.getRangeAt(0);
+        if (!range) return;
+
+        const rect = range.getBoundingClientRect();
+        const x = Math.max(10, Math.min(rect.left, window.innerWidth - 200));
+        const y = rect.bottom + 10;
+
+        setSelectedText(text);
+        setQuoteMenuPosition({ x, y });
+        setQuoteMenuVisible(true);
+    }, []);
+
+    // Save quote to database
+    const handleSaveQuote = async () => {
+        if (!user || !book || !selectedText.trim()) return;
+
+        try {
+            await addQuote({
+                book_id: book.id,
+                book_title: book.title,
+                book_author: book.author,
+                text: selectedText.trim()
+            });
+
+            // Clear selection and hide menu
+            window.getSelection()?.removeAllRanges();
+            setQuoteMenuVisible(false);
+            setSelectedText('');
+
+            // Show feedback
+            alert('Цитата сохранена! ✨');
+        } catch (err) {
+            console.error('Failed to save quote:', err);
+            alert('Не удалось сохранить цитату');
+        }
+    };
+
+    // Close quote menu
+    const handleCloseQuoteMenu = () => {
+        setQuoteMenuVisible(false);
+        setSelectedText('');
+        window.getSelection()?.removeAllRanges();
+    };
+
+    // Listen for text selection
+    useEffect(() => {
+        document.addEventListener('mouseup', handleTextSelection);
+        document.addEventListener('touchend', handleTextSelection);
+
+        return () => {
+            document.removeEventListener('mouseup', handleTextSelection);
+            document.removeEventListener('touchend', handleTextSelection);
+        };
+    }, [handleTextSelection]);
 
     if (loading) {
         return (
@@ -519,6 +594,17 @@ export function Reader() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Quote Menu */}
+            {user && (
+                <QuoteMenu
+                    isVisible={quoteMenuVisible}
+                    position={quoteMenuPosition}
+                    selectedText={selectedText}
+                    onSave={handleSaveQuote}
+                    onClose={handleCloseQuoteMenu}
+                />
             )}
         </div>
     );

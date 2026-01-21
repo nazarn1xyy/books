@@ -78,6 +78,44 @@ create policy "Users can insert their own progress." on reading_progress
 create policy "Users can update their own progress." on reading_progress
   for update using (auth.uid() = user_id);
 
+-- Quotes Table
+create table public.quotes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  book_id text not null,
+  book_title text,
+  book_author text,
+  text text not null,
+  note text,
+  color text default 'yellow',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Favorites Table
+create table public.favorites (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  book_id text not null,
+  book_title text,
+  book_author text,
+  book_cover text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, book_id)
+);
+
+-- Enable RLS for quotes and favorites
+alter table public.quotes enable row level security;
+alter table public.favorites enable row level security;
+
+-- Policies for quotes
+create policy "Users can crud their own quotes" on public.quotes
+  for all using (auth.uid() = user_id);
+
+-- Policies for favorites
+create policy "Users can crud their own favorites" on public.favorites
+  for all using (auth.uid() = user_id);
+
+
 -- Function to handle new user signup (auto-create profile)
 create or replace function public.handle_new_user()
 returns trigger as $$
