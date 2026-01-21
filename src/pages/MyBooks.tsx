@@ -376,10 +376,10 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                         navigate(`/reader/${book.id}`);
                     }
                 }}
-                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-action-pan-y"
+                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none"
+                style={{ width: '100%', overscrollBehavior: 'contain' }}
                 exit={{ height: 0, opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                 whileDrag={{ cursor: "grabbing" }}
-                style={{ width: '100%' }}
             >
                 <div className="flex gap-4 p-4 pointer-events-none select-none">
                     <ImageWithLoader
