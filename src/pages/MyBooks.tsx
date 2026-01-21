@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Trash2, ChevronLeft } from 'lucide-react';
+import { BookOpen, Plus, Trash2, ChevronLeft, Download } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book } from '../types';
 import { books } from '../data/books';
@@ -12,6 +12,7 @@ import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
+import { exportAllBooks } from '../utils/export';
 
 export function MyBooks() {
     const { user } = useAuth();
@@ -19,6 +20,8 @@ export function MyBooks() {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, bookTitle: '' });
 
     // Refresh books when storage changes (e.g. from Realtime sync)
     useEffect(() => {
@@ -159,6 +162,26 @@ export function MyBooks() {
         else setExpandedSeries(name);
     };
 
+    const handleExportAll = async () => {
+        if (myBookIds.length === 0) {
+            alert('Нет книг для экспорта!');
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            await exportAllBooks(myBookIds, (progress) => {
+                setExportProgress(progress);
+            });
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert(error instanceof Error ? error.message : 'Не удалось экспортировать книги');
+        } finally {
+            setIsExporting(false);
+            setExportProgress({ current: 0, total: 0, bookTitle: '' });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)] relative overflow-hidden">
             <div className="px-5 pt-8">
@@ -170,7 +193,38 @@ export function MyBooks() {
                             <p className="text-gray-500 mt-1">{myBookIds.length} книг</p>
                         )}
                     </div>
+                    {myBookIds.length > 0 && (
+                        <button
+                            onClick={handleExportAll}
+                            disabled={isExporting}
+                            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50"
+                            title="Экспортировать все книги"
+                        >
+                            <Download size={20} className="text-white" />
+                        </button>
+                    )}
                 </header>
+
+                {/* Export Progress Modal */}
+                {isExporting && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                        <div className="bg-[#1C1C1E] rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl">
+                            <div className="flex items-center gap-3 mb-4">
+                                <Download className="text-blue-400 animate-bounce" size={28} />
+                                <h2 className="text-xl font-semibold text-white">Экспорт библиотеки</h2>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-gray-400 text-sm mb-2">Упаковка книг...</p>
+                                    <ProgressBar percentage={Math.round((exportProgress.current / exportProgress.total) * 100)} height={6} />
+                                </div>
+                                <p className="text-gray-500 text-xs truncate">
+                                    {exportProgress.current} / {exportProgress.total}: {exportProgress.bookTitle}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Book List */}
                 {items.length > 0 ? (
