@@ -1,13 +1,17 @@
 import { useMemo, useState, useEffect } from 'react';
+import { Download, X } from 'lucide-react';
 import { BookCard } from '../components/BookCard';
 import { getAppState } from '../utils/storage';
 import { fetchBooks } from '../services/flibustaApi';
 import type { Book } from '../types';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 export function Home() {
     const state = getAppState();
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
+    const { canInstall, promptInstall } = useInstallPrompt();
+    const [showInstallBanner, setShowInstallBanner] = useState(true);
 
     useEffect(() => {
         const loadBooks = async () => {
@@ -61,6 +65,33 @@ export function Home() {
                 <header className="mb-6 mt-2">
                     <h1 className="text-3xl font-bold text-white">Библиотека</h1>
                 </header>
+
+                {/* Install PWA Banner */}
+                {canInstall && showInstallBanner && (
+                    <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <Download className="text-blue-400 flex-shrink-0 mt-0.5" size={24} />
+                        <div className="flex-1">
+                            <h3 className="text-white font-semibold mb-1">Установить приложение</h3>
+                            <p className="text-gray-300 text-sm mb-3">Добавьте Libify на главный экран для быстрого доступа</p>
+                            <button
+                                onClick={async () => {
+                                    const success = await promptInstall();
+                                    if (success) setShowInstallBanner(false);
+                                }}
+                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white rounded-lg text-sm font-medium transition-all"
+                            >
+                                Установить
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => setShowInstallBanner(false)}
+                            className="text-gray-400 hover:text-white transition-colors p-1 active:scale-95"
+                            aria-label="Закрыть"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                )}
 
                 {loading ? (
                     <div className="flex justify-center py-20">

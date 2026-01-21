@@ -197,8 +197,9 @@ export function MyBooks() {
                         <button
                             onClick={handleExportAll}
                             disabled={isExporting}
-                            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50"
+                            className="p-3 min-w-[44px] min-h-[44px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
                             title="Экспортировать все книги"
+                            aria-label="Экспортировать все книги"
                         >
                             <Download size={20} className="text-white" />
                         </button>
@@ -310,7 +311,8 @@ export function MyBooks() {
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center shadow-lg shadow-white/10 active:scale-90 transition-transform disabled:opacity-50"
+                    className="w-14 h-14 min-w-[56px] min-h-[56px] bg-white text-black rounded-full flex items-center justify-center shadow-lg shadow-white/10 active:scale-90 transition-transform disabled:opacity-50"
+                    aria-label="Добавить книгу"
                 >
                     {isUploading ? (
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-black border-t-transparent" />
@@ -339,8 +341,13 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
 
     const handleDragEnd = (_e: any, info: PanInfo) => {
         setIsDragging(false);
-        if (info.offset.x < -100) {
+        // More conservative threshold: -150px AND minimum velocity
+        if (info.offset.x < -150 && Math.abs(info.velocity.x) > 200) {
             setSwiped(true);
+            // Haptic feedback on successful swipe
+            if ('vibrate' in navigator) {
+                navigator.vibrate(10);
+            }
             // Trigger remove logic
             onRemove();
         } else {
@@ -359,8 +366,9 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
             <motion.div
                 layout
                 drag="x"
-                dragConstraints={{ left: -100, right: 0 }}
-                dragElastic={0.1}
+                dragConstraints={{ left: -200, right: 0 }}
+                dragElastic={0.15}
+                dragDirectionLock
                 onDragStart={() => setIsDragging(true)}
                 onDragEnd={handleDragEnd}
                 onClick={() => {
@@ -368,10 +376,10 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                         navigate(`/reader/${book.id}`);
                     }
                 }}
-                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y"
+                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-action-pan-y"
                 exit={{ height: 0, opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                whileTap={{ cursor: "grabbing" }}
-                style={{ width: '100%' }} // Ensure full width
+                whileDrag={{ cursor: "grabbing" }}
+                style={{ width: '100%' }}
             >
                 <div className="flex gap-4 p-4 pointer-events-none select-none">
                     <ImageWithLoader

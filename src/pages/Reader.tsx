@@ -261,8 +261,8 @@ export function Reader() {
             <header className="flex items-center justify-between px-4 h-auto min-h-[3.5rem] bg-[var(--reader-bg)]/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 transition-transform shadow-sm">
                 <button
                     onClick={() => navigate(-1)}
-                    aria-label="Go back"
-                    className="p-2 -ml-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                    aria-label="Назад"
+                    className="p-2 -ml-2 min-w-[44px] min-h-[44px] text-[var(--reader-text)] active:opacity-50 active:scale-95 transition-all flex items-center justify-center"
                 >
                     <ChevronLeft size={28} />
                 </button>
@@ -288,8 +288,8 @@ export function Reader() {
                     </button>
                     <button
                         onClick={() => setShowSettings(true)}
-                        aria-label="Open settings"
-                        className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                        aria-label="Настройки"
+                        className="p-2 min-w-[44px] min-h-[44px] text-[var(--reader-text)] active:opacity-70 active:scale-95 transition-all flex items-center justify-center"
                     >
                         <Settings size={24} />
                     </button>

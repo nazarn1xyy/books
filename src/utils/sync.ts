@@ -1,9 +1,13 @@
 import { supabase } from '../lib/supabase';
 import { getAppState, saveAppState, getPendingDeletions, removeFromPendingDeletions, getPendingUploads, removeFromPendingUploads, removeFromMyBooks } from './storage';
 import { getCachedBook, cacheBook } from './cache';
+import { syncMutex } from './mutex';
 
 export async function syncData(userId: string) {
     if (!userId) return;
+
+    // Prevent concurrent syncs
+    const release = await syncMutex.acquire();
 
     try {
         // 0. Process Pending Deletions (Robustness for Offline/Mobile)
@@ -154,8 +158,11 @@ export async function syncData(userId: string) {
         await Promise.all(progressUpdates);
         saveAppState(localState); // Final save
 
+
     } catch (error) {
         console.error('Sync failed:', error);
+    } finally {
+        release(); // Always release the mutex
     }
 }
 
