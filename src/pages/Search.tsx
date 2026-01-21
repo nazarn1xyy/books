@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Search as SearchIcon, X, Loader2 } from 'lucide-react';
 import { fetchBooks } from '../services/flibustaApi';
 import { BookCard } from '../components/BookCard';
@@ -10,8 +10,8 @@ export function Search() {
     const [results, setResults] = useState<Book[]>([]);
     const [loading, setLoading] = useState(false);
     const [debouncedQuery, setDebouncedQuery] = useState('');
-    const { isKeyboardOpen } = useKeyboardHeight();
-    const containerRef = useRef<HTMLDivElement>(null);
+    const { isKeyboardOpen, keyboardHeight } = useKeyboardHeight();
+
     // Debounce search query
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -32,7 +32,6 @@ export function Search() {
             const cacheKey = `search_cache_${debouncedQuery.trim()}`;
             const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
-
                 setResults(JSON.parse(cached));
                 return;
             }
@@ -56,60 +55,67 @@ export function Search() {
         searchBooks();
     }, [debouncedQuery]);
 
+    // Determine if scrolling should be allowed
+    const hasResults = results.length > 0;
+    const shouldAllowScroll = hasResults && !isKeyboardOpen;
+
     return (
         <div
-            ref={containerRef}
-            className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)]"
+            className="bg-black pt-[env(safe-area-inset-top)] overflow-hidden"
             style={{
-                overflow: isKeyboardOpen ? 'hidden' : 'auto',
-                height: isKeyboardOpen ? '100vh' : 'auto',
-                position: isKeyboardOpen ? 'fixed' : 'relative',
-                width: '100%'
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column'
             }}
         >
-            <div className="px-5 pt-8">
-                {/* Search Header */}
-                <header className="sticky top-0 z-10 bg-black pb-4 -mx-5 px-5 pt-8">
-                    <h1 className="text-3xl font-bold text-white mb-4">Поиск</h1>
+            {/* Fixed Search Header */}
+            <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4">
+                <h1 className="text-3xl font-bold text-white mb-4">Поиск</h1>
+                <div className="relative">
+                    <SearchIcon
+                        size={20}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+                    <input
+                        type="search"
+                        inputMode="search"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Книги, авторы, жанры..."
+                        aria-label="Поиск книг"
+                        className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+                    />
+                    {query && (
+                        <button
+                            onClick={() => setQuery('')}
+                            aria-label="Очистить поиск"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
+                        >
+                            <X size={20} />
+                        </button>
+                    )}
+                </div>
+            </header>
 
-                    {/* Search Input */}
-                    <div className="relative">
-                        <SearchIcon
-                            size={20}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                        />
-                        <input
-                            type="search"
-                            inputMode="search"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            spellCheck={false}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Книги, авторы, жанры..."
-                            aria-label="Поиск книг"
-                            className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                        />
-                        {query && (
-                            <button
-                                onClick={() => setQuery('')}
-                                aria-label="Очистить поиск"
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
-                            >
-                                <X size={20} />
-                            </button>
-                        )}
-                    </div>
-                </header>
-
-                {/* Results */}
+            {/* Scrollable Results Area */}
+            <div
+                className="flex-1 px-5"
+                style={{
+                    overflowY: shouldAllowScroll ? 'auto' : 'hidden',
+                    paddingBottom: isKeyboardOpen ? keyboardHeight : 96, // 96 = bottom nav height + padding
+                    WebkitOverflowScrolling: 'touch'
+                }}
+            >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-16">
                         <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />
                         <p className="text-gray-400">Ищем на Флибусте...</p>
                     </div>
                 ) : results.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4 pb-4">
                         {results.map((book) => (
                             <BookCard key={book.id} book={book} size="small" />
                         ))}
