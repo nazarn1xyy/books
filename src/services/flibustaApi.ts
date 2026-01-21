@@ -113,34 +113,96 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
 
 // Shared parsing logic for both remote and local books
 export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; cover?: string; title?: string; author?: string; description?: string; series?: string; seriesNumber?: number }> {
-    // 1. Use Web Worker for heavy lifting (Unzip & Decode)
-    const text = await new Promise<string>((resolve, reject) => {
-        try {
-            const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
+    let text = '';
 
-            worker.onmessage = (e) => {
-                if (e.data.type === 'SUCCESS') {
-                    resolve(e.data.text);
-                } else {
-                    reject(new Error(`Worker error: ${e.data.error || 'Unknown'}`));
+    // 1. Try to use Web Worker for heavy lifting (Unzip & Decode)
+    try {
+        text = await new Promise<string>((resolve, reject) => {
+            try {
+                const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
+
+                const timeout = setTimeout(() => {
+                    worker.terminate();
+                    reject(new Error('Worker timeout'));
+                }, 10000); // 10 second timeout
+
+                worker.onmessage = (e) => {
+                    clearTimeout(timeout);
+                    if (e.data.type === 'SUCCESS') {
+                        resolve(e.data.text);
+                    } else {
+                        reject(new Error(`Worker error: ${e.data.error || 'Unknown'}`));
+                    }
+                    worker.terminate();
+                };
+
+                worker.onerror = (err) => {
+                    clearTimeout(timeout);
+                    console.error('Worker initialization error:', err);
+                    reject(new Error(`Worker failed: ${err.message || 'Cannot start worker'}`));
+                    worker.terminate();
+                };
+
+                // Transfer buffer to worker
+                worker.postMessage({ arrayBuffer: data }, [data]);
+            } catch (workerError) {
+                // Worker creation failed (iOS/Safari issue)
+                console.error('Failed to create worker:', workerError);
+                reject(new Error(`Worker not supported: ${workerError instanceof Error ? workerError.message : 'Unknown'}`));
+            }
+        });
+    } catch (workerError) {
+        // FALLBACK: Parse synchronously in main thread (iOS/Safari)
+        console.warn('Worker not available, using synchronous parsing:', workerError);
+        const JSZip = (await import('jszip')).default;
+
+        // Helper function for encoding detection
+        const detectEncoding = (buffer: Uint8Array): string => {
+            try {
+                const header = new TextDecoder('ascii').decode(buffer.slice(0, 1024));
+                const match = header.match(/encoding=["']([a-zA-Z0-9-_]+)["']/i);
+                if (match && match[1]) {
+                    return match[1];
                 }
-                worker.terminate();
-            };
+            } catch (e) {
+                // Ignore
+            }
+            return 'utf-8';
+        };
 
-            worker.onerror = (err) => {
-                console.error('Worker initialization error:', err);
-                reject(new Error(`Worker failed: ${err.message || 'Cannot start worker'}`));
-                worker.terminate();
-            };
+        // Check if ZIP
+        const arr = new Uint8Array(data.slice(0, 4));
+        const isZip = arr[0] === 0x50 && arr[1] === 0x4B && arr[2] === 0x03 && arr[3] === 0x04;
 
-            // Transfer buffer to worker
-            worker.postMessage({ arrayBuffer: data }, [data]);
-        } catch (workerError) {
-            // Worker creation failed (iOS/Safari issue)
-            console.error('Failed to create worker:', workerError);
-            reject(new Error(`Worker not supported: ${workerError instanceof Error ? workerError.message : 'Unknown'}`));
+        if (isZip) {
+            const zip = await JSZip.loadAsync(data);
+            const fb2File = Object.values(zip.files).find(file => file.name.endsWith('.fb2'));
+
+            if (fb2File) {
+                const fileData = await fb2File.async('uint8array');
+                const encoding = detectEncoding(fileData);
+                try {
+                    const decoder = new TextDecoder(encoding);
+                    text = decoder.decode(fileData);
+                } catch {
+                    const decoder = new TextDecoder('utf-8');
+                    text = decoder.decode(fileData);
+                }
+            } else {
+                throw new Error('No .fb2 file found in archive');
+            }
+        } else {
+            const fileData = new Uint8Array(data);
+            const encoding = detectEncoding(fileData);
+            try {
+                const decoder = new TextDecoder(encoding);
+                text = decoder.decode(fileData);
+            } catch {
+                const decoder = new TextDecoder('utf-8');
+                text = decoder.decode(fileData);
+            }
         }
-    });
+    }
 
     // 2. Parse XML for metadata and body
     const parser = new DOMParser();
