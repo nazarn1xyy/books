@@ -10,7 +10,7 @@ async function fetchViaProxy(url: string, responseType: 'text' | 'blob' | 'array
     const targetUrl = new URL(url);
     const pathAndQuery = targetUrl.pathname + targetUrl.search;
 
-    console.log(`Fetching via local proxy: ${PROXY_URL}${pathAndQuery}`);
+
     try {
         const response = await fetch(`${PROXY_URL}${pathAndQuery}`);
 
@@ -229,13 +229,13 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {
-        console.log(`Cache hit for book ${bookId}`);
+
         return { text: cached.text, cover: cached.cover, pdfData: cached.pdfData };
     }
 
     try {
         const url = `${FLIBUSTA_BASE}/b/${bookId}/fb2`;
-        console.log('Downloading book from:', url);
+
 
         // Fetch as ArrayBuffer to handle ZIP
         const data = await fetchViaProxy(url, 'arraybuffer') as ArrayBuffer;
@@ -245,7 +245,7 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
 
         // 2. Cache the result
         if (parsedData.text) {
-            console.log(`Caching book ${bookId}`);
+
             // Note: For remote books, we might want to prioritize the cover from OPDS if available,
             // but inner FB2 cover is often better quality.
             await cacheBook(bookId, parsedData.text, parsedData.cover || '');

@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { getAppState, saveAppState } from './storage';
+import { getCachedBook, cacheBook } from './cache';
 
 export async function syncData(userId: string) {
     if (!userId) return;
@@ -30,12 +31,21 @@ export async function syncData(userId: string) {
             const book = localState.bookMetadata[id];
             if (!book) return;
 
+            // Hydrate cover from cache if missing (because we stripped it locally)
+            let coverToUpload = book.cover;
+            if (!coverToUpload || coverToUpload === '') {
+                const cached = await getCachedBook(book.id);
+                if (cached?.cover) {
+                    coverToUpload = cached.cover;
+                }
+            }
+
             await supabase.from('user_books').upsert({
                 user_id: userId,
                 book_id: book.id,
                 title: book.title || 'Untitled',
                 author: book.author || 'Unknown',
-                cover: book.cover || '',
+                cover: coverToUpload || '',
                 status: 'reading',
                 format: book.format || 'fb2'
             }, { onConflict: 'user_id, book_id', ignoreDuplicates: true });
@@ -43,12 +53,20 @@ export async function syncData(userId: string) {
 
         // B. Pull Cloud -> Local
         const p2 = cloudBooks?.filter(b => !localBookIds.includes(b.book_id)).map(async (b) => {
+            let coverToSave = b.cover;
+
+            // If cloud has a large cover, offload to IndexedDB and strip from LocalStorage
+            if (coverToSave && coverToSave.startsWith('data:image')) {
+                await cacheBook(b.book_id, '', coverToSave); // Cache it
+                coverToSave = ''; // Strip it
+            }
+
             // Update local metadata
             localState.bookMetadata[b.book_id] = {
                 id: b.book_id,
                 title: b.title,
                 author: b.author,
-                cover: b.cover,
+                cover: coverToSave,
                 description: '', // Cloud might not store full description yet
                 genre: 'Cloud',
                 format: b.format as any || 'fb2'

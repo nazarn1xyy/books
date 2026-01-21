@@ -30,7 +30,7 @@ export function Search() {
             const cacheKey = `search_cache_${debouncedQuery.trim()}`;
             const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
-                console.log('Restoring search from cache:', debouncedQuery);
+
                 setResults(JSON.parse(cached));
                 return;
             }

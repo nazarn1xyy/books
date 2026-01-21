@@ -32,7 +32,7 @@ export function Auth() {
                         },
                     },
                 });
-                console.log('Signup response:', { data, signUpError });
+
                 if (signUpError) throw signUpError;
 
                 if (data.user && !data.session) {

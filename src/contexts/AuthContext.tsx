@@ -43,12 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
-    const signIn = async (email: string) => {
-        // We handle sign in directly in the Auth component for now, 
-        // but let's provide a valid implementation here too
-        // or just make it optional/throw error if used incorrectly.
-        // Actually, let's just log it for now to satisfy linter
-        console.log('SignIn requested for:', email);
+    const signIn = async (_email: string) => {
+        // Placeholder as actual sign in is handled in Auth page
+        return Promise.resolve();
     };
 
     const signOut = async () => {
