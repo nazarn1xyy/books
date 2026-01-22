@@ -15,9 +15,10 @@ export function Sidebar() {
         <aside className="desktop-only fixed left-0 top-0 bottom-0 w-[var(--sidebar-width)] bg-black/95 backdrop-blur-xl border-r border-white/10 flex flex-col z-50">
             {/* Logo */}
             <div className="p-6 border-b border-white/10">
-                <h1 className="text-2xl font-bold text-white tracking-tight">
-                    📚 Libify
-                </h1>
+                <div className="flex items-center gap-2">
+                    <img src="/icon 1.png" alt="Libify" className="w-8 h-8" />
+                    <span className="text-2xl font-bold text-white tracking-tight">Libify</span>
+                </div>
             </div>
 
             {/* Navigation */}

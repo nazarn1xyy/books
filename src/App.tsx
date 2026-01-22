@@ -14,22 +14,22 @@ function lazyWithRetry<T extends ComponentType<unknown>>(
   retries = 3,
   delay = 1000
 ): React.LazyExoticComponent<T> {
-  return lazy(async () => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        return await importFn();
-      } catch (error) {
-        console.warn(`Chunk load failed, attempt ${i + 1}/${retries}`, error);
-        if (i === retries - 1) {
-          throw error;
-        }
-        // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+return lazy(async () => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await importFn();
+    } catch (error) {
+      console.warn(`Chunk load failed, attempt ${i + 1}/${retries}`, error);
+      if (i === retries - 1) {
+        throw error;
       }
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
     }
-    // This shouldn't be reached, but TypeScript needs it
-    throw new Error('Failed to load chunk after retries');
-  });
+  }
+  // This shouldn't be reached, but TypeScript needs it
+  throw new Error('Failed to load chunk after retries');
+});
 }
 
 // Lazy load pages with retry
