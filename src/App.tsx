@@ -63,39 +63,41 @@ function AppContent() {
       <ScrollHandler />
       <AnimatePresence mode="sync">
         <Suspense fallback={<LoadingFallback />}>
-          <Routes location={location} key={location.pathname}>
-            <Route path="/auth" element={
-              <PageWrapper>
-                {loading ? <LoadingFallback /> : user ? <Navigate to="/" replace /> : <Auth />}
-              </PageWrapper>
-            } />
+          <ErrorBoundary key={location.pathname}>
+            <Routes location={location} key={location.pathname}>
+              <Route path="/auth" element={
+                <PageWrapper>
+                  {loading ? <LoadingFallback /> : user ? <Navigate to="/" replace /> : <Auth />}
+                </PageWrapper>
+              } />
 
-            <Route path="/" element={
-              <PageWrapper>
-                <ProtectedRoute><Home /></ProtectedRoute>
-              </PageWrapper>
-            } />
-            <Route path="/search" element={
-              <PageWrapper>
-                <ProtectedRoute><Search /></ProtectedRoute>
-              </PageWrapper>
-            } />
-            <Route path="/my-books" element={
-              <PageWrapper>
-                <ProtectedRoute><MyBooks /></ProtectedRoute>
-              </PageWrapper>
-            } />
-            <Route path="/reader/:id" element={
-              <PageWrapper>
-                <ProtectedRoute><Reader /></ProtectedRoute>
-              </PageWrapper>
-            } />
-            <Route path="/admin" element={
-              <PageWrapper>
-                <Admin />
-              </PageWrapper>
-            } />
-          </Routes>
+              <Route path="/" element={
+                <PageWrapper>
+                  <ProtectedRoute><Home /></ProtectedRoute>
+                </PageWrapper>
+              } />
+              <Route path="/search" element={
+                <PageWrapper>
+                  <ProtectedRoute><Search /></ProtectedRoute>
+                </PageWrapper>
+              } />
+              <Route path="/my-books" element={
+                <PageWrapper>
+                  <ProtectedRoute><MyBooks /></ProtectedRoute>
+                </PageWrapper>
+              } />
+              <Route path="/reader/:id" element={
+                <PageWrapper>
+                  <ProtectedRoute><Reader /></ProtectedRoute>
+                </PageWrapper>
+              } />
+              <Route path="/admin" element={
+                <PageWrapper>
+                  <Admin />
+                </PageWrapper>
+              } />
+            </Routes>
+          </ErrorBoundary>
         </Suspense>
       </AnimatePresence>
 
