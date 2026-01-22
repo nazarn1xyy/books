@@ -4,26 +4,56 @@ import { getCachedBook, cacheBook } from '../utils/cache';
 const PROXY_URL = '/flibusta';
 const FLIBUSTA_BASE = 'http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion';
 
-// Helper to fetch via proxy
-async function fetchViaProxy(url: string, responseType: 'text' | 'blob' | 'arraybuffer' = 'text'): Promise<string | Blob | ArrayBuffer> {
-    // Extract the path from the full URL to append to our proxy
+// Helper to fetch via proxy with retry logic
+async function fetchViaProxy(
+    url: string,
+    responseType: 'text' | 'blob' | 'arraybuffer' = 'text',
+    retries = 3,
+    timeout = 15000
+): Promise<string | Blob | ArrayBuffer> {
     const targetUrl = new URL(url);
     const pathAndQuery = targetUrl.pathname + targetUrl.search;
 
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            console.log(`Fetching ${pathAndQuery} (attempt ${attempt}/${retries})`);
 
-    try {
-        const response = await fetch(`${PROXY_URL}${pathAndQuery}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+            try {
+                const response = await fetch(`${PROXY_URL}${pathAndQuery}`, {
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                if (responseType === 'text') return response.text();
+                if (responseType === 'blob') return response.blob();
+                return response.arrayBuffer();
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        } catch (error) {
+            const isLastAttempt = attempt === retries;
+            const errorMsg = error instanceof Error ? error.message : String(error);
+
+            console.warn(`Attempt ${attempt}/${retries} failed for ${pathAndQuery}:`, errorMsg);
+
+            if (isLastAttempt) {
+                throw new Error(`Не удалось загрузить книгу после ${retries} попыток. ${errorMsg}`);
+            }
+
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
-        if (responseType === 'text') return response.text();
-        if (responseType === 'blob') return response.blob();
-        return response.arrayBuffer();
-    } catch (error) {
-        console.error(`Proxy fetch error for ${url}:`, error);
-        throw error;
     }
+
+    throw new Error('Не удалось загрузить книгу');
 }
 
 export async function fetchBooks(query: string = ''): Promise<Book[]> {
@@ -330,7 +360,6 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {
-
         return { text: cached.text, cover: cached.cover, pdfData: cached.pdfData };
     }
 
@@ -338,23 +367,29 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
         const url = `${FLIBUSTA_BASE}/b/${bookId}/fb2`;
         console.log('Fetching book from:', url);
 
-        // Fetch as ArrayBuffer to handle ZIP
+        // Fetch as ArrayBuffer to handle ZIP (with retry logic)
         const data = await fetchViaProxy(url, 'arraybuffer') as ArrayBuffer;
 
         console.log('Received data size:', data.byteLength, 'bytes');
 
         // Check if we got an empty response
         if (!data || data.byteLength === 0) {
-            throw new Error('Empty response from Flibusta - book may not exist');
+            throw new Error('Книга не найдена на Флибусте. Попробуйте другую книгу.');
         }
 
         // Check if it's HTML (error page) instead of FB2/ZIP
-        const firstBytes = new Uint8Array(data.slice(0, 100));
+        const firstBytes = new Uint8Array(data.slice(0, 200));
         const headerText = new TextDecoder('utf-8', { fatal: false }).decode(firstBytes);
 
         if (headerText.includes('<!DOCTYPE') || headerText.includes('<html') || headerText.includes('<HTML')) {
-            console.error('Received HTML instead of FB2. First 100 chars:', headerText);
-            throw new Error('Flibusta returned HTML error page - book may be unavailable');
+            console.error('Received HTML instead of FB2. First 200 chars:', headerText);
+
+            // Check if it's specifically a 404 or access error
+            if (headerText.includes('404') || headerText.toLowerCase().includes('not found')) {
+                throw new Error('Книга не найдена на сервере. Возможно, она была удалена.');
+            }
+
+            throw new Error('Сервер Флибусты временно недоступен. Попробуйте позже.');
         }
 
         // Use shared parsing logic
@@ -366,11 +401,12 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
             title: parsedData.title
         });
 
+        if (!parsedData.text || parsedData.text.trim().length === 0) {
+            throw new Error('Не удалось извлечь текст из книги. Формат файла может быть повреждён.');
+        }
+
         // 2. Cache the result
         if (parsedData.text) {
-
-            // Note: For remote books, we might want to prioritize the cover from OPDS if available,
-            // but inner FB2 cover is often better quality.
             await cacheBook(bookId, parsedData.text, parsedData.cover || '');
         }
 
@@ -381,7 +417,13 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
             author: parsedData.author
         };
     } catch (error) {
-        console.error('Failed to fetch FB2:', error);
-        throw error;
+        console.error('Failed to fetch book:', error);
+
+        // Provide user-friendly error message
+        const errorMessage = error instanceof Error
+            ? error.message
+            : 'Неизвестная ошибка при загрузке книги';
+
+        throw new Error(errorMessage);
     }
 }
