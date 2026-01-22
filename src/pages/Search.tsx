@@ -69,9 +69,9 @@ export function Search() {
             }}
         >
             {/* Fixed Search Header */}
-            <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4">
-                <h1 className="text-3xl font-bold text-white mb-4">Поиск</h1>
-                <div className="relative">
+            <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4 desktop-container">
+                <h1 className="text-3xl font-bold text-white mb-4 lg:text-4xl">Поиск</h1>
+                <div className="relative lg:max-w-xl">
                     <SearchIcon
                         size={20}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -115,7 +115,7 @@ export function Search() {
                         <p className="text-gray-400">Ищем на Флибусте...</p>
                     </div>
                 ) : results.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-4 pb-4">
+                    <div className="grid grid-cols-3 gap-4 pb-4 lg:grid-cols-4 xl:grid-cols-6 desktop-container">
                         {results.map((book) => (
                             <BookCard key={book.id} book={book} size="small" />
                         ))}

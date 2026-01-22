@@ -257,12 +257,12 @@ export function MyBooks() {
     };
 
     return (
-        <div className="min-h-screen bg-black pb-24 pt-[env(safe-area-inset-top)] relative overflow-hidden">
-            <div className="px-5 pt-8">
+        <div className="min-h-screen bg-black pb-24 lg:pb-8 pt-[env(safe-area-inset-top)] relative overflow-hidden">
+            <div className="px-5 pt-8 desktop-container">
                 {/* Header */}
                 <header className="mb-4 flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">
+                        <h1 className="text-3xl font-bold text-white lg:text-4xl">
                             {activeTab === 'books' ? 'Мои книги' : activeTab === 'favorites' ? 'Избранное' : 'Цитаты'}
                         </h1>
                         {activeTab === 'books' && myBookIds.length > 0 && (

@@ -2,6 +2,7 @@ import { Suspense, lazy, type ReactNode, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BottomNav } from './components/BottomNav';
+import { Sidebar } from './components/Sidebar';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './pages/Auth';
@@ -72,7 +73,7 @@ const PageWrapper = ({ children }: { children: ReactNode }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2, ease: "easeOut" }}
-    className="min-h-screen bg-black"
+    className="min-h-screen bg-black lg:ml-[var(--sidebar-width)]"
   >
     {children}
   </motion.div>
@@ -127,11 +128,20 @@ function AppContent() {
 
       {/* Show nav only if authenticated and not on Auth page */}
       {user && (
-        <Routes>
-          <Route path="/reader/:id" element={null} />
-          <Route path="/auth" element={null} />
-          <Route path="*" element={<BottomNav />} />
-        </Routes>
+        <>
+          {/* Desktop Sidebar */}
+          <Routes>
+            <Route path="/reader/:id" element={null} />
+            <Route path="/auth" element={null} />
+            <Route path="*" element={<Sidebar />} />
+          </Routes>
+          {/* Mobile Bottom Nav */}
+          <Routes>
+            <Route path="/reader/:id" element={null} />
+            <Route path="/auth" element={null} />
+            <Route path="*" element={<BottomNav />} />
+          </Routes>
+        </>
       )}
     </div>
   );

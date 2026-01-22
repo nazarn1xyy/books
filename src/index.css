@@ -204,3 +204,124 @@ input[type="range"]::-webkit-slider-thumb {
   --reader-text: #5F4B32;
   --reader-ui-bg: #E3DCCF;
 }
+
+/* ========== DESKTOP STYLES ========== */
+
+/* Desktop container with max-width for readability */
+.desktop-container {
+  max-width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .desktop-container {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Desktop sidebar width */
+:root {
+  --sidebar-width: 240px;
+}
+
+/* Hide on mobile, show on desktop */
+.desktop-only {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .desktop-only {
+    display: flex !important;
+  }
+}
+
+/* Hide on desktop, show on mobile */
+@media (min-width: 1024px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* Desktop hover effects for cards */
+@media (min-width: 1024px) {
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Show actions on hover */
+  .hover-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .card-hover:hover .hover-actions {
+    opacity: 1;
+  }
+
+  /* Button hover effects */
+  .btn-hover {
+    transition: all 0.15s ease;
+  }
+
+  .btn-hover:hover {
+    transform: scale(1.05);
+  }
+
+  /* Reader content max-width for readability */
+  .reader-content {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Desktop grid utilities */
+@media (min-width: 1024px) {
+  .grid-desktop-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .grid-desktop-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .grid-desktop-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-desktop-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* Scrollbar styling for desktop */
+@media (min-width: 1024px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}

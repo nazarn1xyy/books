@@ -275,6 +275,36 @@ export function Reader() {
         }
     };
 
+    // Keyboard navigation for desktop (Page Flip Mode)
+    useEffect(() => {
+        if (settings.readerMode !== 'page' || showSettings || showSummary) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+
+            switch (e.key) {
+                case 'ArrowRight':
+                case ' ': // Space
+                    e.preventDefault();
+                    goToNextPage();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    goToPrevPage();
+                    break;
+                case 'Escape':
+                    navigate(-1);
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [settings.readerMode, currentPageIndex, totalFlipPages, showSettings, showSummary, navigate]);
+
     // Get current page paragraphs for page mode
     const currentPageParagraphs = useMemo(() => {
         const start = currentPageIndex * PARAGRAPHS_PER_PAGE;

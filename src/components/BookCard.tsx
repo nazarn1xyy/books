@@ -145,7 +145,7 @@ export function BookCard({
         <Link
             to={`/reader/${book.id}`}
             aria-label={`Читать книгу ${book.title}, автор ${book.author}`}
-            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full`}
+            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover`}
         >
             <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">
                 <ImageWithLoader
@@ -165,8 +165,8 @@ export function BookCard({
                             onClick={handleDownloadClick}
                             disabled={isDownloading || isOffline}
                             className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 ${isOffline
-                                    ? 'bg-green-500/90 text-white'
-                                    : 'bg-black/50 text-white/80 hover:bg-black/70'
+                                ? 'bg-green-500/90 text-white'
+                                : 'bg-black/50 text-white/80 hover:bg-black/70'
                                 }`}
                             aria-label={isOffline ? 'Доступно офлайн' : 'Скачать для офлайн'}
                         >
