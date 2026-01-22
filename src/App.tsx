@@ -1,4 +1,4 @@
-import { Suspense, lazy, type ReactNode } from 'react';
+import { Suspense, lazy, type ReactNode, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BottomNav } from './components/BottomNav';
@@ -7,12 +7,36 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './pages/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Lazy load pages
-const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
-const Search = lazy(() => import('./pages/Search').then(module => ({ default: module.Search })));
-const MyBooks = lazy(() => import('./pages/MyBooks').then(module => ({ default: module.MyBooks })));
-const Reader = lazy(() => import('./pages/Reader').then(module => ({ default: module.Reader })));
-const Admin = lazy(() => import('./pages/Admin/Admin').then(module => ({ default: module.Admin })));
+// Lazy import with retry logic for failed chunk loads
+function lazyWithRetry<T extends ComponentType<unknown>>(
+  importFn: () => Promise<{ default: T }>,
+  retries = 3,
+  delay = 1000
+): React.LazyExoticComponent<T> {
+  return lazy(async () => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await importFn();
+      } catch (error) {
+        console.warn(`Chunk load failed, attempt ${i + 1}/${retries}`, error);
+        if (i === retries - 1) {
+          throw error;
+        }
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      }
+    }
+    // This shouldn't be reached, but TypeScript needs it
+    throw new Error('Failed to load chunk after retries');
+  });
+}
+
+// Lazy load pages with retry
+const Home = lazyWithRetry(() => import('./pages/Home').then(module => ({ default: module.Home })));
+const Search = lazyWithRetry(() => import('./pages/Search').then(module => ({ default: module.Search })));
+const MyBooks = lazyWithRetry(() => import('./pages/MyBooks').then(module => ({ default: module.MyBooks })));
+const Reader = lazyWithRetry(() => import('./pages/Reader').then(module => ({ default: module.Reader })));
+const Admin = lazyWithRetry(() => import('./pages/Admin/Admin').then(module => ({ default: module.Admin })));
 
 // Component to handle scroll restoration inside Router context
 function ScrollHandler() {
