@@ -29,7 +29,13 @@ function LoadingFallback() {
 }
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Wait for auth to initialize before deciding
+  if (loading) {
+    return <LoadingFallback />;
+  }
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
@@ -49,7 +55,7 @@ const PageWrapper = ({ children }: { children: ReactNode }) => (
 );
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   return (
@@ -60,7 +66,7 @@ function AppContent() {
           <Routes location={location} key={location.pathname}>
             <Route path="/auth" element={
               <PageWrapper>
-                {user ? <Navigate to="/" replace /> : <Auth />}
+                {loading ? <LoadingFallback /> : user ? <Navigate to="/" replace /> : <Auth />}
               </PageWrapper>
             } />
 
