@@ -777,7 +777,9 @@ export function Reader() {
                                         }`}
                                     style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
                                 >
-                                    <p>{para}</p>
+                                    <p>{translatedParagraphs.length > 0 && translatedParagraphs[index]
+                                        ? translatedParagraphs[index]
+                                        : para}</p>
                                 </div>
                             )}
                             components={{
