@@ -23,9 +23,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'sitemap.xml', 'robots.txt'],
       manifest: {
-        name: 'Flibusta Reader',
+        name: 'Libify - Читалка книг',
         short_name: 'Libify',
-        description: 'Flibusta Book Reader via Tor',
+        description: 'Читалка книг з доступом до Flibusta',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
