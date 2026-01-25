@@ -14,7 +14,7 @@ import { addQuote, addBookmark } from '../services/db';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useCameraStream } from '../hooks/useCameraStream';
 import { useAuth } from '../contexts/AuthContext';
-import { translateText, TRANSLATION_LANGUAGES, type TranslationLanguage } from '../services/translationService';
+import { TRANSLATION_LANGUAGES, type TranslationLanguage } from '../services/translationService';
 import type { Book } from '../types';
 
 // Setup PDF worker
@@ -943,17 +943,13 @@ export function Reader() {
                                                     // Start translation
                                                     setIsTranslating(true);
                                                     setTranslationLang(lang.code);
-                                                    const translated: string[] = [];
                                                     try {
-                                                        for (let i = 0; i < paragraphs.length; i++) {
-                                                            const result = await translateText(paragraphs[i], lang.code);
-                                                            translated.push(result);
-                                                            setTranslationProgress({ current: i + 1, total: paragraphs.length });
-                                                            // Small delay between requests
-                                                            if (i < paragraphs.length - 1) {
-                                                                await new Promise(r => setTimeout(r, 50));
-                                                            }
-                                                        }
+                                                        const { translateParagraphs } = await import('../services/translationService');
+                                                        const translated = await translateParagraphs(
+                                                            paragraphs,
+                                                            lang.code,
+                                                            (current, total) => setTranslationProgress({ current, total })
+                                                        );
                                                         setTranslatedParagraphs(translated);
                                                     } catch (err) {
                                                         console.error('Translation failed:', err);
