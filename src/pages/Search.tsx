@@ -71,7 +71,7 @@ export function Search() {
             }}
         >
             {/* Fixed Search Header */}
-            <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4 desktop-container">
+            <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4 lg:px-8">
                 <h1 className="text-3xl font-bold text-white mb-4 lg:text-4xl">{t('search.title')}</h1>
                 <div className="relative lg:max-w-xl">
                     <SearchIcon
