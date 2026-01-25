@@ -38,13 +38,29 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string | un
     return typeof result === 'string' ? result : undefined;
 }
 
+// Detect browser language and map to supported languages
+function detectBrowserLanguage(): Language {
+    const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'uk';
+    const langCode = browserLang.split('-')[0].toLowerCase();
+
+    if (langCode === 'uk') return 'uk';
+    if (langCode === 'ru') return 'ru';
+    if (langCode === 'en') return 'en';
+
+    // Default to Ukrainian for unsupported languages
+    return 'uk';
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>(() => {
+        // First check localStorage
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved && ['uk', 'ru', 'en'].includes(saved)) {
             return saved as Language;
         }
-        return 'uk'; // Ukrainian as default
+
+        // Auto-detect from browser
+        return detectBrowserLanguage();
     });
 
     const setLanguage = useCallback((lang: Language) => {
