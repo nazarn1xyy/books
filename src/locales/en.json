@@ -1,0 +1,80 @@
+{
+    "common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "retry": "Try again",
+        "back": "Back",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "search": "Search",
+        "settings": "Settings",
+        "logout": "Log out"
+    },
+    "nav": {
+        "home": "Home",
+        "search": "Search",
+        "myBooks": "My Books"
+    },
+    "home": {
+        "title": "Library",
+        "continueReading": "Continue Reading",
+        "recommended": "Recommended",
+        "recentlyAdded": "Recently Added",
+        "greeting": "Hello"
+    },
+    "search": {
+        "title": "Search",
+        "placeholder": "Books, authors, genres...",
+        "searching": "Searching on Flibusta...",
+        "noResults": "No results for \"{query}\"",
+        "enterQuery": "Enter book title or author"
+    },
+    "myBooks": {
+        "title": "My Books",
+        "books": "Books",
+        "favorites": "Favorites",
+        "quotes": "Quotes",
+        "bookmarks": "Bookmarks",
+        "booksCount": "{count} books",
+        "noBooks": "You don't have any books yet",
+        "addFirst": "Find your first book"
+    },
+    "reader": {
+        "page": "Page",
+        "of": "of",
+        "translate": "Translate",
+        "translating": "Translating...",
+        "originalText": "Original",
+        "translatedText": "Translation",
+        "summary": "Summary",
+        "bookmark": "Bookmark",
+        "settings": "Settings",
+        "fontSize": "Font size",
+        "theme": "Theme",
+        "readingMode": "Reading mode",
+        "scroll": "Scroll",
+        "pageFlip": "Page flip"
+    },
+    "auth": {
+        "login": "Log in",
+        "register": "Sign up",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot password?",
+        "noAccount": "Don't have an account?",
+        "hasAccount": "Already have an account?"
+    },
+    "errors": {
+        "bookNotFound": "Book not found on Flibusta",
+        "serverUnavailable": "Server temporarily unavailable",
+        "networkError": "Network error",
+        "translationFailed": "Translation failed"
+    },
+    "language": {
+        "title": "Language",
+        "uk": "Українська",
+        "ru": "Русский",
+        "en": "English"
+    }
+}

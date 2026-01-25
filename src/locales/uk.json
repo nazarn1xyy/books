@@ -1,0 +1,80 @@
+{
+    "common": {
+        "loading": "Завантаження...",
+        "error": "Помилка",
+        "retry": "Спробувати ще",
+        "back": "Назад",
+        "save": "Зберегти",
+        "cancel": "Скасувати",
+        "delete": "Видалити",
+        "search": "Пошук",
+        "settings": "Налаштування",
+        "logout": "Вийти"
+    },
+    "nav": {
+        "home": "Головна",
+        "search": "Пошук",
+        "myBooks": "Мої книги"
+    },
+    "home": {
+        "title": "Бібліотека",
+        "continueReading": "Продовжити читання",
+        "recommended": "Рекомендуємо",
+        "recentlyAdded": "Нещодавно додані",
+        "greeting": "Привіт"
+    },
+    "search": {
+        "title": "Пошук",
+        "placeholder": "Книги, автори, жанри...",
+        "searching": "Шукаємо на Флібусті...",
+        "noResults": "За запитом «{query}» нічого не знайдено",
+        "enterQuery": "Введіть назву книги або автора"
+    },
+    "myBooks": {
+        "title": "Мої книги",
+        "books": "Книги",
+        "favorites": "Улюблене",
+        "quotes": "Цитати",
+        "bookmarks": "Закладки",
+        "booksCount": "{count} книг",
+        "noBooks": "У вас ще немає книг",
+        "addFirst": "Знайдіть першу книгу"
+    },
+    "reader": {
+        "page": "Сторінка",
+        "of": "з",
+        "translate": "Перекласти",
+        "translating": "Перекладаємо...",
+        "originalText": "Оригінал",
+        "translatedText": "Переклад",
+        "summary": "Зміст",
+        "bookmark": "Закладка",
+        "settings": "Налаштування",
+        "fontSize": "Розмір шрифту",
+        "theme": "Тема",
+        "readingMode": "Режим читання",
+        "scroll": "Прокрутка",
+        "pageFlip": "Перегортання"
+    },
+    "auth": {
+        "login": "Увійти",
+        "register": "Зареєструватися",
+        "email": "Email",
+        "password": "Пароль",
+        "forgotPassword": "Забули пароль?",
+        "noAccount": "Немає акаунту?",
+        "hasAccount": "Вже є акаунт?"
+    },
+    "errors": {
+        "bookNotFound": "Книгу не знайдено на Флібусті",
+        "serverUnavailable": "Сервер тимчасово недоступний",
+        "networkError": "Помилка мережі",
+        "translationFailed": "Не вдалося перекласти"
+    },
+    "language": {
+        "title": "Мова",
+        "uk": "Українська",
+        "ru": "Русский",
+        "en": "English"
+    }
+}

@@ -5,6 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { Sidebar } from './components/Sidebar';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { Auth } from './pages/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -14,22 +15,22 @@ function lazyWithRetry<T extends ComponentType<unknown>>(
   retries = 3,
   delay = 1000
 ): React.LazyExoticComponent<T> {
-return lazy(async () => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await importFn();
-    } catch (error) {
-      console.warn(`Chunk load failed, attempt ${i + 1}/${retries}`, error);
-      if (i === retries - 1) {
-        throw error;
+  return lazy(async () => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await importFn();
+      } catch (error) {
+        console.warn(`Chunk load failed, attempt ${i + 1}/${retries}`, error);
+        if (i === retries - 1) {
+          throw error;
+        }
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
       }
-      // Wait before retrying (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
     }
-  }
-  // This shouldn't be reached, but TypeScript needs it
-  throw new Error('Failed to load chunk after retries');
-});
+    // This shouldn't be reached, but TypeScript needs it
+    throw new Error('Failed to load chunk after retries');
+  });
 }
 
 // Lazy load pages with retry
@@ -150,11 +151,13 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </AuthProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }

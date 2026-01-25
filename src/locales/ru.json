@@ -1,0 +1,80 @@
+{
+    "common": {
+        "loading": "Загрузка...",
+        "error": "Ошибка",
+        "retry": "Попробовать ещё",
+        "back": "Назад",
+        "save": "Сохранить",
+        "cancel": "Отмена",
+        "delete": "Удалить",
+        "search": "Поиск",
+        "settings": "Настройки",
+        "logout": "Выйти"
+    },
+    "nav": {
+        "home": "Главная",
+        "search": "Поиск",
+        "myBooks": "Мои книги"
+    },
+    "home": {
+        "title": "Библиотека",
+        "continueReading": "Продолжить чтение",
+        "recommended": "Рекомендуем",
+        "recentlyAdded": "Недавно добавленные",
+        "greeting": "Привет"
+    },
+    "search": {
+        "title": "Поиск",
+        "placeholder": "Книги, авторы, жанры...",
+        "searching": "Ищем на Флибусте...",
+        "noResults": "По запросу «{query}» ничего не найдено",
+        "enterQuery": "Введите название книги или автора"
+    },
+    "myBooks": {
+        "title": "Мои книги",
+        "books": "Книги",
+        "favorites": "Избранное",
+        "quotes": "Цитаты",
+        "bookmarks": "Закладки",
+        "booksCount": "{count} книг",
+        "noBooks": "У вас ещё нет книг",
+        "addFirst": "Найдите первую книгу"
+    },
+    "reader": {
+        "page": "Страница",
+        "of": "из",
+        "translate": "Перевести",
+        "translating": "Переводим...",
+        "originalText": "Оригинал",
+        "translatedText": "Перевод",
+        "summary": "Содержание",
+        "bookmark": "Закладка",
+        "settings": "Настройки",
+        "fontSize": "Размер шрифта",
+        "theme": "Тема",
+        "readingMode": "Режим чтения",
+        "scroll": "Прокрутка",
+        "pageFlip": "Перелистывание"
+    },
+    "auth": {
+        "login": "Войти",
+        "register": "Зарегистрироваться",
+        "email": "Email",
+        "password": "Пароль",
+        "forgotPassword": "Забыли пароль?",
+        "noAccount": "Нет аккаунта?",
+        "hasAccount": "Уже есть аккаунт?"
+    },
+    "errors": {
+        "bookNotFound": "Книга не найдена на Флибусте",
+        "serverUnavailable": "Сервер временно недоступен",
+        "networkError": "Ошибка сети",
+        "translationFailed": "Не удалось перевести"
+    },
+    "language": {
+        "title": "Язык",
+        "uk": "Українська",
+        "ru": "Русский",
+        "en": "English"
+    }
+}
