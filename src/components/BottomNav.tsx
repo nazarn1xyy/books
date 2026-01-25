@@ -1,15 +1,17 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Search, BookOpen } from 'lucide-react';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-
-const navItems = [
-    { to: '/', icon: Home, label: 'Главная' },
-    { to: '/search', icon: Search, label: 'Поиск' },
-    { to: '/my-books', icon: BookOpen, label: 'Мои книги' },
-];
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function BottomNav() {
     const { isKeyboardOpen } = useKeyboardHeight();
+    const { t } = useLanguage();
+
+    const navItems = [
+        { to: '/', icon: Home, label: t('nav.home') },
+        { to: '/search', icon: Search, label: t('nav.search') },
+        { to: '/my-books', icon: BookOpen, label: t('nav.myBooks') },
+    ];
 
     // Hide navigation when keyboard is open
     if (isKeyboardOpen) {

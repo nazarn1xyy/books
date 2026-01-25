@@ -4,6 +4,7 @@ import { fetchBooks } from '../services/flibustaApi';
 import { BookCard } from '../components/BookCard';
 import type { Book } from '../types';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function Search() {
     const [query, setQuery] = useState('');
@@ -11,6 +12,7 @@ export function Search() {
     const [loading, setLoading] = useState(false);
     const [debouncedQuery, setDebouncedQuery] = useState('');
     const { isKeyboardOpen, keyboardHeight } = useKeyboardHeight();
+    const { t } = useLanguage();
 
     // Debounce search query
     useEffect(() => {
@@ -70,7 +72,7 @@ export function Search() {
         >
             {/* Fixed Search Header */}
             <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4 desktop-container">
-                <h1 className="text-3xl font-bold text-white mb-4 lg:text-4xl">Поиск</h1>
+                <h1 className="text-3xl font-bold text-white mb-4 lg:text-4xl">{t('search.title')}</h1>
                 <div className="relative lg:max-w-xl">
                     <SearchIcon
                         size={20}
@@ -84,14 +86,14 @@ export function Search() {
                         spellCheck={false}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Книги, авторы, жанры..."
-                        aria-label="Поиск книг"
+                        placeholder={t('search.placeholder')}
+                        aria-label={t('search.title')}
                         className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
                     />
                     {query && (
                         <button
                             onClick={() => setQuery('')}
-                            aria-label="Очистить поиск"
+                            aria-label={t('common.cancel')}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
                         >
                             <X size={20} />
@@ -112,7 +114,7 @@ export function Search() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-16">
                         <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />
-                        <p className="text-gray-400">Ищем на Флибусте...</p>
+                        <p className="text-gray-400">{t('search.searching')}</p>
                     </div>
                 ) : results.length > 0 ? (
                     <div className="grid grid-cols-3 gap-4 pb-4 lg:grid-cols-4 xl:grid-cols-6 desktop-container">
@@ -124,14 +126,14 @@ export function Search() {
                     <div className="flex flex-col items-center justify-center py-16">
                         <SearchIcon size={48} className="text-gray-600 mb-4" />
                         <p className="text-gray-400 text-center">
-                            По запросу «{debouncedQuery}»<br />ничего не найдено
+                            {t('search.noResults', { query: debouncedQuery })}
                         </p>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16">
                         <SearchIcon size={48} className="text-gray-700 mb-4" />
                         <p className="text-gray-500 text-center">
-                            Введите название книги<br />или автора
+                            {t('search.enterQuery')}
                         </p>
                     </div>
                 )}

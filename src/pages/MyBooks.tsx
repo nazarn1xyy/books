@@ -14,11 +14,13 @@ import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type TabType = 'books' | 'favorites' | 'quotes' | 'bookmarks';
 
 export function MyBooks() {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
@@ -263,7 +265,7 @@ export function MyBooks() {
                 <header className="mb-4 flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-white lg:text-4xl">
-                            {activeTab === 'books' ? 'Мои книги' : activeTab === 'favorites' ? 'Избранное' : 'Цитаты'}
+                            {activeTab === 'books' ? t('myBooks.title') : activeTab === 'favorites' ? t('myBooks.favorites') : activeTab === 'quotes' ? t('myBooks.quotes') : t('myBooks.bookmarks')}
                         </h1>
                         {activeTab === 'books' && myBookIds.length > 0 && (
                             <p className="text-gray-500 mt-1">{myBookIds.length} книг</p>
@@ -299,7 +301,7 @@ export function MyBooks() {
                                 }`}
                         >
                             <Library size={18} />
-                            <span className="font-medium">Книги</span>
+                            <span className="font-medium">{t('myBooks.books')}</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('favorites')}
@@ -309,7 +311,7 @@ export function MyBooks() {
                                 }`}
                         >
                             <Heart size={18} fill={activeTab === 'favorites' ? 'currentColor' : 'none'} />
-                            <span className="font-medium">Избранное</span>
+                            <span className="font-medium">{t('myBooks.favorites')}</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('quotes')}
@@ -319,7 +321,7 @@ export function MyBooks() {
                                 }`}
                         >
                             <MessageSquareQuote size={18} />
-                            <span className="font-medium">Цитаты</span>
+                            <span className="font-medium">{t('myBooks.quotes')}</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('bookmarks')}
@@ -329,7 +331,7 @@ export function MyBooks() {
                                 }`}
                         >
                             <Bookmark size={18} />
-                            <span className="font-medium">Закладки</span>
+                            <span className="font-medium">{t('myBooks.bookmarks')}</span>
                         </button>
                     </div>
                 )}
