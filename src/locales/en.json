@@ -21,7 +21,10 @@
         "continueReading": "Continue Reading",
         "recommended": "Recommended",
         "recentlyAdded": "Recently Added",
-        "greeting": "Hello"
+        "greeting": "Hello",
+        "installTitle": "Install App",
+        "installDesc": "Add Libify to your home screen for quick access",
+        "install": "Install"
     },
     "search": {
         "title": "Search",

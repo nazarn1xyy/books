@@ -21,7 +21,10 @@
         "continueReading": "Продовжити читання",
         "recommended": "Рекомендуємо",
         "recentlyAdded": "Нещодавно додані",
-        "greeting": "Привіт"
+        "greeting": "Привіт",
+        "installTitle": "Встановити додаток",
+        "installDesc": "Додайте Libify на головний екран для швидкого доступу",
+        "install": "Встановити"
     },
     "search": {
         "title": "Пошук",

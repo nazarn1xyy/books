@@ -21,7 +21,10 @@
         "continueReading": "Продолжить чтение",
         "recommended": "Рекомендуем",
         "recentlyAdded": "Недавно добавленные",
-        "greeting": "Привет"
+        "greeting": "Привет",
+        "installTitle": "Установить приложение",
+        "installDesc": "Добавьте Libify на главный экран для быстрого доступа",
+        "install": "Установить"
     },
     "search": {
         "title": "Поиск",

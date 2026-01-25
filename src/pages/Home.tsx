@@ -5,6 +5,7 @@ import { getAppState } from '../utils/storage';
 import { fetchBooks } from '../services/flibustaApi';
 import type { Book } from '../types';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function Home() {
     const state = getAppState();
@@ -12,12 +13,11 @@ export function Home() {
     const [loading, setLoading] = useState(true);
     const { canInstall, promptInstall } = useInstallPrompt();
     const [showInstallBanner, setShowInstallBanner] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         const loadBooks = async () => {
             try {
-                // Flibusta doesn't list books without query, so search for something common
-                // e.g. "Классика" or a popular author
                 const fetchedBooks = await fetchBooks('Толстой');
                 setBooks(fetchedBooks);
             } catch (error) {
@@ -33,8 +33,6 @@ export function Home() {
         if (loading) return [];
         return Object.keys(state.readingProgress)
             .map((bookId) => {
-                // Try to find in fetched books, or maybe we need to fetch specific IDs if not in list
-                // For now, only if in list
                 const book = books.find((b) => b.id === bookId);
                 const progress = state.readingProgress[bookId];
                 if (book && progress && progress.currentPage < progress.totalPages - 1) {
@@ -61,9 +59,8 @@ export function Home() {
         <div className="min-h-screen bg-black pb-24 lg:pb-8 pt-[env(safe-area-inset-top)]">
             <div className="px-5 pt-8 desktop-container">
                 {/* Header */}
-                {/* Header */}
                 <header className="mb-6 mt-2">
-                    <h1 className="text-3xl font-bold text-white">Библиотека</h1>
+                    <h1 className="text-3xl font-bold text-white">{t('home.title')}</h1>
                 </header>
 
                 {/* Install PWA Banner */}
@@ -71,8 +68,8 @@ export function Home() {
                     <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
                         <Download className="text-blue-400 flex-shrink-0 mt-0.5" size={24} />
                         <div className="flex-1">
-                            <h3 className="text-white font-semibold mb-1">Установить приложение</h3>
-                            <p className="text-gray-300 text-sm mb-3">Добавьте Libify на главный экран для быстрого доступа</p>
+                            <h3 className="text-white font-semibold mb-1">{t('home.installTitle')}</h3>
+                            <p className="text-gray-300 text-sm mb-3">{t('home.installDesc')}</p>
                             <button
                                 onClick={async () => {
                                     const success = await promptInstall();
@@ -80,13 +77,13 @@ export function Home() {
                                 }}
                                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white rounded-lg text-sm font-medium transition-all"
                             >
-                                Установить
+                                {t('home.install')}
                             </button>
                         </div>
                         <button
                             onClick={() => setShowInstallBanner(false)}
                             className="text-gray-400 hover:text-white transition-colors p-1 active:scale-95"
-                            aria-label="Закрыть"
+                            aria-label={t('common.cancel')}
                         >
                             <X size={20} />
                         </button>
@@ -99,12 +96,12 @@ export function Home() {
                     </div>
                 ) : books.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <p className="text-gray-400 mb-4">Не удалось загрузить рекомендации.</p>
+                        <p className="text-gray-400 mb-4">{t('errors.networkError')}</p>
                         <button
                             onClick={() => window.location.reload()}
                             className="px-4 py-2 bg-white/10 rounded-full text-white text-sm hover:bg-white/20 transition-colors"
                         >
-                            Попробовать снова
+                            {t('common.retry')}
                         </button>
                     </div>
                 ) : (
@@ -112,7 +109,7 @@ export function Home() {
                         {/* Continue Reading */}
                         {booksInProgress.length > 0 && (
                             <section className="mb-8">
-                                <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">Продолжить чтение</h2>
+                                <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.continueReading')}</h2>
                                 <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {booksInProgress.map((item, index) => (
                                         <BookCard
@@ -130,7 +127,7 @@ export function Home() {
                         {/* Recommended */}
                         {recommendedBooks.length > 0 && (
                             <section className="mb-8">
-                                <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">Рекомендуем</h2>
+                                <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
                                 <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {recommendedBooks.map((book, index) => (
                                         <BookCard
@@ -146,7 +143,7 @@ export function Home() {
 
                         {/* Recently Added */}
                         <section className="mb-8">
-                            <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">Недавно добавленные</h2>
+                            <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
                             <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
                                 {recentBooks.map((book) => (
                                     <BookCard key={book.id} book={book} size="small" />
