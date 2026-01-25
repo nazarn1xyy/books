@@ -28,7 +28,7 @@ export function Sidebar() {
             {/* Logo */}
             <div className="p-6 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                    <img src="/icon 1.png" alt="Libify" className="w-8 h-8" />
+                    <img src="/AppIcon-512@2x.png" alt="Libify" className="w-8 h-8" />
                     <span className="text-2xl font-bold text-white tracking-tight">Libify</span>
                 </div>
             </div>
@@ -72,8 +72,8 @@ export function Sidebar() {
                                     setShowLangMenu(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${language === lang.code
-                                        ? 'bg-white/10 text-white'
-                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                    ? 'bg-white/10 text-white'
+                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >
                                 <span>{lang.flag}</span>
