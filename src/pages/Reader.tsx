@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Footprints } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Footprints, Languages, Loader2 } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -14,6 +14,7 @@ import { addQuote, addBookmark } from '../services/db';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useCameraStream } from '../hooks/useCameraStream';
 import { useAuth } from '../contexts/AuthContext';
+import { translateText, TRANSLATION_LANGUAGES, type TranslationLanguage } from '../services/translationService';
 import type { Book } from '../types';
 
 // Setup PDF worker
@@ -65,6 +66,13 @@ export function Reader() {
     const [ttsActiveParagraph, setTtsActiveParagraph] = useState<number | null>(null);
     const [ttsRate, setTtsRate] = useState(1);
     const [showTtsControls, setShowTtsControls] = useState(false);
+
+    // Translation State
+    const [showTranslateModal, setShowTranslateModal] = useState(false);
+    const [translatedParagraphs, setTranslatedParagraphs] = useState<string[]>([]);
+    const [isTranslating, setIsTranslating] = useState(false);
+    const [translationLang, setTranslationLang] = useState<TranslationLanguage | null>(null);
+    const [translationProgress, setTranslationProgress] = useState({ current: 0, total: 0 });
 
     // Walk Mode (Transparent Reality)
     const { stream, isActive: isCameraActive, startCamera, stopCamera } = useCameraStream();
@@ -600,6 +608,14 @@ export function Reader() {
                     >
                         <Sparkles size={22} className="text-yellow-400" />
                     </button>
+                    {/* Translate Button */}
+                    <button
+                        onClick={() => setShowTranslateModal(true)}
+                        aria-label="Перекласти"
+                        className={`p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity ${translationLang ? 'text-green-400' : ''}`}
+                    >
+                        <Languages size={22} className={translationLang ? 'text-green-400' : ''} />
+                    </button>
                     <button
                         onClick={() => setShowSettings(true)}
                         aria-label="Настройки"
@@ -716,7 +732,9 @@ export function Reader() {
                                                     }`}
                                                 style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
                                             >
-                                                {para}
+                                                {translatedParagraphs.length > 0 && translatedParagraphs[actualIndex]
+                                                    ? translatedParagraphs[actualIndex]
+                                                    : para}
                                             </p>
                                         );
                                     })}
@@ -872,6 +890,104 @@ export function Reader() {
                         >
                             <X size={24} />
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Translation Modal */}
+            {showTranslateModal && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
+                    onClick={() => setShowTranslateModal(false)}
+                >
+                    <div
+                        className="w-full max-w-lg bg-[var(--reader-ui-bg)] rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up shadow-2xl"
+                        style={{ backgroundColor: 'var(--reader-ui-bg)' }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-semibold text-[var(--reader-text)]">🌐 Перекласти книгу</h2>
+                            <button
+                                onClick={() => setShowTranslateModal(false)}
+                                className="p-2 -mr-2 text-gray-400 hover:text-[var(--reader-text)] transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {isTranslating ? (
+                            <div className="py-8 text-center">
+                                <Loader2 className="w-10 h-10 mx-auto mb-4 animate-spin text-blue-400" />
+                                <p className="text-[var(--reader-text)] mb-2">Перекладаємо...</p>
+                                <p className="text-gray-400 text-sm">
+                                    {translationProgress.current} / {translationProgress.total} абзаців
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <p className="text-gray-400 text-sm mb-4">
+                                    Оберіть мову для перекладу книги:
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                    {TRANSLATION_LANGUAGES.map((lang) => (
+                                        <button
+                                            key={lang.code}
+                                            onClick={async () => {
+                                                if (translationLang === lang.code) {
+                                                    // Turn off translation
+                                                    setTranslationLang(null);
+                                                    setTranslatedParagraphs([]);
+                                                    setShowTranslateModal(false);
+                                                } else {
+                                                    // Start translation
+                                                    setIsTranslating(true);
+                                                    setTranslationLang(lang.code);
+                                                    const translated: string[] = [];
+                                                    try {
+                                                        for (let i = 0; i < paragraphs.length; i++) {
+                                                            const result = await translateText(paragraphs[i], lang.code);
+                                                            translated.push(result);
+                                                            setTranslationProgress({ current: i + 1, total: paragraphs.length });
+                                                            // Small delay between requests
+                                                            if (i < paragraphs.length - 1) {
+                                                                await new Promise(r => setTimeout(r, 50));
+                                                            }
+                                                        }
+                                                        setTranslatedParagraphs(translated);
+                                                    } catch (err) {
+                                                        console.error('Translation failed:', err);
+                                                        setTranslationLang(null);
+                                                    }
+                                                    setIsTranslating(false);
+                                                    setShowTranslateModal(false);
+                                                }
+                                            }}
+                                            className={`flex items-center gap-3 p-4 rounded-xl transition-all ${translationLang === lang.code
+                                                ? 'bg-green-500/20 border-2 border-green-500 text-[var(--reader-text)]'
+                                                : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:text-[var(--reader-text)]'
+                                                }`}
+                                        >
+                                            <span className="text-2xl">{lang.flag}</span>
+                                            <span className="text-sm font-medium">{lang.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {translationLang && (
+                                    <button
+                                        onClick={() => {
+                                            setTranslationLang(null);
+                                            setTranslatedParagraphs([]);
+                                            setShowTranslateModal(false);
+                                        }}
+                                        className="w-full py-3 rounded-xl bg-red-500/20 text-red-400 font-medium hover:bg-red-500/30 transition-colors"
+                                    >
+                                        Вимкнути переклад
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
             )}
