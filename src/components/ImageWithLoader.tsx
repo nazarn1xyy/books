@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
 interface ImageWithLoaderProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     wrapperClassName?: string;
 }
 
-export function ImageWithLoader({ wrapperClassName = '', className = '', ...props }: ImageWithLoaderProps) {
+export const ImageWithLoader = memo(function ImageWithLoader({ wrapperClassName = '', className = '', ...props }: ImageWithLoaderProps) {
     const [isLoaded, setIsLoaded] = useState(false);
 
     return (
@@ -27,4 +27,4 @@ export function ImageWithLoader({ wrapperClassName = '', className = '', ...prop
             />
         </div>
     );
-}
+});

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Share2, Download, Check } from 'lucide-react';
 import type { Book } from '../types';
@@ -20,7 +20,7 @@ interface BookCardProps {
     initialFavorite?: boolean;
 }
 
-export function BookCard({
+export const BookCard = memo(function BookCard({
     book,
     size = 'medium',
     showProgress = false,
@@ -223,4 +223,4 @@ export function BookCard({
             </div>
         </Link>
     );
-}
+});

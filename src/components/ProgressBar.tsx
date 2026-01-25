@@ -1,10 +1,12 @@
+import { memo } from 'react';
+
 interface ProgressBarProps {
     percentage: number;
     height?: number;
     showLabel?: boolean;
 }
 
-export function ProgressBar({ percentage, height = 4, showLabel = false }: ProgressBarProps) {
+export const ProgressBar = memo(function ProgressBar({ percentage, height = 4, showLabel = false }: ProgressBarProps) {
     return (
         <div className="w-full">
             <div
@@ -21,4 +23,4 @@ export function ProgressBar({ percentage, height = 4, showLabel = false }: Progr
             )}
         </div>
     );
-}
+});

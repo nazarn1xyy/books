@@ -101,6 +101,7 @@ export default defineConfig({
     }),
   ],
   build: {
+    sourcemap: false, // Disable sourcemaps in production for smaller bundle
     rollupOptions: {
       output: {
         manualChunks: {
@@ -108,9 +109,14 @@ export default defineConfig({
           ui: ['lucide-react'],
           charts: ['recharts'],
           animation: ['framer-motion'],
+          pdf: ['pdfjs-dist'],
+          virtuoso: ['react-virtuoso'],
+          supabase: ['@supabase/supabase-js'],
         },
       },
     },
+    // Increase chunk size warning limit since we have lazy loading
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     proxy: {

@@ -12,6 +12,7 @@ import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -258,8 +259,43 @@ export function MyBooks() {
         }
     };
 
+    const refreshData = async () => {
+        setLoadingData(true);
+        try {
+            setMyBookIds(getMyBookIds());
+            const [favs, qs, bms] = await Promise.all([
+                getFavorites(),
+                getQuotes(),
+                getBookmarks()
+            ]);
+            setFavorites(favs);
+            setQuotes(qs);
+            setBookmarks(bms);
+        } catch (err) {
+            console.error('Failed to refresh data:', err);
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
+
     return (
-        <div className="min-h-screen bg-black pb-24 lg:pb-8 pt-[env(safe-area-inset-top)] relative overflow-hidden">
+        <div ref={containerRef} className="min-h-screen bg-black pb-24 lg:pb-8 pt-[env(safe-area-inset-top)] relative overflow-y-auto overscroll-contain h-screen">
+            {/* Pull to Refresh Indicator */}
+            <div
+                className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
+                style={{
+                    top: 'env(safe-area-inset-top)',
+                    transform: `translateY(${pullProgress > 0 ? pullProgress - 40 : -100}px)`
+                }}
+            >
+                <div className="bg-[#1C1C1E] rounded-full p-2 shadow-xl border border-white/10">
+                    <div className={`w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full ${isRefreshing ? 'animate-spin' : ''}`}
+                        style={{ transform: `rotate(${pullProgress * 2}deg)` }}
+                    />
+                </div>
+            </div>
             <div className="px-5 pt-8 desktop-container">
                 {/* Header */}
                 <header className="mb-4 flex items-center justify-between">

@@ -99,8 +99,13 @@
   </script>
 
   <title>Библиотека - Читалка книг</title>
-  <link rel="preconnect" href="https://images.unsplash.com" />
-  <link rel="dns-prefetch" href="https://images.unsplash.com" />
+  <!-- Preconnect to critical origins -->
+  <link rel="preconnect" href="https://libify.store" />
+  <link rel="preconnect" href="https://xhyznruotgnbgsqc.supabase.co" crossorigin />
+  <link rel="dns-prefetch" href="https://xhyznruotgnbgsqc.supabase.co" />
+  <!-- Preload critical fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <script>
     window.addEventListener('error', async function (e) { const t = e.message?.toLowerCase() || "", r = t.includes("token") || t.includes("syntax") || t.includes("script error") || t.includes("mime"); if (e.target && ("SCRIPT" === e.target.tagName || r)) { console.error("Critical boot error detected:", e); if ("serviceWorker" in navigator) { const e = await navigator.serviceWorker.getRegistrations(); for (const t of e) await t.unregister() } sessionStorage.getItem("retry_boot") ? sessionStorage.removeItem("retry_boot") : (sessionStorage.setItem("retry_boot", "true"), window.location.reload()) } }, !0);
   </script>
