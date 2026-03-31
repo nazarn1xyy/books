@@ -21,11 +21,17 @@ export interface ReadingProgress {
   scrollPercentage?: number;
 }
 
+export interface Chapter {
+  title: string;
+  paragraphIndex: number;
+}
+
 export interface UserSettings {
   fontSize: number;
   brightness: number;
   theme?: 'light' | 'dark' | 'sepia' | 'oled';
   readerMode?: 'scroll' | 'page';
+  fontFamily?: 'sans' | 'serif' | 'mono' | 'rounded';
 }
 
 export interface AppState {

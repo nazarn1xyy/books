@@ -146,7 +146,7 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
     }
 }
 
-export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string; series?: string; seriesNumber?: number }> {
+export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string; series?: string; seriesNumber?: number; chapters?: { title: string; paragraphIndex: number }[] }> {
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {
@@ -204,7 +204,8 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
             text: parsedData.text,
             cover: parsedData.cover,
             title: parsedData.title,
-            author: parsedData.author
+            author: parsedData.author,
+            chapters: parsedData.chapters
         };
     } catch (error) {
         console.error('Failed to fetch book:', error);

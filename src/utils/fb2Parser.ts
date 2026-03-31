@@ -14,6 +14,7 @@ export interface ParsedBookData {
     description?: string;
     series?: string;
     seriesNumber?: number;
+    chapters?: { title: string; paragraphIndex: number }[];
 }
 
 /**
@@ -185,15 +186,47 @@ function extractFb2Content(doc: Document): ParsedBookData {
         cover = `data:${contentType};base64,${base64}`;
     }
 
-    // Extract Body Text
+    // Extract Body Text + Chapters
     const bodyElements = doc.getElementsByTagNameNS('*', 'body');
     const body = bodyElements.length > 0 ? bodyElements[0] : null;
 
     let extractedText = '';
+    const chapters: { title: string; paragraphIndex: number }[] = [];
 
     if (body) {
-        const paragraphs = body.getElementsByTagNameNS('*', 'p');
-        extractedText = Array.from(paragraphs).map(p => p.textContent).join('\n\n');
+        const allParagraphs = Array.from(body.getElementsByTagNameNS('*', 'p'));
+        extractedText = allParagraphs.map(p => p.textContent || '').join('\n\n');
+
+        // Extract chapter positions from sections
+        const processSection = (section: Element, depth: number) => {
+            if (depth > 3) return;
+            const localName = (el: Element) => el.localName || el.tagName?.split(':').pop() || '';
+
+            // Find a direct <title> child of this section
+            const titleEl = Array.from(section.children).find(c => localName(c) === 'title');
+            if (titleEl) {
+                const rawTitle = titleEl.textContent?.trim().replace(/\s+/g, ' ') || '';
+                if (rawTitle && rawTitle.length < 300) {
+                    // First non-title <p> in this section gives chapter start position
+                    const titlePs = new Set(Array.from(titleEl.getElementsByTagNameNS('*', 'p')));
+                    const sectionPs = Array.from(section.getElementsByTagNameNS('*', 'p'));
+                    const firstContentP = sectionPs.find(p => !titlePs.has(p)) || sectionPs[0];
+                    if (firstContentP) {
+                        const idx = allParagraphs.indexOf(firstContentP);
+                        if (idx >= 0) chapters.push({ title: rawTitle, paragraphIndex: idx });
+                    }
+                }
+            }
+
+            // Recurse into child sections
+            Array.from(section.children)
+                .filter(c => localName(c) === 'section')
+                .forEach(s => processSection(s as Element, depth + 1));
+        };
+
+        Array.from(body.children)
+            .filter(c => (c.localName || c.tagName?.split(':').pop() || '') === 'section')
+            .forEach(s => processSection(s as Element, 0));
     }
 
     // 4. Series (Sequence)
@@ -220,7 +253,8 @@ function extractFb2Content(doc: Document): ParsedBookData {
         author,
         description,
         series,
-        seriesNumber
+        seriesNumber,
+        chapters: chapters.length > 0 ? chapters : undefined
     };
 }
 

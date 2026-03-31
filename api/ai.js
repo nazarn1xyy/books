@@ -30,7 +30,10 @@ export default async function handler(req, res) {
     }
 
     // Use environment variable or fallback to the provided key
-    const API_KEY = process.env.GLHF_API_KEY || 'ozNuUIEEFB1kvZYEpFycMEN4uX9D9TuJ';
+    const API_KEY = process.env.GLHF_API_KEY;
+    if (!API_KEY) {
+        return res.status(500).json({ error: 'AI service not configured' });
+    }
     const BASE_URL = 'https://glhf.chat/api/openai/v1';
 
     try {

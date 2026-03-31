@@ -38,6 +38,9 @@ export function MyBooks() {
         setTimeout(() => setCopiedQuoteId(null), 2000);
     };
 
+    // Sort
+    const [sortBy, setSortBy] = useState<'date' | 'title' | 'author'>('date');
+
     // Tabs
     const [activeTab, setActiveTab] = useState<TabType>('books');
     const [favorites, setFavorites] = useState<Favorite[]>([]);
@@ -134,17 +137,23 @@ export function MyBooks() {
             result.push({ type: 'series', name, books: seriesBooks });
         });
 
-        // Sort entire list by lastRead (max of series)
         return result.sort((a, b) => {
-            const getTimestamp = (item: typeof result[0]) => {
-                if (item.type === 'book') return item.data.progress?.lastRead || 0;
-                // For series, find the most recently read book
-                return Math.max(...item.books.map(b => b.progress?.lastRead || 0));
-            };
-            return getTimestamp(b) - getTimestamp(a);
-        });
+            const label = (item: typeof result[0]) =>
+                item.type === 'book' ? item.data.book : item.books[0]?.book;
 
-    }, [myBookIds]);
+            if (sortBy === 'title') {
+                return (label(a)?.title || '').localeCompare(label(b)?.title || '', undefined, { sensitivity: 'base' });
+            }
+            if (sortBy === 'author') {
+                return (label(a)?.author || '').localeCompare(label(b)?.author || '', undefined, { sensitivity: 'base' });
+            }
+            // date (default)
+            const ts = (item: typeof result[0]) =>
+                item.type === 'book' ? item.data.progress?.lastRead || 0
+                    : Math.max(...item.books.map(b => b.progress?.lastRead || 0));
+            return ts(b) - ts(a);
+        });
+    }, [myBookIds, sortBy]);
 
     const handleRemove = (bookId: string) => {
         confirmDelete('Удалить эту книгу из списка?', () => {
@@ -317,6 +326,25 @@ export function MyBooks() {
                         </button>
                     )}
                 </header>
+
+                {/* Sort Bar — books tab only */}
+                {activeTab === 'books' && items.length > 1 && (
+                    <div className="flex gap-2 mb-4">
+                        {([
+                            { key: 'date', label: 'По дате' },
+                            { key: 'title', label: 'По названию' },
+                            { key: 'author', label: 'По автору' },
+                        ] as const).map(s => (
+                            <button
+                                key={s.key}
+                                onClick={() => setSortBy(s.key)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-white text-black' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}
+                            >
+                                {s.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Tab Bar */}
                 {user && (

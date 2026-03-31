@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Languages, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Languages, Loader2, List } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -45,7 +45,9 @@ export function Reader() {
 
     // UI State
     const [showSettings, setShowSettings] = useState(false);
+    const [showToc, setShowToc] = useState(false);
     const [settings, setSettings] = useState(getSettings);
+    const [chapters, setChapters] = useState<{ title: string; paragraphIndex: number }[]>([]);
 
     // Page Flip Mode State
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -97,7 +99,8 @@ export function Reader() {
 
             try {
                 // Fetch book content from Flibusta (FB2 parsed) or cache (PDF)
-                const { text, cover, pdfData, title, author, series, seriesNumber } = await fetchBookContent(id);
+                const { text, cover, pdfData, title, author, series, seriesNumber, chapters: bookChapters } = await fetchBookContent(id);
+                if (bookChapters?.length) setChapters(bookChapters);
 
                 console.log('Book fetch result:', {
                     textLength: text?.length || 0,
@@ -271,6 +274,12 @@ export function Reader() {
 
     const updateTheme = (theme: 'light' | 'dark' | 'sepia' | 'oled') => {
         const newSettings = { ...settings, theme };
+        setSettings(newSettings);
+        saveSettings(newSettings);
+    };
+
+    const updateFontFamily = (fontFamily: 'sans' | 'serif' | 'mono' | 'rounded') => {
+        const newSettings = { ...settings, fontFamily };
         setSettings(newSettings);
         saveSettings(newSettings);
     };
@@ -555,13 +564,22 @@ export function Reader() {
 
     const currentTheme = settings.theme || 'dark';
 
+    const FONT_FAMILIES = {
+        sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        serif: "Georgia, 'Times New Roman', serif",
+        mono: "'Courier New', Courier, monospace",
+        rounded: "'Nunito', 'SF Pro Rounded', ui-rounded, sans-serif",
+    };
+    const currentFont = settings.fontFamily || 'sans';
+
     return (
         <div
             className={`fixed inset-0 flex flex-col theme-${currentTheme} transition-colors duration-300`}
             style={{
                 backgroundColor: 'var(--reader-bg)',
                 color: 'var(--reader-text)',
-                filter: `brightness(${settings.brightness}%)`
+                filter: `brightness(${settings.brightness}%)`,
+                fontFamily: FONT_FAMILIES[currentFont]
             }}
         >
 
@@ -621,6 +639,15 @@ export function Reader() {
                     >
                         <Languages size={22} className={translationLang ? 'text-green-400' : ''} />
                     </button>
+                    {book?.format !== 'pdf' && chapters.length > 0 && (
+                        <button
+                            onClick={() => setShowToc(true)}
+                            aria-label="Содержание"
+                            className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity"
+                        >
+                            <List size={22} />
+                        </button>
+                    )}
                     <button
                         onClick={() => setShowSettings(true)}
                         aria-label="Настройки"
@@ -1049,6 +1076,30 @@ export function Reader() {
                             </div>
                         )}
 
+                        {/* Font Family */}
+                        {book?.format !== 'pdf' && (
+                            <div className="mb-6">
+                                <label className="text-sm text-gray-400 mb-3 block">Шрифт</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {([
+                                        { key: 'sans', label: 'Без', sample: 'Aa' },
+                                        { key: 'serif', label: 'Serif', sample: 'Aa' },
+                                        { key: 'mono', label: 'Mono', sample: 'Aa' },
+                                        { key: 'rounded', label: 'Round', sample: 'Aa' },
+                                    ] as const).map(f => (
+                                        <button
+                                            key={f.key}
+                                            onClick={() => updateFontFamily(f.key)}
+                                            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${currentFont === f.key ? 'bg-white/20 ring-1 ring-white/40' : 'bg-black/10 dark:bg-white/5'}`}
+                                        >
+                                            <span className="text-[var(--reader-text)] text-lg leading-none" style={{ fontFamily: FONT_FAMILIES[f.key] }}>{f.sample}</span>
+                                            <span className="text-gray-400 text-[10px]">{f.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Reader Mode Toggle */}
                         {book?.format !== 'pdf' && (
                             <div>
@@ -1093,6 +1144,42 @@ export function Reader() {
                                 />
                                 <span className="text-[var(--reader-text)] font-medium w-10 text-right">{settings.brightness}%</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Table of Contents Drawer */}
+            {showToc && (
+                <div className="fixed inset-0 z-50 flex">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowToc(false)} />
+                    {/* Panel */}
+                    <div className="relative ml-auto w-full max-w-xs h-full bg-[var(--reader-bg)] border-l border-white/10 flex flex-col shadow-2xl">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 pt-[calc(env(safe-area-inset-top)+1rem)]">
+                            <h2 className="text-[var(--reader-text)] font-semibold text-lg">Содержание</h2>
+                            <button onClick={() => setShowToc(false)} className="p-2 text-gray-400 hover:text-[var(--reader-text)] transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto py-2">
+                            {chapters.map((ch, i) => {
+                                const isCurrent = visibleRange.startIndex >= ch.paragraphIndex &&
+                                    (i === chapters.length - 1 || visibleRange.startIndex < chapters[i + 1].paragraphIndex);
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => {
+                                            virtuosoRef.current?.scrollToIndex({ index: ch.paragraphIndex, align: 'start' });
+                                            setShowToc(false);
+                                        }}
+                                        className={`w-full text-left px-5 py-3 transition-colors active:opacity-60 ${isCurrent ? 'text-blue-400 bg-blue-400/10' : 'text-[var(--reader-text)] hover:bg-white/5'}`}
+                                    >
+                                        <span className="text-xs text-gray-500 block mb-0.5">Глава {i + 1}</span>
+                                        <span className="text-sm font-medium line-clamp-2">{ch.title}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
