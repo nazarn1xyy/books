@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { Download, X } from 'lucide-react';
 import { BookCard } from '../components/BookCard';
-import { getAppState } from '../utils/storage';
+import { getAppState, getBookMetadata } from '../utils/storage';
 import { fetchBooks } from '../services/flibustaApi';
 import type { Book } from '../types';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
@@ -11,7 +11,6 @@ let _homeCache: { books: Book[]; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000;
 
 export function Home() {
-    const state = getAppState();
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const { canInstall, promptInstall } = useInstallPrompt();
@@ -45,9 +44,10 @@ export function Home() {
 
     const booksInProgress = useMemo(() => {
         if (loading) return [];
+        const state = getAppState();
         return Object.keys(state.readingProgress)
             .map((bookId) => {
-                const book = books.find((b) => b.id === bookId);
+                const book = books.find((b) => b.id === bookId) || getBookMetadata(bookId);
                 const progress = state.readingProgress[bookId];
                 if (book && progress && progress.currentPage < progress.totalPages - 1) {
                     return { book, progress };
@@ -57,7 +57,7 @@ export function Home() {
             .filter(Boolean)
             .sort((a, b) => (b?.progress.lastRead || 0) - (a?.progress.lastRead || 0))
             .slice(0, 5);
-    }, [state.readingProgress, books, loading]);
+    }, [books, loading]);
 
     const recommendedBooks = useMemo(() => {
         return books

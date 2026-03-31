@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, X, Loader2 } from 'lucide-react';
 import { fetchBooks } from '../services/flibustaApi';
 import { BookCard } from '../components/BookCard';
@@ -7,10 +8,11 @@ import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export function Search() {
-    const [query, setQuery] = useState('');
+    const [searchParams] = useSearchParams();
+    const [query, setQuery] = useState(() => searchParams.get('q') || '');
     const [results, setResults] = useState<Book[]>([]);
     const [loading, setLoading] = useState(false);
-    const [debouncedQuery, setDebouncedQuery] = useState('');
+    const [debouncedQuery, setDebouncedQuery] = useState(() => searchParams.get('q') || '');
     const { isKeyboardOpen, keyboardHeight } = useKeyboardHeight();
     const { t } = useLanguage();
 

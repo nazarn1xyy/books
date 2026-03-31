@@ -21,16 +21,17 @@ export function useInstallPrompt() {
             setInstallPrompt(e as BeforeInstallPromptEvent);
         };
 
-        window.addEventListener('beforeinstallprompt', handler);
-
-        // Check if installed via appinstalled event
-        window.addEventListener('appinstalled', () => {
+        const installedHandler = () => {
             setIsInstalled(true);
             setInstallPrompt(null);
-        });
+        };
+
+        window.addEventListener('beforeinstallprompt', handler);
+        window.addEventListener('appinstalled', installedHandler);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handler);
+            window.removeEventListener('appinstalled', installedHandler);
         };
     }, []);
 

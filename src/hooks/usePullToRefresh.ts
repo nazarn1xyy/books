@@ -4,6 +4,9 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [pullProgress, setPullProgress] = useState(0);
+    const pullProgressRef = useRef(0);
+    const onRefreshRef = useRef(onRefresh);
+    onRefreshRef.current = onRefresh;
 
     useEffect(() => {
         const container = containerRef.current;
@@ -26,15 +29,12 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             const diff = currentY - startY;
 
             if (diff > 0 && container.scrollTop === 0) {
-                // Resistance effect
                 const progress = Math.min(diff * 0.5, 120);
+                pullProgressRef.current = progress;
                 setPullProgress(progress);
-
-                // Prevent default scroll if pulling down at top
-                if (diff > 0 && e.cancelable) {
-                    e.preventDefault();
-                }
+                if (e.cancelable) e.preventDefault();
             } else {
+                pullProgressRef.current = 0;
                 setPullProgress(0);
             }
         };
@@ -43,14 +43,14 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             if (!isDragging) return;
             isDragging = false;
 
-            if (pullProgress > 80) { // Threshold to trigger refresh
+            if (pullProgressRef.current > 80) {
                 setIsRefreshing(true);
-                setPullProgress(80); // Snap to loading position
+                setPullProgress(80);
+                pullProgressRef.current = 80;
 
                 try {
-                    // Min 1s loading for better UX
                     const start = Date.now();
-                    await onRefresh();
+                    await onRefreshRef.current();
                     const elapsed = Date.now() - start;
                     if (elapsed < 1000) {
                         await new Promise(r => setTimeout(r, 1000 - elapsed));
@@ -58,9 +58,11 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
                 } finally {
                     setIsRefreshing(false);
                     setPullProgress(0);
+                    pullProgressRef.current = 0;
                 }
             } else {
                 setPullProgress(0);
+                pullProgressRef.current = 0;
             }
         };
 
@@ -73,7 +75,7 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             container.removeEventListener('touchmove', handleTouchMove);
             container.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [onRefresh, pullProgress]);
+    }, []); // stable — no deps needed with refs
 
     return { containerRef, isRefreshing, pullProgress };
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Settings, X, Minus, Plus, Sun, Sparkles, Brain, BookmarkPlus, AlignLeft, Layers, Play, Pause, Languages, Loader2 } from 'lucide-react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -25,6 +25,7 @@ const PDF_WORKER_SRC = new URL(
 export function Reader() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user } = useAuth();
 
     // State
@@ -75,15 +76,24 @@ export function Reader() {
 
 
 
+    // Toast
+    const [toast, setToast] = useState<string | null>(null);
+    const showToast = useCallback((msg: string) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 2500);
+    }, []);
+
     // Refs
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Initial load
     useEffect(() => {
         const loadBook = async () => {
             if (!id) return;
             setLoading(true);
+            abortControllerRef.current = new AbortController();
 
             try {
                 // Fetch book content from Flibusta (FB2 parsed) or cache (PDF)
@@ -145,6 +155,7 @@ export function Reader() {
             }
         };
         loadBook();
+        return () => { abortControllerRef.current?.abort(); };
     }, [id]);
 
     const paragraphs = useMemo(() => fullText.split('\n\n'), [fullText]);
@@ -159,24 +170,29 @@ export function Reader() {
         // Only run if we have content ready to scroll
         if (total === 0) return;
 
-        const progress = getReadingProgress(id);
-        if (progress) {
-            let startIndex = 0;
-            // Use saved currentPage (index) if available, otherwise calc from percentage
-            if (progress.currentPage !== undefined && progress.currentPage < total) {
-                startIndex = progress.currentPage;
-            } else if (progress.scrollPercentage) {
-                startIndex = Math.floor((progress.scrollPercentage / 100) * total);
+        const bookmarkParagraph = searchParams.get('p');
+        let startIndex = 0;
+
+        if (bookmarkParagraph !== null) {
+            startIndex = Math.max(0, Math.min(parseInt(bookmarkParagraph, 10), total - 1));
+        } else {
+            const progress = getReadingProgress(id);
+            if (progress) {
+                if (progress.currentPage !== undefined && progress.currentPage < total) {
+                    startIndex = progress.currentPage;
+                } else if (progress.scrollPercentage) {
+                    startIndex = Math.floor((progress.scrollPercentage / 100) * total);
+                }
             }
-
-            const safeIndex = Math.max(0, Math.min(startIndex, total - 1));
-
-            // Initial scroll with slight delay to ensure list is rendered
-            setTimeout(() => {
-                virtuosoRef.current?.scrollToIndex({ index: safeIndex, align: 'start' });
-            }, 100);
         }
-    }, [id, paragraphs.length, numPages, book?.format]);
+
+        const safeIndex = Math.max(0, Math.min(startIndex, total - 1));
+
+        // Initial scroll with slight delay to ensure list is rendered
+        setTimeout(() => {
+            virtuosoRef.current?.scrollToIndex({ index: safeIndex, align: 'start' });
+        }, 100);
+    }, [id, paragraphs.length, numPages, book?.format, searchParams]);
 
     const handleRangeChanged = useCallback((range: { startIndex: number, endIndex: number }) => {
         if (!id) return;
@@ -392,12 +408,12 @@ export function Reader() {
 
     const handleSummarize = async () => {
         if (book?.format === 'pdf') {
-            alert('AI справка пока не поддерживается для PDF.');
+            showToast('AI справка пока не поддерживается для PDF.');
             return;
         }
 
         setShowSummary(true);
-        if (summaryContent) return; // Don't regenerate if already there (could reset on close though)
+        if (summaryContent) return;
 
         // Always regenerate for new context actually, but for now let's keep it simple.
         // Or regenerate every time they open it?
@@ -474,10 +490,10 @@ export function Reader() {
             setSelectedText('');
 
             // Show feedback
-            alert('Цитата сохранена! ✨');
+            showToast('Цитата сохранена! ✨');
         } catch (err) {
             console.error('Failed to save quote:', err);
-            alert('Не удалось сохранить цитату');
+            showToast('Не удалось сохранить цитату');
         }
     };
 
@@ -513,10 +529,10 @@ export function Reader() {
                 paragraph_index: paragraphIndex,
                 preview_text: previewText
             }, user.id);
-            alert('🔖 Закладка добавлена!');
+            showToast('🔖 Закладка добавлена!');
         } catch (err) {
             console.error('Failed to add bookmark:', err);
-            alert('Не удалось добавить закладку');
+            showToast('Не удалось добавить закладку');
         }
     };
 
@@ -1091,6 +1107,13 @@ export function Reader() {
                     onSave={handleSaveQuote}
                     onClose={handleCloseQuoteMenu}
                 />
+            )}
+
+            {/* Toast */}
+            {toast && (
+                <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-[#2C2C2E] text-white text-sm font-medium rounded-xl shadow-xl border border-white/10 pointer-events-none animate-slide-up whitespace-nowrap">
+                    {toast}
+                </div>
             )}
         </div>
     );

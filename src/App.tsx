@@ -119,7 +119,7 @@ function AppContent() {
               } />
               <Route path="/admin" element={
                 <PageWrapper>
-                  <Admin />
+                  <ProtectedRoute><Admin /></ProtectedRoute>
                 </PageWrapper>
               } />
             </Routes>
