@@ -57,6 +57,9 @@ export function saveReadingProgress(progress: ReadingProgress): void {
     const state = getAppState();
     state.readingProgress[progress.bookId] = progress;
     saveAppState(state);
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('storage-update'));
+    }
 }
 
 export function addToMyBooks(book: Book): void {

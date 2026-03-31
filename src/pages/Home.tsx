@@ -18,6 +18,17 @@ export function Home() {
     const { t } = useLanguage();
 
     const loadingRef = useRef(false);
+    const [progressTick, setProgressTick] = useState(0);
+
+    // Re-compute booksInProgress when reading progress changes or page becomes visible
+    useEffect(() => {
+        const refresh = () => setProgressTick(t => t + 1);
+        window.addEventListener('storage-update', refresh);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+        return () => {
+            window.removeEventListener('storage-update', refresh);
+        };
+    }, []);
 
     useEffect(() => {
         if (_homeCache && Date.now() - _homeCache.timestamp < CACHE_TTL) {
@@ -57,7 +68,7 @@ export function Home() {
             .filter(Boolean)
             .sort((a, b) => (b?.progress.lastRead || 0) - (a?.progress.lastRead || 0))
             .slice(0, 5);
-    }, [books, loading]);
+    }, [books, loading, progressTick]);
 
     const recommendedBooks = useMemo(() => {
         return books

@@ -89,6 +89,15 @@ export function Reader() {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const pendingProgressRef = useRef<Parameters<typeof saveReadingProgress>[0] | null>(null);
+
+    // Flush pending progress save on unmount so it's never lost
+    useEffect(() => {
+        return () => {
+            if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+            if (pendingProgressRef.current) saveReadingProgress(pendingProgressRef.current);
+        };
+    }, []);
 
     // Initial load
     useEffect(() => {
@@ -221,14 +230,17 @@ export function Reader() {
             clearTimeout(scrollTimeoutRef.current);
         }
 
+        const progressData = {
+            bookId: id,
+            currentPage: currentIndex,
+            totalPages: total,
+            lastRead: Date.now(),
+            scrollPercentage: percentage
+        };
+        pendingProgressRef.current = progressData;
         scrollTimeoutRef.current = setTimeout(() => {
-            saveReadingProgress({
-                bookId: id,
-                currentPage: currentIndex, // 0-based index
-                totalPages: total,
-                lastRead: Date.now(),
-                scrollPercentage: percentage
-            });
+            saveReadingProgress(progressData);
+            pendingProgressRef.current = null;
         }, 1000);
     }, [id, book?.format, numPages, paragraphs.length]);
 
