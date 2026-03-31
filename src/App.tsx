@@ -85,7 +85,7 @@ function AppContent() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
+    <div className="min-h-screen bg-black overflow-x-hidden">
       <ScrollHandler />
       <AnimatePresence mode="sync">
         <Suspense fallback={<LoadingFallback />}>
