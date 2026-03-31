@@ -1,5 +1,10 @@
 import type { Book } from '../types';
 import { getCachedBook, cacheBook } from '../utils/cache';
+import { parseBookData } from '../utils/fb2Parser';
+
+// Re-export parseBookData for backward compatibility
+// (used by MyBooks.tsx via `import { parseBookData } from '../services/flibustaApi'`)
+export { parseBookData } from '../utils/fb2Parser';
 
 const PROXY_URL = '/flibusta';
 const FLIBUSTA_BASE = 'http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion';
@@ -141,221 +146,6 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
     }
 }
 
-// Shared parsing logic for both remote and local books
-export async function parseBookData(data: ArrayBuffer): Promise<{ text: string; cover?: string; title?: string; author?: string; description?: string; series?: string; seriesNumber?: number }> {
-    let text = '';
-
-    // 1. Try to use Web Worker for heavy lifting (Unzip & Decode)
-    try {
-        text = await new Promise<string>((resolve, reject) => {
-            try {
-                const worker = new Worker(new URL('../workers/bookParser.worker.ts', import.meta.url), { type: 'module' });
-
-                const timeout = setTimeout(() => {
-                    worker.terminate();
-                    reject(new Error('Worker timeout'));
-                }, 10000); // 10 second timeout
-
-                worker.onmessage = (e) => {
-                    clearTimeout(timeout);
-                    if (e.data.type === 'SUCCESS') {
-                        resolve(e.data.text);
-                    } else {
-                        reject(new Error(`Worker error: ${e.data.error || 'Unknown'}`));
-                    }
-                    worker.terminate();
-                };
-
-                worker.onerror = (err) => {
-                    clearTimeout(timeout);
-                    console.error('Worker initialization error:', err);
-                    reject(new Error(`Worker failed: ${err.message || 'Cannot start worker'}`));
-                    worker.terminate();
-                };
-
-                // Don't use transferable to keep data available for fallback
-                worker.postMessage({ arrayBuffer: data });
-            } catch (workerError) {
-                // Worker creation failed (iOS/Safari issue)
-                console.error('Failed to create worker:', workerError);
-                reject(new Error(`Worker not supported: ${workerError instanceof Error ? workerError.message : 'Unknown'}`));
-            }
-        });
-    } catch (workerError) {
-        // FALLBACK: Parse synchronously in main thread (iOS/Safari)
-        console.warn('Worker not available, using synchronous parsing:', workerError);
-        const JSZip = (await import('jszip')).default;
-
-        // Helper function for encoding detection
-        const detectEncoding = (buffer: Uint8Array): string => {
-            try {
-                const header = new TextDecoder('ascii').decode(buffer.slice(0, 1024));
-                const match = header.match(/encoding=["']([a-zA-Z0-9-_]+)["']/i);
-                if (match && match[1]) {
-                    return match[1];
-                }
-            } catch (e) {
-                // Ignore
-            }
-            return 'utf-8';
-        };
-
-        // Check if ZIP
-        const arr = new Uint8Array(data.slice(0, 4));
-        const isZip = arr[0] === 0x50 && arr[1] === 0x4B && arr[2] === 0x03 && arr[3] === 0x04;
-
-        if (isZip) {
-            const zip = await JSZip.loadAsync(data);
-            const fb2File = Object.values(zip.files).find(file => file.name.endsWith('.fb2'));
-
-            if (fb2File) {
-                const fileData = await fb2File.async('uint8array');
-                const encoding = detectEncoding(fileData);
-                try {
-                    const decoder = new TextDecoder(encoding);
-                    text = decoder.decode(fileData);
-                } catch {
-                    const decoder = new TextDecoder('utf-8');
-                    text = decoder.decode(fileData);
-                }
-            } else {
-                throw new Error('No .fb2 file found in archive');
-            }
-        } else {
-            const fileData = new Uint8Array(data);
-            const encoding = detectEncoding(fileData);
-            try {
-                const decoder = new TextDecoder(encoding);
-                text = decoder.decode(fileData);
-            } catch {
-                const decoder = new TextDecoder('utf-8');
-                text = decoder.decode(fileData);
-            }
-        }
-    }
-
-    // 2. Parse XML for metadata and body
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/xml');
-
-    // Check for parser errors with detailed diagnostics
-    const parserError = doc.querySelector('parsererror');
-    if (parserError) {
-        const errorText = parserError.textContent || 'Unknown XML error';
-        console.error('XML Parse Error:', errorText);
-        console.error('Text preview (first 500 chars):', text.substring(0, 500));
-        throw new Error(`Failed to parse FB2 XML: ${errorText.substring(0, 200)}`);
-    }
-
-    // Validate that it's actually an FB2 document
-    const fb2Root = doc.querySelector('FictionBook') || doc.getElementsByTagName('FictionBook')[0];
-    if (!fb2Root) {
-        console.error('Not a valid FB2 document. Root element:', doc.documentElement?.tagName);
-        console.error('Text preview:', text.substring(0, 300));
-        throw new Error('Not a valid FB2 document - missing FictionBook root element');
-    }
-
-    // Extract Metadata (Title, Author, Description)
-    // Use getElementsByTagNameNS('*', tag) to ignore namespace prefixes (e.g., <fb:book-title>)
-
-    // Helper to find first element by local name, ignoring namespace
-    const getFirstText = (tagName: string, root: Document | Element = doc): string | null => {
-        const elements = root.getElementsByTagNameNS('*', tagName);
-        return elements.length > 0 ? elements[0].textContent : null;
-    };
-
-    let title = 'Без названия';
-    let author = 'Неизвестный автор';
-    let description = '';
-
-    // 1. Title
-    // Priority: <book-title> -> <title>
-    const bookTitleText = getFirstText('book-title');
-    if (bookTitleText) {
-        title = bookTitleText;
-    } else {
-        const titleText = getFirstText('title');
-        if (titleText) title = titleText;
-    }
-
-    // 2. Author
-    // Search for <author> tag globally. If multiple, take first.
-    // Logic: extract first-name, middle-name, last-name
-    const authors = doc.getElementsByTagNameNS('*', 'author');
-    if (authors.length > 0) {
-        // Use the first author found
-        const authorNode = authors[0];
-
-        const fName = getFirstText('first-name', authorNode) || '';
-        const lName = getFirstText('last-name', authorNode) || '';
-        const mName = getFirstText('middle-name', authorNode) || '';
-
-        const fullName = [fName, mName, lName].filter(Boolean).join(' ');
-        if (fullName) author = fullName;
-    }
-
-    // 3. Description
-    const descText = getFirstText('annotation') || getFirstText('description');
-    if (descText) {
-        description = descText;
-    }
-
-    // Extract Cover
-    let cover = '';
-    // Global search for binary with id containing 'cover' OR content-type image
-    const binaries = Array.from(doc.getElementsByTagNameNS('*', 'binary'));
-    const coverBinary = binaries.find(b => {
-        const id = b.getAttribute('id') || '';
-        const type = b.getAttribute('content-type') || '';
-        return id.toLowerCase().includes('cover') || type.startsWith('image/');
-    });
-
-    if (coverBinary) {
-        const contentType = coverBinary.getAttribute('content-type') || 'image/jpeg';
-        const base64 = coverBinary.textContent;
-        cover = `data:${contentType};base64,${base64}`;
-    }
-
-    // Extract Body Text
-    // Note: getElementsByTagNameNS matches whatever namespace.
-    const bodyElements = doc.getElementsByTagNameNS('*', 'body');
-    const body = bodyElements.length > 0 ? bodyElements[0] : null;
-
-    let extractedText = '';
-
-    if (body) {
-        const paragraphs = body.getElementsByTagNameNS('*', 'p');
-        extractedText = Array.from(paragraphs).map(p => p.textContent).join('\n\n');
-    }
-
-    // 4. Series (Sequence)
-    let series = undefined;
-    let seriesNumber = undefined;
-
-    // Look for <sequence>
-    // Example: <sequence name="Harry Potter" number="1"/>
-    const sequences = doc.getElementsByTagNameNS('*', 'sequence');
-    if (sequences.length > 0) {
-        // Often there might be publish-info sequence too, so we try to find one with a name
-        const validSeq = Array.from(sequences).find(s => s.getAttribute('name'));
-        if (validSeq) {
-            series = validSeq.getAttribute('name') || undefined;
-            const num = validSeq.getAttribute('number');
-            if (num) seriesNumber = parseInt(num, 10);
-        }
-    }
-
-    return {
-        text: extractedText,
-        cover,
-        title,
-        author,
-        description,
-        series,
-        seriesNumber
-    };
-}
-
 export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string; series?: string; seriesNumber?: number }> {
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
@@ -392,7 +182,7 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
             throw new Error('Сервер Флибусты временно недоступен. Попробуйте позже.');
         }
 
-        // Use shared parsing logic
+        // Use shared parsing logic from fb2Parser utility
         const parsedData = await parseBookData(data);
 
         console.log('Parsed data result:', {
