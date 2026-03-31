@@ -2,6 +2,8 @@ const DB_NAME = 'flibusta-cache';
 const STORE_NAME = 'books';
 const VERSION = 1;
 
+let _dbPromise: Promise<IDBDatabase> | null = null;
+
 export interface CachedBook {
     id: string;
     text: string;
@@ -11,7 +13,8 @@ export interface CachedBook {
 }
 
 function openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
+    if (_dbPromise) return _dbPromise;
+    _dbPromise = new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, VERSION); // Note: Version bumps handled dynamically if needed, or we just rely on loosely typed store
 
         request.onerror = () => reject(request.error);
@@ -24,6 +27,7 @@ function openDB(): Promise<IDBDatabase> {
             }
         };
     });
+    return _dbPromise;
 }
 
 export async function cacheBook(id: string, text: string, cover: string, pdfData?: ArrayBuffer): Promise<void> {
@@ -81,11 +85,31 @@ export async function clearCache(): Promise<void> {
     }
 }
 
-export async function isBookCached(id: string): Promise<boolean> {
+let _cachedIds: Set<string> | null = null;
+
+export async function getCachedBookIds(): Promise<Set<string>> {
+    if (_cachedIds) return _cachedIds;
     try {
-        const cached = await getCachedBook(id);
-        return !!cached;
+        const db = await openDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const req = tx.objectStore(STORE_NAME).getAllKeys();
+            req.onsuccess = () => {
+                _cachedIds = new Set(req.result as string[]);
+                resolve(_cachedIds);
+            };
+            req.onerror = () => resolve(new Set());
+        });
     } catch {
-        return false;
+        return new Set();
     }
+}
+
+export function markBookCached(id: string) {
+    if (_cachedIds) _cachedIds.add(id);
+}
+
+export async function isBookCached(id: string): Promise<boolean> {
+    const ids = await getCachedBookIds();
+    return ids.has(id);
 }

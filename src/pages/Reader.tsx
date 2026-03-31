@@ -178,7 +178,7 @@ export function Reader() {
         }
     }, [id, paragraphs.length, numPages, book?.format]);
 
-    const handleRangeChanged = (range: { startIndex: number, endIndex: number }) => {
+    const handleRangeChanged = useCallback((range: { startIndex: number, endIndex: number }) => {
         if (!id) return;
 
         setVisibleRange(range);
@@ -211,7 +211,32 @@ export function Reader() {
                 scrollPercentage: percentage
             });
         }, 1000);
-    };
+    }, [id, book?.format, numPages, paragraphs.length]);
+
+    const renderScrollItem = useCallback((index: number, para: string) => (
+        <div
+            className={`px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto transition-all duration-300 ${index === ttsActiveParagraph ? 'bg-yellow-500/20 dark:bg-yellow-500/10 -mx-2 px-8 rounded-lg' : ''}`}
+            style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
+        >
+            <p>{translatedParagraphs.length > 0 && translatedParagraphs[index]
+                ? translatedParagraphs[index]
+                : para}</p>
+        </div>
+    ), [ttsActiveParagraph, settings.fontSize, translatedParagraphs]);
+
+    const renderPdfItem = useCallback((index: number) => (
+        <div className="flex justify-center py-2 px-2">
+            <Page
+                key={`page_${index + 1}`}
+                pageNumber={index + 1}
+                scale={pdfScale}
+                width={(window.innerWidth > 768 ? 768 : window.innerWidth - 16)}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="shadow-xl bg-white"
+            />
+        </div>
+    ), [pdfScale]);
 
     const updateFontSize = (delta: number) => {
         const newSettings = {
@@ -441,7 +466,7 @@ export function Reader() {
                 book_title: book.title,
                 book_author: book.author,
                 text: selectedText.trim()
-            });
+            }, user.id);
 
             // Clear selection and hide menu
             window.getSelection()?.removeAllRanges();
@@ -487,7 +512,7 @@ export function Reader() {
                 book_title: book.title,
                 paragraph_index: paragraphIndex,
                 preview_text: previewText
-            });
+            }, user.id);
             alert('🔖 Закладка добавлена!');
         } catch (err) {
             console.error('Failed to add bookmark:', err);
@@ -656,19 +681,7 @@ export function Reader() {
                                     style={{ height: '100%' }}
                                     totalCount={numPages}
                                     rangeChanged={handleRangeChanged}
-                                    itemContent={(index) => (
-                                        <div className="flex justify-center py-2 px-2">
-                                            <Page
-                                                key={`page_${index + 1}`}
-                                                pageNumber={index + 1}
-                                                scale={pdfScale}
-                                                width={(window.innerWidth > 768 ? 768 : window.innerWidth - 16)}
-                                                renderTextLayer={false}
-                                                renderAnnotationLayer={false}
-                                                className="shadow-xl bg-white"
-                                            />
-                                        </div>
-                                    )}
+                                    itemContent={renderPdfItem}
                                     components={{
                                         Footer: () => <div className="h-24" />,
                                     }}
@@ -735,17 +748,7 @@ export function Reader() {
                             style={{ height: '100%' }}
                             data={paragraphs}
                             rangeChanged={handleRangeChanged}
-                            itemContent={(index, para) => (
-                                <div
-                                    className={`px-6 py-2 leading-relaxed font-serif max-w-3xl mx-auto transition-all duration-300 ${index === ttsActiveParagraph ? 'bg-yellow-500/20 dark:bg-yellow-500/10 -mx-2 px-8 rounded-lg' : ''
-                                        }`}
-                                    style={{ fontSize: `${settings.fontSize}px`, color: 'var(--reader-text)' }}
-                                >
-                                    <p>{translatedParagraphs.length > 0 && translatedParagraphs[index]
-                                        ? translatedParagraphs[index]
-                                        : para}</p>
-                                </div>
-                            )}
+                            itemContent={renderScrollItem}
                             components={{
                                 Footer: () => <div className="h-48" />, // Extra space for controls
                             }}
@@ -906,17 +909,22 @@ export function Reader() {
                                                     setTranslatedParagraphs([]);
                                                     setShowTranslateModal(false);
                                                 } else {
-                                                    // Start translation
+                                                    // Start translation — only visible window ± 100 paragraphs
                                                     setIsTranslating(true);
                                                     setTranslationLang(lang.code);
                                                     try {
+                                                        const TRANSLATE_BUFFER = 100;
+                                                        const winStart = Math.max(0, visibleRange.startIndex - TRANSLATE_BUFFER);
+                                                        const winEnd = Math.min(paragraphs.length, visibleRange.endIndex + TRANSLATE_BUFFER);
                                                         const { translateParagraphs } = await import('../services/translationService');
                                                         const translated = await translateParagraphs(
-                                                            paragraphs,
+                                                            paragraphs.slice(winStart, winEnd),
                                                             lang.code,
                                                             (current, total) => setTranslationProgress({ current, total })
                                                         );
-                                                        setTranslatedParagraphs(translated);
+                                                        const full = new Array(paragraphs.length).fill('');
+                                                        translated.forEach((t, i) => { full[winStart + i] = t; });
+                                                        setTranslatedParagraphs(full);
                                                     } catch (err) {
                                                         console.error('Translation failed:', err);
                                                         setTranslationLang(null);

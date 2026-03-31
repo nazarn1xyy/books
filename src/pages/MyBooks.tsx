@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book, Quote, Favorite, Bookmark as BookmarkType } from '../types';
-import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
+import { getMyBookIds, getAppState, getReadingProgress, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { parseBookData } from '../services/flibustaApi';
@@ -113,9 +113,10 @@ export function MyBooks() {
         const singles: { book: Book; progress: any }[] = [];
         const seriesMap = new Map<string, { book: Book; progress: any }[]>();
 
+        const state = getAppState();
         myBookIds.forEach((id) => {
-            const book = getBookMetadata(id);
-            const progress = getReadingProgress(id);
+            const book = state.bookMetadata[id];
+            const progress = state.readingProgress[id] || null;
             if (!book) return;
             const item = { book, progress };
 

@@ -1,17 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import ukLocale from '../locales/uk.json';
-import ruLocale from '../locales/ru.json';
-import enLocale from '../locales/en.json';
 
 export type Language = 'uk' | 'ru' | 'en';
 
 type LocaleData = typeof ukLocale;
-
-const locales: Record<Language, LocaleData> = {
-    uk: ukLocale,
-    ru: ruLocale,
-    en: enLocale,
-};
 
 interface LanguageContextType {
     language: Language;
@@ -52,6 +44,8 @@ function detectBrowserLanguage(): Language {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+    const [loadedLocale, setLoadedLocale] = useState<LocaleData>(ukLocale);
+
     const [language, setLanguageState] = useState<Language>(() => {
         // First check localStorage
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -71,11 +65,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         document.documentElement.lang = language;
+        if (language === 'uk') {
+            setLoadedLocale(ukLocale);
+        } else {
+            import(`../locales/${language}.json`).then(m => setLoadedLocale(m.default));
+        }
     }, [language]);
 
     const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-        const locale = locales[language];
-        let value = getNestedValue(locale as unknown as Record<string, unknown>, key);
+        let value = getNestedValue(loadedLocale as unknown as Record<string, unknown>, key);
 
         if (!value) {
             // Fallback to Ukrainian
@@ -95,7 +93,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         }
 
         return value;
-    }, [language]);
+    }, [loadedLocale]);
 
     return (
         <LanguageContext.Provider value={{ language, setLanguage, t }}>

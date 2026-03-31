@@ -4,14 +4,11 @@ import type { Quote, Favorite, Bookmark } from '../types';
 
 // --- Quotes Service ---
 
-export async function addQuote(quote: Omit<Quote, 'id' | 'created_at' | 'user_id'>) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not logged in');
-
+export async function addQuote(quote: Omit<Quote, 'id' | 'created_at' | 'user_id'>, userId: string) {
     const { data, error } = await supabase
         .from('quotes')
         .insert({
-            user_id: userData.user.id,
+            user_id: userId,
             book_id: quote.book_id,
             book_title: quote.book_title,
             book_author: quote.book_author,
@@ -52,14 +49,11 @@ export async function getQuotes(bookId?: string) {
 
 // --- Favorites Service ---
 
-export async function addFavorite(book: { id: string, title: string, author: string, cover: string }) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not logged in');
-
+export async function addFavorite(book: { id: string, title: string, author: string, cover: string }, userId: string) {
     const { data, error } = await supabase
         .from('favorites')
         .insert({
-            user_id: userData.user.id,
+            user_id: userId,
             book_id: book.id,
             book_title: book.title,
             book_author: book.author,
@@ -108,14 +102,11 @@ export async function isBookFavorite(bookId: string) {
 
 // --- Bookmarks Service ---
 
-export async function addBookmark(bookmark: { book_id: string, book_title?: string, paragraph_index: number, preview_text?: string }) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error('User not logged in');
-
+export async function addBookmark(bookmark: { book_id: string, book_title?: string, paragraph_index: number, preview_text?: string }, userId: string) {
     const { data, error } = await supabase
         .from('bookmarks')
         .upsert({
-            user_id: userData.user.id,
+            user_id: userId,
             book_id: bookmark.book_id,
             book_title: bookmark.book_title,
             paragraph_index: bookmark.paragraph_index,

@@ -7,7 +7,7 @@ import { ProgressBar } from './ProgressBar';
 import { ImageWithLoader } from './ImageWithLoader';
 import { useBookCover } from '../hooks/useBookCover';
 import { addFavorite, removeFavorite, isBookFavorite } from '../services/db';
-import { isBookCached, cacheBook } from '../utils/cache';
+import { getCachedBookIds, markBookCached, cacheBook } from '../utils/cache';
 import { fetchBookContent } from '../services/flibustaApi';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -43,9 +43,9 @@ export const BookCard = memo(function BookCard({
         }
     }, [book.id, user, showActions, initialFavorite]);
 
-    // Check if book is cached (offline)
+    // Check if book is cached (offline) using shared Set — one IDB read per session
     useEffect(() => {
-        isBookCached(book.id).then(setIsOffline).catch(() => setIsOffline(false));
+        getCachedBookIds().then(ids => setIsOffline(ids.has(book.id))).catch(() => setIsOffline(false));
     }, [book.id]);
 
     const rawPercentage = progress && progress.totalPages > 0
@@ -81,7 +81,7 @@ export const BookCard = memo(function BookCard({
                     title: book.title,
                     author: book.author,
                     cover: coverSrc || ''
-                });
+                }, user.id);
                 setIsFavorite(true);
             }
         } catch (err) {
@@ -131,6 +131,7 @@ export const BookCard = memo(function BookCard({
                     coverSrc || '',
                     bookData.pdfData
                 );
+                markBookCached(book.id);
                 setIsOffline(true);
             }
         } catch (err) {

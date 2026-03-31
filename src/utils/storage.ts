@@ -4,6 +4,12 @@ const STORAGE_KEY = 'book-library-state';
 
 let _cachedState: AppState | null = null;
 
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY) _cachedState = null;
+    });
+}
+
 const defaultState: AppState = {
     myBooks: [],
     bookMetadata: {},
