@@ -53,6 +53,12 @@ export function Auth() {
 
             if (message === 'Load failed' || message === 'Failed to fetch') {
                 message = 'Ошибка соединения. Проверьте интернет или отключите AdBlock/VPN.';
+            } else if (message === 'Invalid login credentials') {
+                message = 'Неверный email или пароль. Также проверьте, подтвердили ли вы email после регистрации.';
+            } else if (message.toLowerCase().includes('email not confirmed')) {
+                message = 'Email не подтверждён. Проверьте входящие (и папку Спам) и нажмите ссылку подтверждения.';
+            } else if (message.toLowerCase().includes('user already registered')) {
+                message = 'Этот email уже зарегистрирован. Попробуйте войти.';
             }
 
             setError(message);
