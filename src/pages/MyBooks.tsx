@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark } from 'lucide-react';
+import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark, Copy, Check } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book, Quote, Favorite, Bookmark as BookmarkType } from '../types';
 import { getMyBookIds, getAppState, getReadingProgress, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
@@ -28,6 +28,15 @@ export function MyBooks() {
     const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
     const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, bookTitle: '' });
+
+    const [pendingDelete, setPendingDelete] = useState<{ label: string; onConfirm: () => void } | null>(null);
+    const confirmDelete = (label: string, onConfirm: () => void) => setPendingDelete({ label, onConfirm });
+    const [copiedQuoteId, setCopiedQuoteId] = useState<string | null>(null);
+    const copyQuote = (id: string, text: string) => {
+        navigator.clipboard.writeText(text).catch(() => {});
+        setCopiedQuoteId(id);
+        setTimeout(() => setCopiedQuoteId(null), 2000);
+    };
 
     // Tabs
     const [activeTab, setActiveTab] = useState<TabType>('books');
@@ -77,37 +86,21 @@ export function MyBooks() {
     }, [user]);
 
     // Handle delete quote
-    const handleDeleteQuote = async (id: string) => {
-        if (!window.confirm('Удалить эту цитату?')) return;
-        try {
-            await deleteQuote(id);
-            setQuotes(prev => prev.filter(q => q.id !== id));
-        } catch (err) {
-            console.error('Failed to delete quote:', err);
-        }
-    };
+    const handleDeleteQuote = (id: string) => confirmDelete('Удалить эту цитату?', async () => {
+        try { await deleteQuote(id); setQuotes(prev => prev.filter(q => q.id !== id)); }
+        catch (err) { console.error('Failed to delete quote:', err); }
+    });
 
-    // Handle remove favorite
-    const handleRemoveFavorite = async (bookId: string) => {
-        if (!window.confirm('Удалить из избранного?')) return;
-        try {
-            await removeFavorite(bookId);
-            setFavorites(prev => prev.filter(f => f.book_id !== bookId));
-        } catch (err) {
-            console.error('Failed to remove favorite:', err);
-        }
-    };
+    const handleRemoveFavorite = (bookId: string) => confirmDelete('Удалить из избранного?', async () => {
+        try { await removeFavorite(bookId); setFavorites(prev => prev.filter(f => f.book_id !== bookId)); }
+        catch (err) { console.error('Failed to remove favorite:', err); }
+    });
 
     // Handle delete bookmark
-    const handleDeleteBookmark = async (id: string) => {
-        if (!window.confirm('Удалить закладку?')) return;
-        try {
-            await deleteBookmark(id);
-            setBookmarks(prev => prev.filter(b => b.id !== id));
-        } catch (err) {
-            console.error('Failed to delete bookmark:', err);
-        }
-    };
+    const handleDeleteBookmark = (id: string) => confirmDelete('Удалить закладку?', async () => {
+        try { await deleteBookmark(id); setBookmarks(prev => prev.filter(b => b.id !== id)); }
+        catch (err) { console.error('Failed to delete bookmark:', err); }
+    });
 
     const items = useMemo(() => {
         const singles: { book: Book; progress: any }[] = [];
@@ -153,16 +146,15 @@ export function MyBooks() {
 
     }, [myBookIds]);
 
-    const handleRemove = async (bookId: string) => {
-        if (window.confirm('Удалить эту книгу из списка?')) {
-            // Optimistically remove locally
+    const handleRemove = (bookId: string) => {
+        confirmDelete('Удалить эту книгу из списка?', () => {
             removeFromMyBooks(bookId);
             setMyBookIds(getMyBookIds());
             addToPendingDeletions(bookId);
             if (user) {
                 removeBookFromCloud(user.id, bookId).then(() => { });
             }
-        }
+        });
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,13 +296,13 @@ export function MyBooks() {
                             {activeTab === 'books' ? t('myBooks.title') : activeTab === 'favorites' ? t('myBooks.favorites') : activeTab === 'quotes' ? t('myBooks.quotes') : t('myBooks.bookmarks')}
                         </h1>
                         {activeTab === 'books' && myBookIds.length > 0 && (
-                            <p className="text-gray-500 mt-1">{myBookIds.length} книг</p>
+                            <p className="text-gray-500 mt-1">{t('myBooks.booksCount', { count: myBookIds.length })}</p>
                         )}
                         {activeTab === 'favorites' && (
-                            <p className="text-gray-500 mt-1">{favorites.length} книг</p>
+                            <p className="text-gray-500 mt-1">{t('myBooks.booksCount', { count: favorites.length })}</p>
                         )}
                         {activeTab === 'quotes' && (
-                            <p className="text-gray-500 mt-1">{quotes.length} цитат</p>
+                            <p className="text-gray-500 mt-1">{quotes.length} {t('myBooks.quotes').toLowerCase()}</p>
                         )}
                     </div>
                     {activeTab === 'books' && myBookIds.length > 0 && (
@@ -541,13 +533,22 @@ export function MyBooks() {
                                                 <span className="font-medium">{quote.book_title || 'Книга'}</span>
                                                 {quote.book_author && ` — ${quote.book_author}`}
                                             </div>
-                                            <button
-                                                onClick={() => handleDeleteQuote(quote.id)}
-                                                className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                                aria-label="Удалить цитату"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => copyQuote(quote.id, quote.text)}
+                                                    className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                                    aria-label="Скопировать цитату"
+                                                >
+                                                    {copiedQuoteId === quote.id ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteQuote(quote.id)}
+                                                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                    aria-label="Удалить цитату"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -616,6 +617,29 @@ export function MyBooks() {
                     </>
                 )}
             </div>
+
+            {/* Confirm Delete Dialog */}
+            {pendingDelete && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center pb-[env(safe-area-inset-bottom)]">
+                    <div className="bg-[#1C1C1E] rounded-t-3xl w-full max-w-lg p-6 border-t border-white/10">
+                        <p className="text-white font-semibold text-center mb-5">{pendingDelete.label}</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setPendingDelete(null)}
+                                className="flex-1 h-12 bg-white/10 text-white rounded-xl font-medium active:scale-95 transition-all"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={() => { pendingDelete.onConfirm(); setPendingDelete(null); }}
+                                className="flex-1 h-12 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-all"
+                            >
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Upload Button */}
             <div className="fixed bottom-32 right-5 z-20 pb-[env(safe-area-inset-bottom)]">

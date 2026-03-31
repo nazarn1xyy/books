@@ -5,10 +5,13 @@ import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pi
 import { getGenres, getNotifications, getActivityByPeriod, type UserStat } from '../../services/mockStats';
 
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
-// ... other imports
+const ADMIN_EMAIL = 'nazarshikir2021@gmail.com';
 
 export function Admin() {
+    const { user } = useAuth();
+
     const [stats, setStats] = useState({
         totalUsers: 0,
         activeNow: 0,
@@ -112,6 +115,15 @@ export function Admin() {
         }, 3000);
         return () => clearInterval(interval);
     }, []);
+
+    if (!user || user.email !== ADMIN_EMAIL) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center flex-col gap-3">
+                <p className="text-gray-400 text-lg">403 — Доступ запрещён</p>
+                <a href="/" className="text-white underline text-sm">На главную</a>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-black text-white pb-24 pt-[env(safe-area-inset-top)] overflow-x-hidden">

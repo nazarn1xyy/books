@@ -1,21 +1,42 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { BookOpen, User, Mail, Lock, Loader2 } from 'lucide-react';
+import { BookOpen, User, Mail, Lock, Loader2, CheckCircle } from 'lucide-react';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 
 export function Auth() {
     const [isLogin, setIsLogin] = useState(true);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [nickname, setNickname] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const { isKeyboardOpen } = useKeyboardHeight();
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) { setError('Введите email'); return; }
+        setLoading(true);
+        setError(null);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth`,
+            });
+            if (error) throw error;
+            setSuccessMessage('Ссылка для сброса пароля отправлена на ' + email);
+        } catch (err: any) {
+            setError(err.message || 'Не удалось отправить письмо');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setSuccessMessage(null);
 
         try {
             if (isLogin) {
@@ -38,11 +59,11 @@ export function Auth() {
                 if (signUpError) throw signUpError;
 
                 if (data.user && !data.session) {
+                    setSuccessMessage('Аккаунт создан! Проверьте почту ' + email + ' и подтвердите регистрацию.');
                     setIsLogin(true);
                 } else if (data.session) {
                     // Auto-login happened, App.tsx will redirect
                 } else {
-                    // Fallback
                     console.warn('Signup succeed but no session/user returned', data);
                     setIsLogin(true);
                 }
@@ -91,94 +112,161 @@ export function Auth() {
                 </div>
 
                 <div className="bg-[#1C1C1E]/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-                    <div className="flex gap-4 mb-8 bg-black/20 p-1 rounded-xl">
-                        <button
-                            onClick={() => setIsLogin(true)}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${isLogin
-                                ? 'bg-white text-black shadow-lg'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            Вход
-                        </button>
-                        <button
-                            onClick={() => setIsLogin(false)}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${!isLogin
-                                ? 'bg-white text-black shadow-lg'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            Регистрация
-                        </button>
-                    </div>
+                    {/* Success Message */}
+                    {successMessage && (
+                        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-start gap-2">
+                            <CheckCircle size={18} className="text-green-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-green-400 text-sm">{successMessage}</p>
+                        </div>
+                    )}
 
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        {!isLogin && (
+                    {isForgotPassword ? (
+                        /* Forgot Password Form */
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                            <div className="mb-4">
+                                <h2 className="text-white font-semibold text-lg mb-1">Сброс пароля</h2>
+                                <p className="text-gray-400 text-sm">Введите email — пришлём ссылку для сброса</p>
+                            </div>
                             <div className="space-y-1">
-                                <label className="text-xs font-medium text-gray-400 ml-1">Никнейм</label>
+                                <label className="text-xs font-medium text-gray-400 ml-1">Email</label>
                                 <div className="relative">
-                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                     <input
-                                        type="text"
-                                        required={!isLogin}
-                                        value={nickname}
-                                        onChange={(e) => setNickname(e.target.value)}
-                                        placeholder="Придумайте никнейм"
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="example@mail.com"
                                         className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
                                     />
                                 </div>
                             </div>
-                        )}
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-400 ml-1">Email</label>
-                            <div className="relative">
-                                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="example@mail.com"
-                                    className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-400 ml-1">Пароль</label>
-                            <div className="relative">
-                                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                                <input
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    minLength={6}
-                                    className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
-                                />
-                            </div>
-                        </div>
-
-                        {error && (
-                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full h-12 bg-white text-black rounded-xl font-bold mt-2 hover:bg-gray-100 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center shadow-lg shadow-white/5"
-                        >
-                            {loading ? (
-                                <Loader2 size={24} className="animate-spin" />
-                            ) : (
-                                isLogin ? 'Войти' : 'Создать аккаунт'
+                            {error && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">{error}</div>
                             )}
-                        </button>
-                    </form>
+                            <button type="submit" disabled={loading}
+                                className="w-full h-12 bg-white text-black rounded-xl font-bold hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center">
+                                {loading ? <Loader2 size={24} className="animate-spin" /> : 'Отправить письмо'}
+                            </button>
+                            <button type="button" onClick={() => { setIsForgotPassword(false); setError(null); setSuccessMessage(null); }}
+                                className="w-full text-gray-400 text-sm hover:text-white transition-colors py-1">
+                                ← Назад ко входу
+                            </button>
+                        </form>
+                    ) : (
+                        <>
+                            <div className="flex gap-4 mb-8 bg-black/20 p-1 rounded-xl">
+                                <button
+                                    onClick={() => { setIsLogin(true); setError(null); setSuccessMessage(null); }}
+                                    className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${isLogin ? 'bg-white text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                                >
+                                    Вход
+                                </button>
+                                <button
+                                    onClick={() => { setIsLogin(false); setError(null); setSuccessMessage(null); }}
+                                    className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${!isLogin ? 'bg-white text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                                >
+                                    Регистрация
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAuth} className="space-y-4">
+                                {!isLogin && (
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-gray-400 ml-1">Никнейм</label>
+                                        <div className="relative">
+                                            <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                                            <input
+                                                type="text"
+                                                required={!isLogin}
+                                                value={nickname}
+                                                onChange={(e) => setNickname(e.target.value)}
+                                                placeholder="Придумайте никнейм"
+                                                className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-400 ml-1">Email</label>
+                                    <div className="relative">
+                                        <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                                        <input
+                                            type="email"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="example@mail.com"
+                                            className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
+                                        />
+                                    </div>
+                                </div>
+
+                                {isLogin && (
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between ml-1">
+                                            <label className="text-xs font-medium text-gray-400">Пароль</label>
+                                            <button type="button"
+                                                onClick={() => { setIsForgotPassword(true); setError(null); setSuccessMessage(null); }}
+                                                className="text-xs text-gray-500 hover:text-white transition-colors"
+                                            >
+                                                Забыли пароль?
+                                            </button>
+                                        </div>
+                                        <div className="relative">
+                                            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                                            <input
+                                                type="password"
+                                                required
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="••••••••"
+                                                minLength={6}
+                                                className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!isLogin && (
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-gray-400 ml-1">Пароль</label>
+                                        <div className="relative">
+                                            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                                            <input
+                                                type="password"
+                                                required
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="••••••••"
+                                                minLength={6}
+                                                className="w-full h-12 bg-black/40 rounded-xl pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all border border-white/5 focus:border-white/10"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {error && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full h-12 bg-white text-black rounded-xl font-bold mt-2 hover:bg-gray-100 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center shadow-lg shadow-white/5"
+                                >
+                                    {loading ? (
+                                        <Loader2 size={24} className="animate-spin" />
+                                    ) : (
+                                        isLogin ? 'Войти' : 'Создать аккаунт'
+                                    )}
+                                </button>
+                            </form>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
