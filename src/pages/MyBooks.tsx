@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book, Quote, Favorite, Bookmark as BookmarkType } from '../types';
-import { books } from '../data/books';
 import { getMyBookIds, getReadingProgress, getBookMetadata, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
 import { ImageWithLoader } from '../components/ImageWithLoader';
@@ -115,7 +114,7 @@ export function MyBooks() {
         const seriesMap = new Map<string, { book: Book; progress: any }[]>();
 
         myBookIds.forEach((id) => {
-            const book = books.find((b) => b.id === id) || getBookMetadata(id);
+            const book = getBookMetadata(id);
             const progress = getReadingProgress(id);
             if (!book) return;
             const item = { book, progress };

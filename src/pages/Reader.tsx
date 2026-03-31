@@ -17,8 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { TRANSLATION_LANGUAGES, type TranslationLanguage } from '../services/translationService';
 import type { Book } from '../types';
 
-// Setup PDF worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+const PDF_WORKER_SRC = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url,
 ).toString();
@@ -98,7 +97,10 @@ export function Reader() {
                 });
 
                 setFullText(text);
-                if (pdfData) setPdfData(pdfData);
+                if (pdfData) {
+                    pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
+                    setPdfData(pdfData);
+                }
 
                 if (!text && !pdfData) {
                     throw new Error('No text content available - book data is empty');

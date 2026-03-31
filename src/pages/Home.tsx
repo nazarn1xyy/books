@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Download, X } from 'lucide-react';
 import { BookCard } from '../components/BookCard';
 import { getAppState } from '../utils/storage';
@@ -6,6 +6,9 @@ import { fetchBooks } from '../services/flibustaApi';
 import type { Book } from '../types';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { useLanguage } from '../contexts/LanguageContext';
+
+let _homeCache: { books: Book[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000;
 
 export function Home() {
     const state = getAppState();
@@ -15,15 +18,26 @@ export function Home() {
     const [showInstallBanner, setShowInstallBanner] = useState(true);
     const { t } = useLanguage();
 
+    const loadingRef = useRef(false);
+
     useEffect(() => {
+        if (_homeCache && Date.now() - _homeCache.timestamp < CACHE_TTL) {
+            setBooks(_homeCache.books);
+            setLoading(false);
+            return;
+        }
+        if (loadingRef.current) return;
+        loadingRef.current = true;
         const loadBooks = async () => {
             try {
                 const fetchedBooks = await fetchBooks('Толстой');
+                _homeCache = { books: fetchedBooks, timestamp: Date.now() };
                 setBooks(fetchedBooks);
             } catch (error) {
                 console.error('Failed to load books', error);
             } finally {
                 setLoading(false);
+                loadingRef.current = false;
             }
         };
         loadBooks();

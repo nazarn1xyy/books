@@ -2,6 +2,8 @@ import type { AppState, ReadingProgress, UserSettings, Book } from '../types';
 
 const STORAGE_KEY = 'book-library-state';
 
+let _cachedState: AppState | null = null;
+
 const defaultState: AppState = {
     myBooks: [],
     bookMetadata: {},
@@ -15,18 +17,24 @@ const defaultState: AppState = {
 };
 
 export function getAppState(): AppState {
+    if (_cachedState) return _cachedState;
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
-            return { ...defaultState, ...JSON.parse(stored) };
+            const parsed: AppState = { ...defaultState, ...JSON.parse(stored) };
+            _cachedState = parsed;
+            return parsed;
         }
     } catch (e) {
         console.error('Failed to load app state:', e);
     }
-    return defaultState;
+    const fresh: AppState = { ...defaultState };
+    _cachedState = fresh;
+    return fresh;
 }
 
 export function saveAppState(state: AppState): void {
+    _cachedState = state;
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {

@@ -47,6 +47,7 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globIgnores: ['**/charts-*.js'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
