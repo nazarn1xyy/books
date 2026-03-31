@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getAppState, saveAppState, getPendingDeletions, removeFromPendingDeletions, getPendingUploads, removeFromPendingUploads, removeFromMyBooks } from './storage';
+import { getAppState, saveAppState, getPendingDeletions, removeFromPendingDeletions, getPendingUploads, removeFromPendingUploads } from './storage';
 import { getCachedBook, cacheBook } from './cache';
 import { syncMutex } from './mutex';
 
@@ -70,14 +70,29 @@ export async function syncData(userId: string) {
         const cloudBookIds = cloudBooks?.map(b => b.book_id) || [];
         const pendingUploadsStillActive = getPendingUploads();
 
-        // A. Remove Local books that are NOT in Cloud (and NOT pending upload)
-        // This propagates "Cloud deletions" to the device
-        localBookIds.forEach(localId => {
-            if (!cloudBookIds.includes(localId) && !pendingUploadsStillActive.includes(localId)) {
-                // If it's not in cloud, and we are not trying to upload it -> It was deleted remotely
-                removeFromMyBooks(localId);
+        // A. Push Local -> Cloud (upload local books not yet in cloud)
+        // Books opened via Flibusta/local upload are stored locally only; this syncs them up.
+        const booksToUpload = localBookIds.filter(
+            id => !cloudBookIds.includes(id) && !pendingUploadsStillActive.includes(id)
+        );
+        await Promise.all(booksToUpload.map(async (bookId) => {
+            const book = localState.bookMetadata[bookId];
+            if (!book) return;
+            let coverToUpload = book.cover;
+            if (!coverToUpload || coverToUpload === '') {
+                const cached = await getCachedBook(book.id);
+                if (cached?.cover) coverToUpload = cached.cover;
             }
-        });
+            await supabase.from('user_books').upsert({
+                user_id: userId,
+                book_id: book.id,
+                title: book.title || 'Untitled',
+                author: book.author || 'Unknown',
+                cover: coverToUpload || '',
+                status: 'reading',
+                format: book.format || 'fb2'
+            }, { onConflict: 'user_id, book_id', ignoreDuplicates: true });
+        }));
 
         // B. Pull Cloud -> Local (Download missing books)
         // We refreshing state inside loop ideally but here we can just push to array
@@ -157,7 +172,7 @@ export async function syncData(userId: string) {
 
         await Promise.all(progressUpdates);
         saveAppState(localState); // Final save
-
+        window.dispatchEvent(new Event('storage-update'));
 
     } catch (error) {
         console.error('Sync failed:', error);
