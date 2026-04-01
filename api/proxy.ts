@@ -7,19 +7,17 @@ export const config = {
 
 export default async function handler(req: Request) {
     const url = new URL(req.url);
-    // Extract the path after /api/proxy (or however it's routed)
-    // We expect the rewrite to map /flibusta/... -> /api/proxy?path=...
-    // But easier: check the request URL parameters from the query string
 
-    const targetPath = url.searchParams.get('path');
-    const query = url.searchParams.toString().replace(`path=${encodeURIComponent(targetPath || '')}&`, '').replace(`&path=${encodeURIComponent(targetPath || '')}`, '');
+    const targetPath = url.searchParams.get('path') || '';
+    const host = url.searchParams.get('host') || 'flibusta.is';
 
-    // Reconstruct the target URL.
-    // Using http://flibusta.is directly to avoid redirects and mixed content issues.
-    // The server-side fetch has no mixed-content restrictions.
-    const target = `http://flibusta.is/${targetPath}${query ? '?' + query : ''}`;
+    // Strip internal routing params; forward any remaining query string to the target
+    const forwardParams = new URLSearchParams(url.searchParams);
+    forwardParams.delete('path');
+    forwardParams.delete('host');
+    const queryString = forwardParams.toString();
 
-    console.log(`Proxying to: ${target}`);
+    const target = `http://${host}/${targetPath}${queryString ? '?' + queryString : ''}`;
 
     try {
         const response = await fetch(target, {

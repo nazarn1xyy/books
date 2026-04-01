@@ -146,9 +146,9 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
 }
 
 export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string; series?: string; seriesNumber?: number; chapters?: { title: string; paragraphIndex: number }[] }> {
-    // 1. Check Cache first
+    // 1. Check Cache first — only use if it actually has content
     const cached = await getCachedBook(bookId);
-    if (cached) {
+    if (cached && (cached.text?.trim() || cached.pdfData)) {
         return {
             text: cached.text,
             cover: cached.cover,

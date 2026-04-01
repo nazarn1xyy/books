@@ -42,6 +42,7 @@ export async function cacheBook(
     pdfData?: ArrayBuffer,
     meta?: { title?: string; author?: string; series?: string; seriesNumber?: number; chapters?: { title: string; paragraphIndex: number }[] }
 ): Promise<void> {
+    if (!text?.trim() && !pdfData) return; // Don't store empty entries
     try {
         const db = await openDB();
         return new Promise((resolve, reject) => {
