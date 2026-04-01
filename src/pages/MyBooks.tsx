@@ -14,13 +14,18 @@ import { useBookCover } from '../hooks/useBookCover';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage, type Language } from '../contexts/LanguageContext';
 
 type TabType = 'books' | 'favorites' | 'quotes' | 'bookmarks';
 
 export function MyBooks() {
     const { user } = useAuth();
-    const { t } = useLanguage();
+    const { t, language, setLanguage } = useLanguage();
+    const LANGUAGES: { code: Language; name: string; flag: string }[] = [
+        { code: 'uk', name: 'Українська', flag: '🇺🇦' },
+        { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+        { code: 'en', name: 'English', flag: '🇬🇧' },
+    ];
     const navigate = useNavigate();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
@@ -651,6 +656,23 @@ export function MyBooks() {
                         )}
                     </>
                 )}
+            </div>
+
+            {/* Mobile Language Switcher */}
+            <div className="mobile-only mt-10 mb-6 flex flex-col gap-3">
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-widest px-1">{t('language.title')}</p>
+                <div className="flex gap-2">
+                    {LANGUAGES.map(lang => (
+                        <button
+                            key={lang.code}
+                            onClick={() => setLanguage(lang.code)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${language === lang.code ? 'bg-white text-black' : 'bg-white/10 text-gray-400'}`}
+                        >
+                            <span>{lang.flag}</span>
+                            <span>{lang.name}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Confirm Delete Dialog */}
