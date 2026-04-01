@@ -51,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const debouncedSync = () => {
             clearTimeout(syncTimeout);
             syncTimeout = setTimeout(() => {
-                console.log('Realtime update detected, syncing...');
                 syncData(user.id);
             }, 1000); // Wait 1s for batch updates
         };

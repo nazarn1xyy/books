@@ -6,7 +6,6 @@ function detectEncoding(buffer: Uint8Array): string {
         const header = new TextDecoder('ascii').decode(buffer.slice(0, 1024));
         const match = header.match(/encoding=["']([a-zA-Z0-9-_]+)["']/i);
         if (match && match[1]) {
-            console.log('Detected encoding:', match[1]);
             return match[1];
         }
     } catch (e) {
