@@ -685,13 +685,13 @@ export function MyBooks() {
                                 onClick={() => setPendingDelete(null)}
                                 className="flex-1 h-12 bg-white/10 text-white rounded-xl font-medium active:scale-95 transition-all"
                             >
-                                Отмена
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={() => { pendingDelete.onConfirm(); setPendingDelete(null); }}
                                 className="flex-1 h-12 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-all"
                             >
-                                Удалить
+                                {t('common.delete')}
                             </button>
                         </div>
                     </div>
