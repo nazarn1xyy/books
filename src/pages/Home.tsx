@@ -23,10 +23,12 @@ export function Home() {
     // Re-compute booksInProgress when reading progress changes or page becomes visible
     useEffect(() => {
         const refresh = () => setProgressTick(t => t + 1);
+        const onVisibility = () => { if (!document.hidden) refresh(); };
         window.addEventListener('storage-update', refresh);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+        document.addEventListener('visibilitychange', onVisibility);
         return () => {
             window.removeEventListener('storage-update', refresh);
+            document.removeEventListener('visibilitychange', onVisibility);
         };
     }, []);
 
