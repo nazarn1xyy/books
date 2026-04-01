@@ -35,6 +35,8 @@ export const BookCard = memo(function BookCard({
     const [isLoading, setIsLoading] = useState(false);
     const [isOffline, setIsOffline] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [cardToast, setCardToast] = useState<string | null>(null);
+    const showCardToast = (msg: string) => { setCardToast(msg); setTimeout(() => setCardToast(null), 2000); };
 
     // Check favorite status on mount if user is logged in and showActions is true
     useEffect(() => {
@@ -107,7 +109,7 @@ export const BookCard = memo(function BookCard({
             } else {
                 // Fallback: copy to clipboard
                 await navigator.clipboard.writeText(shareData.url);
-                alert('Ссылка скопирована!');
+                showCardToast('Ссылка скопирована!');
             }
         } catch (err) {
             if ((err as Error).name !== 'AbortError') {
@@ -129,14 +131,16 @@ export const BookCard = memo(function BookCard({
                     book.id,
                     bookData.text || '',
                     coverSrc || '',
-                    bookData.pdfData
+                    bookData.pdfData,
+                    { title: bookData.title, author: bookData.author, series: bookData.series, seriesNumber: bookData.seriesNumber, chapters: bookData.chapters }
                 );
                 markBookCached(book.id);
                 setIsOffline(true);
+                showCardToast('Скачано!');
             }
         } catch (err) {
             console.error('Failed to download book:', err);
-            alert('Не удалось скачать книгу');
+            showCardToast('Не удалось скачать книгу');
         } finally {
             setIsDownloading(false);
         }
@@ -146,8 +150,13 @@ export const BookCard = memo(function BookCard({
         <Link
             to={`/reader/${book.id}`}
             aria-label={`Читать книгу ${book.title}, автор ${book.author}`}
-            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover`}
+            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative`}
         >
+            {cardToast && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg">
+                    {cardToast}
+                </div>
+            )}
             <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">
                 <ImageWithLoader
                     src={coverSrc || 'https://placehold.co/300x450?text=No+Cover'}

@@ -249,7 +249,7 @@ export function MyBooks() {
 
     const handleExportAll = async () => {
         if (myBookIds.length === 0) {
-            alert('Нет книг для экспорта!');
+            setUploadError('Нет книг для экспорта!');
             return;
         }
 
@@ -260,7 +260,7 @@ export function MyBooks() {
             });
         } catch (error) {
             console.error('Export failed:', error);
-            alert(error instanceof Error ? error.message : 'Не удалось экспортировать книги');
+            setUploadError(error instanceof Error ? error.message : 'Не удалось экспортировать книги');
         } finally {
             setIsExporting(false);
             setExportProgress({ current: 0, total: 0, bookTitle: '' });
