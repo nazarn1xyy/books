@@ -150,7 +150,16 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
     // 1. Check Cache first
     const cached = await getCachedBook(bookId);
     if (cached) {
-        return { text: cached.text, cover: cached.cover, pdfData: cached.pdfData };
+        return {
+            text: cached.text,
+            cover: cached.cover,
+            pdfData: cached.pdfData,
+            title: cached.title,
+            author: cached.author,
+            series: cached.series,
+            seriesNumber: cached.seriesNumber,
+            chapters: cached.chapters,
+        };
     }
 
     try {
@@ -197,7 +206,13 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
 
         // 2. Cache the result
         if (parsedData.text) {
-            await cacheBook(bookId, parsedData.text, parsedData.cover || '');
+            await cacheBook(bookId, parsedData.text, parsedData.cover || '', undefined, {
+                title: parsedData.title,
+                author: parsedData.author,
+                series: parsedData.series,
+                seriesNumber: parsedData.seriesNumber,
+                chapters: parsedData.chapters,
+            });
         }
 
         return {
@@ -205,7 +220,9 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
             cover: parsedData.cover,
             title: parsedData.title,
             author: parsedData.author,
-            chapters: parsedData.chapters
+            series: parsedData.series,
+            seriesNumber: parsedData.seriesNumber,
+            chapters: parsedData.chapters,
         };
     } catch (error) {
         console.error('Failed to fetch book:', error);

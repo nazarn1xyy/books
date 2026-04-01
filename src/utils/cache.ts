@@ -10,6 +10,11 @@ export interface CachedBook {
     cover: string;
     timestamp: number;
     pdfData?: ArrayBuffer;
+    title?: string;
+    author?: string;
+    series?: string;
+    seriesNumber?: number;
+    chapters?: { title: string; paragraphIndex: number }[];
 }
 
 function openDB(): Promise<IDBDatabase> {
@@ -30,7 +35,13 @@ function openDB(): Promise<IDBDatabase> {
     return _dbPromise;
 }
 
-export async function cacheBook(id: string, text: string, cover: string, pdfData?: ArrayBuffer): Promise<void> {
+export async function cacheBook(
+    id: string,
+    text: string,
+    cover: string,
+    pdfData?: ArrayBuffer,
+    meta?: { title?: string; author?: string; series?: string; seriesNumber?: number; chapters?: { title: string; paragraphIndex: number }[] }
+): Promise<void> {
     try {
         const db = await openDB();
         return new Promise((resolve, reject) => {
@@ -41,7 +52,8 @@ export async function cacheBook(id: string, text: string, cover: string, pdfData
                 text,
                 cover,
                 timestamp: Date.now(),
-                pdfData
+                pdfData,
+                ...meta
             });
 
             request.onerror = () => reject(request.error);

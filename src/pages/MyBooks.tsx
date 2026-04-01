@@ -24,6 +24,7 @@ export function MyBooks() {
     const navigate = useNavigate();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
@@ -206,7 +207,13 @@ export function MyBooks() {
                 series = parsed.series;
                 seriesNumber = parsed.seriesNumber;
 
-                await cacheBook(newBookId, text, cover);
+                await cacheBook(newBookId, text, cover, undefined, {
+                    title: parsed.title,
+                    author: parsed.author,
+                    series: parsed.series,
+                    seriesNumber: parsed.seriesNumber,
+                    chapters: parsed.chapters,
+                });
             }
 
             const newBook: Book = {
@@ -227,7 +234,7 @@ export function MyBooks() {
 
         } catch (error) {
             console.error('Failed to upload book:', error);
-            alert('Не удалось открыть файл. Поддерживаются FB2, FB2.ZIP и PDF.');
+            setUploadError('Не удалось открыть файл. Поддерживаются FB2, FB2.ZIP и PDF.');
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -666,6 +673,16 @@ export function MyBooks() {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Upload Error Toast */}
+            {uploadError && (
+                <div
+                    onClick={() => setUploadError(null)}
+                    className="fixed bottom-52 left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
+                >
+                    {uploadError}
                 </div>
             )}
 

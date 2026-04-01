@@ -78,6 +78,9 @@ export function addToMyBooks(book: Book): void {
 
     state.bookMetadata[book.id] = bookToSave;
     saveAppState(state);
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('storage-update'));
+    }
 }
 
 export function removeFromMyBooks(bookId: string): void {
