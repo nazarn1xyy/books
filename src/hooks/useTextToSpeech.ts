@@ -40,7 +40,10 @@ export function useTextToSpeech() {
         }
 
         return () => {
-            // Optional cleanup
+            synthesis.current.cancel();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = null;
+            }
         };
     }, [state.hasBrowserSupport]);
 
