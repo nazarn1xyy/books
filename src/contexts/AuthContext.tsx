@@ -52,15 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             clearTimeout(syncTimeout);
             syncTimeout = setTimeout(() => {
                 console.log('Realtime update detected, syncing...');
-                syncData(user.id).then(() => {
-                    // Force refresh UI by reloading window? No, React state should handle it.
-                    // But syncData updates local storage, not React state directly.
-                    // We need to trigger a window event or use a state manager.
-                    // Since existing components read from storage on mount or use events?
-                    // MyBooks uses `useState(getMyBookIds())`. It doesn't listen to storage.
-                    // We need to dispatch a custom event 'storage-update'.
-                    window.dispatchEvent(new Event('storage-update'));
-                });
+                syncData(user.id);
             }, 1000); // Wait 1s for batch updates
         };
 
