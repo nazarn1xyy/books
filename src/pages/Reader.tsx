@@ -111,13 +111,6 @@ export function Reader() {
                 const { text, cover, pdfData, title, author, series, seriesNumber, chapters: bookChapters } = await fetchBookContent(id);
                 if (bookChapters?.length) setChapters(bookChapters);
 
-                console.log('Book fetch result:', {
-                    textLength: text?.length || 0,
-                    hasPdf: !!pdfData,
-                    title,
-                    author
-                });
-
                 setFullText(text);
                 if (pdfData) {
                     pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;

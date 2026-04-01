@@ -21,7 +21,6 @@ async function fetchViaProxy(
 
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            console.log(`Fetching ${pathAndQuery} (attempt ${attempt}/${retries})`);
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -164,12 +163,9 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
 
     try {
         const url = `${FLIBUSTA_BASE}/b/${bookId}/fb2`;
-        console.log('Fetching book from:', url);
 
         // Fetch as ArrayBuffer to handle ZIP (with retry logic)
         const data = await fetchViaProxy(url, 'arraybuffer') as ArrayBuffer;
-
-        console.log('Received data size:', data.byteLength, 'bytes');
 
         // Check if we got an empty response
         if (!data || data.byteLength === 0) {
@@ -193,12 +189,6 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
 
         // Use shared parsing logic from fb2Parser utility
         const parsedData = await parseBookData(data);
-
-        console.log('Parsed data result:', {
-            textLength: parsedData.text?.length || 0,
-            hasText: !!parsedData.text,
-            title: parsedData.title
-        });
 
         if (!parsedData.text || parsedData.text.trim().length === 0) {
             throw new Error('Не удалось извлечь текст из книги. Формат файла может быть повреждён.');
