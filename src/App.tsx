@@ -73,14 +73,10 @@ const PageWrapper = ({ children, hasSidebar = false }: { children: ReactNode; ha
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
-      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
-      transition={
-        shouldReduceMotion
-          ? { duration: 0.1 }
-          : { type: "spring", stiffness: 350, damping: 35, mass: 0.8 }
-      }
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: shouldReduceMotion ? 0.05 : 0.15 }}
       className={`min-h-screen bg-black ${hasSidebar ? 'lg:ml-[var(--sidebar-width)]' : ''}`}
     >
       {children}

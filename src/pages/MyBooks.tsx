@@ -290,7 +290,7 @@ export function MyBooks() {
     const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-black pb-28 lg:pb-8 relative">
+        <div ref={containerRef} className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden relative">
             {/* Pull to Refresh Indicator */}
             <div
                 className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
@@ -307,8 +307,8 @@ export function MyBooks() {
                 </div>
             </div>
 
-            {/* Sticky Header with Apple Blur */}
-            <div className="sticky top-0 z-30 bg-black/90 backdrop-blur-xl pt-[calc(env(safe-area-inset-top)+1rem)] pb-3 border-b border-white/5">
+            {/* Pinned Fixed Header */}
+            <div className="flex-shrink-0 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-2 pb-3 z-30">
                 <div className="px-5 desktop-container">
                     {/* Header */}
                     <header className="mb-3 flex items-center justify-between">
@@ -418,7 +418,11 @@ export function MyBooks() {
                 </div>
             </div>
 
-            <div className="px-5 pt-4 desktop-container">
+            {/* Scrollable Content Area */}
+            <div
+                className="flex-1 px-5 pt-4 pb-28 overflow-y-auto overflow-x-hidden touch-pan-y desktop-container"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+            >
 
                 {/* Export Progress Modal */}
                 {isExporting && (
