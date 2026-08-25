@@ -311,9 +311,9 @@ export function MyBooks() {
             <div className="flex-shrink-0 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-2 pb-3 z-30">
                 <div className="px-5 desktop-container">
                     {/* Header */}
-                    <header className="mb-3 flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-white lg:text-3xl">
+                    <header className="mb-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-2xl font-bold text-white lg:text-3xl truncate">
                                 {activeTab === 'books' ? t('myBooks.title') : activeTab === 'favorites' ? t('myBooks.favorites') : activeTab === 'quotes' ? t('myBooks.quotes') : t('myBooks.bookmarks')}
                             </h1>
                             {activeTab === 'books' && myBookIds.length > 0 && (
@@ -326,17 +326,39 @@ export function MyBooks() {
                                 <p className="text-gray-500 text-xs mt-0.5">{quotes.length} {t('myBooks.quotes').toLowerCase()}</p>
                             )}
                         </div>
-                        {activeTab === 'books' && myBookIds.length > 0 && (
-                            <button
-                                onClick={handleExportAll}
-                                disabled={isExporting}
-                                className="p-2.5 min-w-[40px] min-h-[40px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
-                                title={t('myBooks.exportAll')}
-                                aria-label={t('myBooks.exportAll')}
-                            >
-                                <Download size={18} className="text-white" aria-hidden="true" />
-                            </button>
-                        )}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Language Switcher */}
+                            <div className="flex items-center bg-white/10 p-0.5 rounded-xl border border-white/5" role="group" aria-label={t('language.title')}>
+                                {LANGUAGES.map(lang => (
+                                    <button
+                                        key={lang.code}
+                                        onClick={() => setLanguage(lang.code)}
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 active:scale-95 ${language === lang.code
+                                            ? 'bg-white text-black shadow-sm'
+                                            : 'text-gray-400 hover:text-white'
+                                            }`}
+                                        title={lang.name}
+                                        aria-label={lang.name}
+                                    >
+                                        <span className="text-xs leading-none">{lang.flag}</span>
+                                        <span className="uppercase text-[11px] font-bold">{lang.code}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Export All Button */}
+                            {activeTab === 'books' && myBookIds.length > 0 && (
+                                <button
+                                    onClick={handleExportAll}
+                                    disabled={isExporting}
+                                    className="p-2.5 min-w-[40px] min-h-[40px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center border border-white/5"
+                                    title={t('myBooks.exportAll')}
+                                    aria-label={t('myBooks.exportAll')}
+                                >
+                                    <Download size={18} className="text-white" aria-hidden="true" />
+                                </button>
+                            )}
+                        </div>
                     </header>
 
                     {/* Sort Bar */}
@@ -665,23 +687,6 @@ export function MyBooks() {
                         )}
                     </div>
                 )}
-            </div>
-
-            {/* Mobile Language Switcher */}
-            <div className="mobile-only mt-10 mb-6 px-5 flex flex-col gap-3">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-widest px-1">{t('language.title')}</p>
-                <div className="flex gap-2">
-                    {LANGUAGES.map(lang => (
-                        <button
-                            key={lang.code}
-                            onClick={() => setLanguage(lang.code)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${language === lang.code ? 'bg-white text-black font-semibold' : 'bg-white/10 text-gray-400'}`}
-                        >
-                            <span>{lang.flag}</span>
-                            <span>{lang.name}</span>
-                        </button>
-                    ))}
-                </div>
             </div>
 
             {/* Confirm Delete Dialog */}
