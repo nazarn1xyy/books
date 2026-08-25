@@ -134,8 +134,8 @@ function extractFb2Content(doc: Document): ParsedBookData {
         return elements.length > 0 ? elements[0].textContent : null;
     };
 
-    let title = 'Без названия';
-    let author = 'Неизвестный автор';
+    let title = 'Без назви';
+    let author = 'Невідомий автор';
     let description = '';
 
     // 1. Title

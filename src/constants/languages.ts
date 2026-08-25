@@ -8,6 +8,5 @@ export interface LanguageOption {
 
 export const LANGUAGES: LanguageOption[] = [
     { code: 'uk', name: 'Українська', flag: '🇺🇦' },
-    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
     { code: 'en', name: 'English', flag: '🇬🇧' },
 ];

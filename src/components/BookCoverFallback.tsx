@@ -100,7 +100,7 @@ export const BookCoverFallback = memo(function BookCoverFallback({
                     className={`font-serif font-bold text-white tracking-tight line-clamp-3 ${sizeStyles.titleSize}`}
                     title={title}
                 >
-                    {title || 'Без названия'}
+                    {title || 'Без назви'}
                 </h4>
                 {author && (
                     <p

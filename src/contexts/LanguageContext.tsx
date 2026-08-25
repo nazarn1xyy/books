@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import ukLocale from '../locales/uk.json';
 
-export type Language = 'uk' | 'ru' | 'en';
+export type Language = 'uk' | 'en';
 
 type LocaleData = typeof ukLocale;
 
@@ -36,11 +36,10 @@ function detectBrowserLanguage(): Language {
     const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'uk';
     const langCode = browserLang.split('-')[0].toLowerCase();
 
-    if (langCode === 'uk') return 'uk';
-    if (langCode === 'ru') return 'ru';
     if (langCode === 'en') return 'en';
+    if (langCode === 'uk') return 'uk';
 
-    // Default to Ukrainian for unsupported languages
+    // Default to Ukrainian
     return 'uk';
 }
 
@@ -50,7 +49,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>(() => {
         // First check localStorage
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved && ['uk', 'ru', 'en'].includes(saved)) {
+        if (saved && ['uk', 'en'].includes(saved)) {
             return saved as Language;
         }
 

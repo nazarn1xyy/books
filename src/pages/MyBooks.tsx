@@ -202,7 +202,7 @@ export function MyBooks() {
             } else {
                 const parsed = await parseBookData(buffer);
                 text = parsed.text;
-                if (parsed.title && parsed.title !== 'Без названия' && parsed.title.trim() !== '') {
+                if (parsed.title && parsed.title !== 'Без назви' && parsed.title !== 'Без названия' && parsed.title.trim() !== '') {
                     title = parsed.title;
                 } else {
                     title = title.replace(/_/g, ' ');
@@ -805,8 +805,8 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                     />
                     <div className="flex-1 flex flex-col justify-between text-left py-1">
                         <div>
-                            <h3 className="font-semibold text-white line-clamp-2">{book.title || 'Без названия'}</h3>
-                            <p className="text-sm text-gray-500 mt-0.5">{book.author || 'Неизвестный автор'}</p>
+                            <h3 className="font-semibold text-white line-clamp-2">{book.title || 'Без назви'}</h3>
+                            <p className="text-sm text-gray-500 mt-0.5">{book.author || 'Невідомий автор'}</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex-1">

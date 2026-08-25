@@ -62,10 +62,10 @@ export function useTextToSpeech() {
         if (options.volume) utterance.volume = options.volume;
         if (options.voice) utterance.voice = options.voice;
 
-        // Try to select a Russian voice by default if none provided
+        // Try to select a Ukrainian or English voice by default if none provided
         if (!options.voice) {
-            const ruVoice = state.voices.find(v => v.lang.startsWith('ru'));
-            if (ruVoice) utterance.voice = ruVoice;
+            const preferredVoice = state.voices.find(v => v.lang.startsWith('uk')) || state.voices.find(v => v.lang.startsWith('en'));
+            if (preferredVoice) utterance.voice = preferredVoice;
         }
 
         utterance.onstart = () => {

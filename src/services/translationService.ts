@@ -6,11 +6,10 @@ const TRANSLATE_URL = 'https://translate.googleapis.com/translate_a/single';
 // Cache translations to avoid repeated API calls
 const translationCache = new Map<string, string>();
 
-export type TranslationLanguage = 'uk' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'pl';
+export type TranslationLanguage = 'uk' | 'en' | 'de' | 'fr' | 'es' | 'pl';
 
 export const TRANSLATION_LANGUAGES: { code: TranslationLanguage; name: string; flag: string }[] = [
     { code: 'uk', name: 'Українська', flag: '🇺🇦' },
-    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
     { code: 'en', name: 'English', flag: '🇬🇧' },
     { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
     { code: 'fr', name: 'Français', flag: '🇫🇷' },
