@@ -102,24 +102,31 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
             if (!id) return;
 
             // Cover: <link rel="http://opds-spec.org/image" href="...">
-            // or thumbnail
+            // or thumbnail or image MIME
             let cover = '';
-            const imageLink = Array.from(entry.querySelectorAll('link')).find(l =>
-                l.getAttribute('rel') === 'http://opds-spec.org/image' ||
-                l.getAttribute('rel') === 'http://opds-spec.org/thumbnail'
-            );
+            const imageLink = Array.from(entry.querySelectorAll('link')).find(l => {
+                const rel = (l.getAttribute('rel') || '').toLowerCase();
+                const type = (l.getAttribute('type') || '').toLowerCase();
+                return (
+                    rel.includes('image') ||
+                    rel.includes('thumbnail') ||
+                    rel.includes('cover') ||
+                    type.startsWith('image/')
+                );
+            });
 
             if (imageLink) {
                 const href = imageLink.getAttribute('href');
                 if (href) {
                     // Handle relative URLs
                     const coverUrl = href.startsWith('http') ? href : `${FLIBUSTA_BASE}${href}`;
-                    // Route cover through proxy too if it's from flibusta
-                    if (coverUrl.includes('flibusta') || coverUrl.includes('onion')) {
+                    if (coverUrl.includes('static.flibusta')) {
+                        const u = new URL(coverUrl);
+                        cover = `/static_flibusta${u.pathname}${u.search}`;
+                    } else if (coverUrl.includes('flibusta') || coverUrl.includes('onion')) {
                         const u = new URL(coverUrl);
                         cover = `${PROXY_URL}${u.pathname}${u.search}`;
                     } else {
-                        // External covers (rare)
                         cover = coverUrl;
                     }
                 }
@@ -130,7 +137,7 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
                     id,
                     title,
                     author: authorName,
-                    cover: cover || 'https://placehold.co/300x450?text=No+Cover',
+                    cover: cover || '',
                     description: entry.querySelector('content')?.textContent || '',
                     genre: '',
                     contentUrl: `${FLIBUSTA_BASE}/b/${id}/fb2`

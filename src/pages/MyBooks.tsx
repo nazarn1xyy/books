@@ -197,7 +197,7 @@ export function MyBooks() {
 
             if (isPdf) {
                 format = 'pdf';
-                cover = 'https://placehold.co/300x450?text=PDF';
+                cover = '';
                 await cacheBook(newBookId, '', cover, buffer);
             } else {
                 const parsed = await parseBookData(buffer);
@@ -209,7 +209,7 @@ export function MyBooks() {
                 }
 
                 author = parsed.author || author;
-                cover = parsed.cover || 'https://placehold.co/300x450?text=Wait...';
+                cover = parsed.cover || '';
                 description = parsed.description || description;
                 series = parsed.series;
                 seriesNumber = parsed.seriesNumber;
@@ -521,8 +521,11 @@ export function MyBooks() {
                                     >
                                         <div className="flex items-center gap-4 min-w-0">
                                             <ImageWithLoader
-                                                src={fav.book_cover || 'https://placehold.co/300x450?text=No+Cover'}
+                                                src={fav.book_cover}
                                                 alt={fav.book_title}
+                                                fallbackTitle={fav.book_title}
+                                                fallbackAuthor={fav.book_author}
+                                                size="sm"
                                                 className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
                                                 wrapperClassName="w-12 h-16 rounded-lg flex-shrink-0 bg-[#2C2C2E]"
                                             />
@@ -794,6 +797,10 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                     <ImageWithLoader
                         src={coverSrc}
                         alt={book.title}
+                        fallbackTitle={book.title}
+                        fallbackAuthor={book.author}
+                        fallbackFormat={book.format}
+                        size="sm"
                         loading="lazy"
                         className="w-16 h-24 rounded-lg object-cover flex-shrink-0"
                         wrapperClassName="w-16 h-24 rounded-lg flex-shrink-0 bg-[#2C2C2E]"

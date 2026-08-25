@@ -74,9 +74,8 @@ export function Home() {
     }, [books, loading, progressTick]);
 
     const recommendedBooks = useMemo(() => {
-        return books
-            .filter(book => !book.cover.includes('placehold.co'))
-            .slice(0, 4);
+        const withCovers = books.filter(book => book.cover && !book.cover.includes('placehold.co'));
+        return withCovers.length >= 4 ? withCovers.slice(0, 4) : books.slice(0, 4);
     }, [books]);
 
     const recentBooks = useMemo(() => {

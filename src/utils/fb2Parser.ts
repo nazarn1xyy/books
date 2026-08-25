@@ -172,18 +172,39 @@ function extractFb2Content(doc: Document): ParsedBookData {
 
     // Extract Cover
     let cover = '';
-    // Global search for binary with id containing 'cover' OR content-type image
     const binaries = Array.from(doc.getElementsByTagNameNS('*', 'binary'));
-    const coverBinary = binaries.find(b => {
-        const id = b.getAttribute('id') || '';
-        const type = b.getAttribute('content-type') || '';
-        return id.toLowerCase().includes('cover') || type.startsWith('image/');
-    });
 
-    if (coverBinary) {
+    // Check for explicit coverpage reference first
+    const coverpageImages = Array.from(doc.getElementsByTagNameNS('*', 'coverpage'))
+        .flatMap(cp => Array.from(cp.getElementsByTagNameNS('*', 'image')));
+    
+    let targetBinaryId = '';
+    if (coverpageImages.length > 0) {
+        const img = coverpageImages[0];
+        const href = img.getAttribute('href') || img.getAttribute('l:href') || img.getAttribute('xlink:href') || '';
+        targetBinaryId = href.replace(/^#/, '');
+    }
+
+    let coverBinary = targetBinaryId
+        ? binaries.find(b => (b.getAttribute('id') || '').replace(/^#/, '') === targetBinaryId)
+        : null;
+
+    // Fallback: search for binary with id containing 'cover' OR content-type image
+    if (!coverBinary) {
+        coverBinary = binaries.find(b => {
+            const id = (b.getAttribute('id') || '').toLowerCase();
+            const type = (b.getAttribute('content-type') || '').toLowerCase();
+            return id.includes('cover') || type.startsWith('image/');
+        }) || (binaries.length > 0 ? binaries[0] : null);
+    }
+
+    if (coverBinary && coverBinary.textContent) {
         const contentType = coverBinary.getAttribute('content-type') || 'image/jpeg';
-        const base64 = coverBinary.textContent;
-        cover = `data:${contentType};base64,${base64}`;
+        // Strip all whitespace and line breaks from base64 string
+        const cleanBase64 = coverBinary.textContent.replace(/[\r\n\s]+/g, '');
+        if (cleanBase64.length > 50) {
+            cover = `data:${contentType};base64,${cleanBase64}`;
+        }
     }
 
     // Extract Body Text + Chapters

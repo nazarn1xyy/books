@@ -121,14 +121,14 @@ export function Reader() {
                 const existingBook = getBookMetadata(id);
                 const bookData: Book = existingBook ? {
                     ...existingBook,
-                    cover: cover || existingBook.cover,
+                    cover: cover || (existingBook.cover?.includes('placehold.co') ? '' : existingBook.cover) || '',
                     series: series || existingBook.series,
                     seriesNumber: seriesNumber || existingBook.seriesNumber
                 } : {
                     id,
                     title: title || '',
                     author: author || '',
-                    cover: cover || 'https://placehold.co/300x450?text=No+Cover',
+                    cover: cover || '',
                     description: '',
                     genre: '',
                     contentUrl: '',

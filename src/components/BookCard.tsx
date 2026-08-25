@@ -182,8 +182,12 @@ export const BookCard = memo(function BookCard({
             )}
             <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">
                 <ImageWithLoader
-                    src={coverSrc || 'https://placehold.co/300x450?text=No+Cover'}
+                    src={coverSrc}
                     alt={book.title}
+                    fallbackTitle={book.title}
+                    fallbackAuthor={book.author}
+                    fallbackFormat={book.format}
+                    size={size}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
                     fetchPriority={priority ? "high" : "low"}

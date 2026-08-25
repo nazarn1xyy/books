@@ -1,18 +1,55 @@
-import { useState, memo } from 'react';
+import { useState, memo, type ReactNode } from 'react';
+import { BookCoverFallback } from './BookCoverFallback';
 
 interface ImageWithLoaderProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     wrapperClassName?: string;
     aspectRatio?: string;
+    fallback?: ReactNode;
+    fallbackTitle?: string;
+    fallbackAuthor?: string;
+    fallbackFormat?: string;
+    size?: 'sm' | 'md' | 'lg' | 'small' | 'medium' | 'large';
 }
 
 export const ImageWithLoader = memo(function ImageWithLoader({
+    src,
+    alt = '',
     wrapperClassName = '',
     className = '',
     aspectRatio = 'aspect-[2/3]',
-    alt = '',
+    fallback,
+    fallbackTitle,
+    fallbackAuthor,
+    fallbackFormat,
+    size = 'md',
+    onLoad,
+    onError,
     ...props
 }: ImageWithLoaderProps) {
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+    const [errorSrc, setErrorSrc] = useState<string | null>(null);
+
+    const isInvalidSrc = !src || src.trim() === '' || src.includes('placehold.co');
+    const hasError = errorSrc === src;
+    const isLoaded = loadedSrc === src;
+
+    // If source is missing, invalid, or errored out, render Apple Books fallback
+    if (isInvalidSrc || hasError) {
+        if (fallback) {
+            return <div className={`relative overflow-hidden ${aspectRatio} ${wrapperClassName}`}>{fallback}</div>;
+        }
+
+        return (
+            <div className={`relative overflow-hidden ${aspectRatio} ${wrapperClassName}`}>
+                <BookCoverFallback
+                    title={fallbackTitle || alt || 'Book'}
+                    author={fallbackAuthor}
+                    format={fallbackFormat}
+                    size={size}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className={`relative overflow-hidden ${aspectRatio} ${wrapperClassName}`}>
@@ -26,6 +63,8 @@ export const ImageWithLoader = memo(function ImageWithLoader({
 
             {/* Image */}
             <img
+                key={src}
+                src={src}
                 alt={alt}
                 decoding="async"
                 {...props}
@@ -33,8 +72,12 @@ export const ImageWithLoader = memo(function ImageWithLoader({
                     isLoaded ? 'opacity-100' : 'opacity-0'
                 } ${className}`}
                 onLoad={(e) => {
-                    setIsLoaded(true);
-                    props.onLoad?.(e);
+                    setLoadedSrc(src);
+                    onLoad?.(e);
+                }}
+                onError={(e) => {
+                    setErrorSrc(src);
+                    onError?.(e);
                 }}
             />
         </div>
