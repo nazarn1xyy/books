@@ -1,4 +1,4 @@
-import { ChevronLeft, Sparkles, BookmarkPlus, Play, Languages, List, Settings } from 'lucide-react';
+import { ChevronLeft, BookmarkPlus, Play, Languages, List, Settings } from 'lucide-react';
 import type { Book } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -13,7 +13,6 @@ interface ReaderHeaderProps {
     onBack: () => void;
     onTtsPlay: () => void;
     onAddBookmark: () => void;
-    onSummarize: () => void;
     onOpenTranslate: () => void;
     onOpenToc: () => void;
     onOpenSettings: () => void;
@@ -30,7 +29,6 @@ export function ReaderHeader({
     onBack,
     onTtsPlay,
     onAddBookmark,
-    onSummarize,
     onOpenTranslate,
     onOpenToc,
     onOpenSettings
@@ -79,13 +77,6 @@ export function ReaderHeader({
                         </button>
                     </>
                 )}
-                <button
-                    onClick={onSummarize}
-                    aria-label={t('aria.aiSummary')}
-                    className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity rounded-full min-w-[40px] min-h-[40px] flex items-center justify-center"
-                >
-                    <Sparkles size={20} className="text-yellow-400" />
-                </button>
                 <button
                     onClick={onOpenTranslate}
                     aria-label={t('aria.translateBook')}

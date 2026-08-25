@@ -5,7 +5,6 @@ import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { fetchBookContent } from '../services/flibustaApi';
 import { QuoteMenu } from '../components/QuoteMenu';
 import { getSettings, saveSettings, saveReadingProgress, getReadingProgress, addToMyBooks, getBookMetadata } from '../utils/storage';
-import { summarizeText } from '../services/ai';
 import { addQuote, addBookmark } from '../services/db';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +15,6 @@ import type { Book } from '../types';
 import { ReaderHeader } from './Reader/ReaderHeader';
 import { ReaderFooter } from './Reader/ReaderFooter';
 import { ReaderSettingsModal } from './Reader/ReaderSettingsModal';
-import { ReaderSummaryModal } from './Reader/ReaderSummaryModal';
 import { ReaderTranslateModal } from './Reader/ReaderTranslateModal';
 import { ReaderTocDrawer } from './Reader/ReaderTocDrawer';
 import { ReaderTtsControls } from './Reader/ReaderTtsControls';
@@ -53,11 +51,6 @@ export function Reader() {
     // Page Flip Mode State
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const PARAGRAPHS_PER_PAGE = 10;
-
-    // AI Summary State
-    const [showSummary, setShowSummary] = useState(false);
-    const [summaryContent, setSummaryContent] = useState('');
-    const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
     // Quote Selection State
     const [quoteMenuVisible, setQuoteMenuVisible] = useState(false);
@@ -296,7 +289,7 @@ export function Reader() {
 
     // Keyboard navigation for desktop (Page Flip Mode)
     useEffect(() => {
-        if (settings.readerMode !== 'page' || showSettings || showSummary) return;
+        if (settings.readerMode !== 'page' || showSettings) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -321,7 +314,7 @@ export function Reader() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [settings.readerMode, goToNextPage, goToPrevPage, showSettings, showSummary, navigate]);
+    }, [settings.readerMode, goToNextPage, goToPrevPage, showSettings, navigate]);
 
     const currentPageParagraphs = useMemo(() => {
         const start = currentPageIndex * PARAGRAPHS_PER_PAGE;
@@ -378,40 +371,6 @@ export function Reader() {
     const handleTtsPrev = () => {
         cancel();
         setTtsActiveParagraph(prev => (prev !== null && prev > 0 ? prev - 1 : prev));
-    };
-
-    const handleSummarize = async () => {
-        if (book?.format === 'pdf') {
-            showToast(t('reader.pdfNotSupportedAi'));
-            return;
-        }
-
-        setShowSummary(true);
-        if (summaryContent) return;
-
-        setSummaryContent('');
-        setIsGeneratingSummary(true);
-
-        try {
-            const start = Math.max(0, visibleRange.startIndex - 5);
-            const end = Math.min(paragraphs.length, visibleRange.startIndex + 20);
-            const textChunk = paragraphs.slice(start, end).join('\n\n');
-
-            if (!textChunk.trim()) {
-                throw new Error('Not enough text');
-            }
-
-            const result = await summarizeText(textChunk);
-            if (result.error) {
-                setSummaryContent(`${t('common.error')}: ${result.error}`);
-            } else {
-                setSummaryContent(result.summary);
-            }
-        } catch {
-            setSummaryContent(t('errors.networkError'));
-        } finally {
-            setIsGeneratingSummary(false);
-        }
     };
 
     // Text selection for quotes
@@ -550,7 +509,6 @@ export function Reader() {
                 onBack={() => navigate(-1)}
                 onTtsPlay={handleTtsPlay}
                 onAddBookmark={handleAddBookmark}
-                onSummarize={handleSummarize}
                 onOpenTranslate={() => setShowTranslateModal(true)}
                 onOpenToc={() => setShowToc(true)}
                 onOpenSettings={() => setShowSettings(true)}
@@ -648,14 +606,6 @@ export function Reader() {
 
             {/* Footer Progress Bar */}
             <ReaderFooter scrollProgress={scrollProgress} />
-
-            {/* AI Summary Bottom Sheet */}
-            <ReaderSummaryModal
-                isOpen={showSummary}
-                onClose={() => setShowSummary(false)}
-                summaryContent={summaryContent}
-                isGenerating={isGeneratingSummary}
-            />
 
             {/* Translation Bottom Sheet */}
             <ReaderTranslateModal
