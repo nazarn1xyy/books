@@ -111,7 +111,7 @@ export function Search() {
                         <p className="text-gray-400">{t('search.searching')}</p>
                     </div>
                 ) : results.length > 0 ? (
-                    <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-4 desktop-container">
+                    <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4 pb-4 desktop-container">
                         {results.map((book) => (
                             <BookCard key={book.id} book={book} size="small" />
                         ))}

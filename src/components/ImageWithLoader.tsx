@@ -1,6 +1,8 @@
 import { useState, memo, type ReactNode } from 'react';
 import { BookCoverFallback } from './BookCoverFallback';
 
+const _loadedImagesCache = new Set<string>();
+
 interface ImageWithLoaderProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     wrapperClassName?: string;
     aspectRatio?: string;
@@ -26,12 +28,15 @@ export const ImageWithLoader = memo(function ImageWithLoader({
     onError,
     ...props
 }: ImageWithLoaderProps) {
-    const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+    const isInvalidSrc = !src || src.trim() === '' || src.includes('placehold.co');
+    const [loadedSrc, setLoadedSrc] = useState<string | null>(() => {
+        if (src && _loadedImagesCache.has(src)) return src;
+        return null;
+    });
     const [errorSrc, setErrorSrc] = useState<string | null>(null);
 
-    const isInvalidSrc = !src || src.trim() === '' || src.includes('placehold.co');
     const hasError = errorSrc === src;
-    const isLoaded = loadedSrc === src;
+    const isLoaded = loadedSrc === src || (!!src && _loadedImagesCache.has(src));
 
     // If source is missing, invalid, or errored out, render Apple Books fallback
     if (isInvalidSrc || hasError) {
@@ -54,12 +59,12 @@ export const ImageWithLoader = memo(function ImageWithLoader({
     return (
         <div className={`relative overflow-hidden ${aspectRatio} ${wrapperClassName}`}>
             {/* Skeleton / Placeholder to prevent Cumulative Layout Shift */}
-            <div
-                className={`absolute inset-0 bg-[#2C2C2E] transition-opacity duration-300 ${
-                    isLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100 animate-pulse'
-                }`}
-                aria-hidden="true"
-            />
+            {!isLoaded && (
+                <div
+                    className="absolute inset-0 bg-[#2C2C2E] animate-pulse"
+                    aria-hidden="true"
+                />
+            )}
 
             {/* Image */}
             <img
@@ -68,10 +73,11 @@ export const ImageWithLoader = memo(function ImageWithLoader({
                 alt={alt}
                 decoding="async"
                 {...props}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                className={`w-full h-full object-cover transition-opacity duration-200 ${
                     isLoaded ? 'opacity-100' : 'opacity-0'
                 } ${className}`}
                 onLoad={(e) => {
+                    if (src) _loadedImagesCache.add(src);
                     setLoadedSrc(src);
                     onLoad?.(e);
                 }}

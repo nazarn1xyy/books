@@ -339,7 +339,7 @@ export function MyBooks() {
 
                 {/* Sort Bar */}
                 {activeTab === 'books' && items.length > 1 && (
-                    <div className="flex gap-2 mb-4" role="group" aria-label={t('sort.byDate')}>
+                    <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide py-1 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0" role="group" aria-label={t('sort.byDate')}>
                         {([
                             { key: 'date', label: t('sort.byDate') },
                             { key: 'title', label: t('sort.byTitle') },
@@ -358,7 +358,7 @@ export function MyBooks() {
 
                 {/* Tab Bar with ARIA */}
                 {user && (
-                    <div className="flex gap-2 mb-6 overflow-x-auto py-1 -mx-1 px-1" role="tablist" aria-label="Sections">
+                    <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide py-1 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0" role="tablist" aria-label="Sections">
                         <button
                             role="tab"
                             aria-selected={activeTab === 'books'}

@@ -41,6 +41,17 @@ body {
 .scroll-snap-x {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  scroll-padding-left: 1.25rem;
+  scroll-padding-right: 1.25rem;
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+@media (min-width: 640px) {
+  .scroll-snap-x {
+    scroll-padding-left: 1.5rem;
+    scroll-padding-right: 1.5rem;
+  }
 }
 
 .snap-start {

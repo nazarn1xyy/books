@@ -137,14 +137,14 @@ export function Home() {
                         {booksInProgress.length > 0 && (
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.continueReading')}</h2>
-                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
+                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {booksInProgress.map((item, index) => (
                                         <BookCard
                                             key={item!.book.id}
                                             book={item!.book}
                                             size="medium"
                                             showProgress
-                                            priority={index < 2}
+                                            priority={index < 3}
                                         />
                                     ))}
                                 </div>
@@ -155,13 +155,13 @@ export function Home() {
                         {recommendedBooks.length > 0 && (
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
-                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
+                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {recommendedBooks.map((book, index) => (
                                         <BookCard
                                             key={book.id}
                                             book={book}
                                             size="large"
-                                            priority={index < 2}
+                                            priority={index < 3}
                                         />
                                     ))}
                                 </div>
@@ -171,9 +171,9 @@ export function Home() {
                         {/* Recently Added */}
                         <section className="mb-8">
                             <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
-                            <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                                {recentBooks.map((book) => (
-                                    <BookCard key={book.id} book={book} size="small" />
+                            <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4">
+                                {recentBooks.map((book, index) => (
+                                    <BookCard key={book.id} book={book} size="small" priority={index < 4} />
                                 ))}
                             </div>
                         </section>

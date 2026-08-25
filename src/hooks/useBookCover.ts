@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getCachedBook } from '../utils/cache';
 
+const _coverMemoryCache = new Map<string, string>();
+
 function isRealCover(url?: string): boolean {
     if (!url || typeof url !== 'string') return false;
     const trimmed = url.trim();
@@ -8,13 +10,22 @@ function isRealCover(url?: string): boolean {
 }
 
 export function useBookCover(bookId: string, initialCover?: string) {
-    const [cachedCover, setCachedCover] = useState<string>('');
+    const hasInitial = isRealCover(initialCover);
+    if (hasInitial) {
+        _coverMemoryCache.set(bookId, initialCover!);
+    }
+
+    const [cachedCover, setCachedCover] = useState<string>(() => {
+        if (hasInitial) return initialCover!;
+        return _coverMemoryCache.get(bookId) || '';
+    });
 
     useEffect(() => {
-        if (!isRealCover(initialCover)) {
+        if (!hasInitial && !_coverMemoryCache.has(bookId)) {
             let mounted = true;
             getCachedBook(bookId).then(cached => {
                 if (mounted && cached?.cover && isRealCover(cached.cover)) {
+                    _coverMemoryCache.set(bookId, cached.cover);
                     setCachedCover(cached.cover);
                 }
             }).catch(() => {});
@@ -23,11 +34,11 @@ export function useBookCover(bookId: string, initialCover?: string) {
                 mounted = false;
             };
         }
-    }, [bookId, initialCover]);
+    }, [bookId, hasInitial]);
 
-    if (isRealCover(initialCover)) {
+    if (hasInitial) {
         return initialCover!;
     }
 
-    return cachedCover || '';
+    return _coverMemoryCache.get(bookId) || cachedCover || '';
 }

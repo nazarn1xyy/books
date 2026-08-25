@@ -75,15 +75,15 @@ export const BookCard = memo(function BookCard({
     }, [progress]);
 
     const sizeClasses = {
-        small: 'w-28',
-        medium: 'w-36',
-        large: 'w-44',
+        small: 'w-28 min-[380px]:w-32',
+        medium: 'w-36 min-[380px]:w-40',
+        large: 'w-44 min-[380px]:w-48',
     };
 
     const imageHeights = {
-        small: 'h-40',
-        medium: 'h-52',
-        large: 'h-64',
+        small: 'h-40 min-[380px]:h-44',
+        medium: 'h-52 min-[380px]:h-56',
+        large: 'h-64 min-[380px]:h-68',
     };
 
     const handleFavoriteClick = async (e: React.MouseEvent) => {
