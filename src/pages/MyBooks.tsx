@@ -290,7 +290,7 @@ export function MyBooks() {
     const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
 
     return (
-        <div ref={containerRef} className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden relative">
+        <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden relative">
             {/* Pull to Refresh Indicator */}
             <div
                 className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
@@ -442,6 +442,7 @@ export function MyBooks() {
 
             {/* Scrollable Content Area */}
             <div
+                ref={containerRef}
                 className="flex-1 px-5 pt-4 pb-28 overflow-y-auto overflow-x-hidden touch-pan-y desktop-container"
                 style={{ WebkitOverflowScrolling: 'touch' }}
             >
@@ -792,6 +793,7 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
             <motion.div
                 layout
                 drag="x"
+                dragDirectionLock
                 dragConstraints={{ left: -180, right: 0 }}
                 dragElastic={0.55}
                 transition={{ type: "spring", stiffness: 400, damping: 35 }}

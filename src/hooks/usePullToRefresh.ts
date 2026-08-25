@@ -13,12 +13,15 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
         let startX = 0;
         let isTopPull = false;
 
-        const isAtTop = () => {
-            return (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+        const getScrollTop = () => {
+            if (containerRef.current) {
+                return containerRef.current.scrollTop;
+            }
+            return window.scrollY || document.documentElement.scrollTop || 0;
         };
 
         const handleTouchStart = (e: TouchEvent) => {
-            if (isAtTop() && e.touches.length === 1) {
+            if (getScrollTop() <= 0 && e.touches.length === 1) {
                 startY = e.touches[0].clientY;
                 startX = e.touches[0].clientX;
                 isTopPull = true;
@@ -36,8 +39,8 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
                 return;
             }
 
-            // If user scrolled down into the page, disable pull-to-refresh
-            if (!isAtTop()) {
+            // If user scrolled down into the page, disable pull-to-refresh and never prevent default
+            if (getScrollTop() > 0) {
                 isTopPull = false;
                 if (pullProgressRef.current > 0) {
                     pullProgressRef.current = 0;
@@ -51,7 +54,7 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             const diffY = currentY - startY;
             const diffX = currentX - startX;
 
-            // If user is swiping horizontally or scrolling down the page, cancel pull-to-refresh
+            // If user is swiping horizontally or scrolling down (finger moving up), cancel pull-to-refresh
             if (diffY <= 0 || Math.abs(diffX) > Math.abs(diffY)) {
                 isTopPull = false;
                 if (pullProgressRef.current > 0) {
@@ -98,16 +101,17 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             }
         };
 
-        window.addEventListener('touchstart', handleTouchStart, { passive: true });
-        window.addEventListener('touchmove', handleTouchMove, { passive: false });
-        window.addEventListener('touchend', handleTouchEnd, { passive: true });
-        window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+        const target = containerRef.current || window;
+        target.addEventListener('touchstart', handleTouchStart as EventListener, { passive: true });
+        target.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false });
+        target.addEventListener('touchend', handleTouchEnd as EventListener, { passive: true });
+        target.addEventListener('touchcancel', handleTouchEnd as EventListener, { passive: true });
 
         return () => {
-            window.removeEventListener('touchstart', handleTouchStart);
-            window.removeEventListener('touchmove', handleTouchMove);
-            window.removeEventListener('touchend', handleTouchEnd);
-            window.removeEventListener('touchcancel', handleTouchEnd);
+            target.removeEventListener('touchstart', handleTouchStart as EventListener);
+            target.removeEventListener('touchmove', handleTouchMove as EventListener);
+            target.removeEventListener('touchend', handleTouchEnd as EventListener);
+            target.removeEventListener('touchcancel', handleTouchEnd as EventListener);
         };
     }, []);
 
