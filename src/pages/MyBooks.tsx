@@ -11,7 +11,6 @@ import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { removeBookFromCloud } from '../utils/sync';
 import { useBookCover } from '../hooks/useBookCover';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -270,43 +269,8 @@ export function MyBooks() {
         }
     };
 
-    const refreshData = async () => {
-        setLoadingData(true);
-        try {
-            setMyBookIds(getMyBookIds());
-            const [favs, qs, bms] = await Promise.all([
-                getFavorites(),
-                getQuotes(),
-                getBookmarks()
-            ]);
-            setFavorites(favs);
-            setQuotes(qs);
-            setBookmarks(bms);
-        } finally {
-            setLoadingData(false);
-        }
-    };
-
-    const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
-
     return (
         <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden relative">
-            {/* Pull to Refresh Indicator */}
-            <div
-                className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
-                style={{
-                    top: 'env(safe-area-inset-top)',
-                    transform: `translateY(${pullProgress > 0 ? pullProgress - 40 : -100}px)`
-                }}
-            >
-                <div className="bg-[#1C1C1E] rounded-full p-2 shadow-xl border border-white/10">
-                    <div
-                        className={`w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full ${isRefreshing ? 'animate-spin' : ''}`}
-                        style={{ transform: `rotate(${pullProgress * 2}deg)` }}
-                    />
-                </div>
-            </div>
-
             {/* Pinned Fixed Header */}
             <div className="flex-shrink-0 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-2 pb-3 z-30">
                 <div className="px-5 desktop-container">
@@ -442,7 +406,6 @@ export function MyBooks() {
 
             {/* Scrollable Content Area */}
             <div
-                ref={containerRef}
                 className="flex-1 px-5 pt-4 pb-28 overflow-y-auto overflow-x-hidden touch-pan-y desktop-container"
                 style={{ WebkitOverflowScrolling: 'touch' }}
             >
