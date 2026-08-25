@@ -290,7 +290,7 @@ export function MyBooks() {
     const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)] relative">
+        <div ref={containerRef} className="min-h-screen bg-black pb-28 lg:pb-8 relative">
             {/* Pull to Refresh Indicator */}
             <div
                 className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
@@ -307,112 +307,118 @@ export function MyBooks() {
                 </div>
             </div>
 
-            <div className="px-5 pt-8 desktop-container">
-                {/* Header */}
-                <header className="mb-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-white lg:text-4xl">
-                            {activeTab === 'books' ? t('myBooks.title') : activeTab === 'favorites' ? t('myBooks.favorites') : activeTab === 'quotes' ? t('myBooks.quotes') : t('myBooks.bookmarks')}
-                        </h1>
+            {/* Sticky Header with Apple Blur */}
+            <div className="sticky top-0 z-30 bg-black/90 backdrop-blur-xl pt-[calc(env(safe-area-inset-top)+1rem)] pb-3 border-b border-white/5">
+                <div className="px-5 desktop-container">
+                    {/* Header */}
+                    <header className="mb-3 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold text-white lg:text-3xl">
+                                {activeTab === 'books' ? t('myBooks.title') : activeTab === 'favorites' ? t('myBooks.favorites') : activeTab === 'quotes' ? t('myBooks.quotes') : t('myBooks.bookmarks')}
+                            </h1>
+                            {activeTab === 'books' && myBookIds.length > 0 && (
+                                <p className="text-gray-500 text-xs mt-0.5">{t('myBooks.booksCount', { count: myBookIds.length })}</p>
+                            )}
+                            {activeTab === 'favorites' && (
+                                <p className="text-gray-500 text-xs mt-0.5">{t('myBooks.booksCount', { count: favorites.length })}</p>
+                            )}
+                            {activeTab === 'quotes' && (
+                                <p className="text-gray-500 text-xs mt-0.5">{quotes.length} {t('myBooks.quotes').toLowerCase()}</p>
+                            )}
+                        </div>
                         {activeTab === 'books' && myBookIds.length > 0 && (
-                            <p className="text-gray-500 mt-1">{t('myBooks.booksCount', { count: myBookIds.length })}</p>
-                        )}
-                        {activeTab === 'favorites' && (
-                            <p className="text-gray-500 mt-1">{t('myBooks.booksCount', { count: favorites.length })}</p>
-                        )}
-                        {activeTab === 'quotes' && (
-                            <p className="text-gray-500 mt-1">{quotes.length} {t('myBooks.quotes').toLowerCase()}</p>
-                        )}
-                    </div>
-                    {activeTab === 'books' && myBookIds.length > 0 && (
-                        <button
-                            onClick={handleExportAll}
-                            disabled={isExporting}
-                            className="p-3 min-w-[44px] min-h-[44px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
-                            title={t('myBooks.exportAll')}
-                            aria-label={t('myBooks.exportAll')}
-                        >
-                            <Download size={20} className="text-white" aria-hidden="true" />
-                        </button>
-                    )}
-                </header>
-
-                {/* Sort Bar */}
-                {activeTab === 'books' && items.length > 1 && (
-                    <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide py-1 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0" role="group" aria-label={t('sort.byDate')}>
-                        {([
-                            { key: 'date', label: t('sort.byDate') },
-                            { key: 'title', label: t('sort.byTitle') },
-                            { key: 'author', label: t('sort.byAuthor') },
-                        ] as const).map(s => (
                             <button
-                                key={s.key}
-                                onClick={() => setSortBy(s.key)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-white text-black' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}
+                                onClick={handleExportAll}
+                                disabled={isExporting}
+                                className="p-2.5 min-w-[40px] min-h-[40px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
+                                title={t('myBooks.exportAll')}
+                                aria-label={t('myBooks.exportAll')}
                             >
-                                {s.label}
+                                <Download size={18} className="text-white" aria-hidden="true" />
                             </button>
-                        ))}
-                    </div>
-                )}
+                        )}
+                    </header>
 
-                {/* Tab Bar with ARIA */}
-                {user && (
-                    <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide py-1 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0" role="tablist" aria-label="Sections">
-                        <button
-                            role="tab"
-                            aria-selected={activeTab === 'books'}
-                            aria-controls="panel-books"
-                            onClick={() => setActiveTab('books')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'books'
-                                ? 'bg-white text-black font-semibold shadow-sm'
-                                : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
-                        >
-                            <Library size={18} aria-hidden="true" />
-                            <span>{t('myBooks.books')}</span>
-                        </button>
-                        <button
-                            role="tab"
-                            aria-selected={activeTab === 'favorites'}
-                            aria-controls="panel-favorites"
-                            onClick={() => setActiveTab('favorites')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'favorites'
-                                ? 'bg-red-500 text-white font-semibold shadow-sm'
-                                : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
-                        >
-                            <Heart size={18} fill={activeTab === 'favorites' ? 'currentColor' : 'none'} aria-hidden="true" />
-                            <span>{t('myBooks.favorites')}</span>
-                        </button>
-                        <button
-                            role="tab"
-                            aria-selected={activeTab === 'quotes'}
-                            aria-controls="panel-quotes"
-                            onClick={() => setActiveTab('quotes')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'quotes'
-                                ? 'bg-purple-500 text-white font-semibold shadow-sm'
-                                : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
-                        >
-                            <MessageSquareQuote size={18} aria-hidden="true" />
-                            <span>{t('myBooks.quotes')}</span>
-                        </button>
-                        <button
-                            role="tab"
-                            aria-selected={activeTab === 'bookmarks'}
-                            aria-controls="panel-bookmarks"
-                            onClick={() => setActiveTab('bookmarks')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'bookmarks'
-                                ? 'bg-blue-500 text-white font-semibold shadow-sm'
-                                : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
-                        >
-                            <Bookmark size={18} aria-hidden="true" />
-                            <span>{t('myBooks.bookmarks')}</span>
-                        </button>
-                    </div>
-                )}
+                    {/* Sort Bar */}
+                    {activeTab === 'books' && items.length > 1 && (
+                        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide py-0.5 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0" role="group" aria-label={t('sort.byDate')}>
+                            {([
+                                { key: 'date', label: t('sort.byDate') },
+                                { key: 'title', label: t('sort.byTitle') },
+                                { key: 'author', label: t('sort.byAuthor') },
+                            ] as const).map(s => (
+                                <button
+                                    key={s.key}
+                                    onClick={() => setSortBy(s.key)}
+                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-white text-black font-semibold' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}
+                                >
+                                    {s.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Tab Bar with ARIA */}
+                    {user && (
+                        <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0" role="tablist" aria-label="Sections">
+                            <button
+                                role="tab"
+                                aria-selected={activeTab === 'books'}
+                                aria-controls="panel-books"
+                                onClick={() => setActiveTab('books')}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm transition-all whitespace-nowrap ${activeTab === 'books'
+                                    ? 'bg-white text-black font-semibold shadow-sm'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                <Library size={16} aria-hidden="true" />
+                                <span>{t('myBooks.books')}</span>
+                            </button>
+                            <button
+                                role="tab"
+                                aria-selected={activeTab === 'favorites'}
+                                aria-controls="panel-favorites"
+                                onClick={() => setActiveTab('favorites')}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm transition-all whitespace-nowrap ${activeTab === 'favorites'
+                                    ? 'bg-red-500 text-white font-semibold shadow-sm'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                <Heart size={16} fill={activeTab === 'favorites' ? 'currentColor' : 'none'} aria-hidden="true" />
+                                <span>{t('myBooks.favorites')}</span>
+                            </button>
+                            <button
+                                role="tab"
+                                aria-selected={activeTab === 'quotes'}
+                                aria-controls="panel-quotes"
+                                onClick={() => setActiveTab('quotes')}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm transition-all whitespace-nowrap ${activeTab === 'quotes'
+                                    ? 'bg-purple-500 text-white font-semibold shadow-sm'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                <MessageSquareQuote size={16} aria-hidden="true" />
+                                <span>{t('myBooks.quotes')}</span>
+                            </button>
+                            <button
+                                role="tab"
+                                aria-selected={activeTab === 'bookmarks'}
+                                aria-controls="panel-bookmarks"
+                                onClick={() => setActiveTab('bookmarks')}
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm transition-all whitespace-nowrap ${activeTab === 'bookmarks'
+                                    ? 'bg-blue-500 text-white font-semibold shadow-sm'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                <Bookmark size={16} aria-hidden="true" />
+                                <span>{t('myBooks.bookmarks')}</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="px-5 pt-4 desktop-container">
 
                 {/* Export Progress Modal */}
                 {isExporting && (
