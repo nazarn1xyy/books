@@ -1,6 +1,6 @@
 import { Suspense, lazy, type ReactNode, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { BottomNav } from './components/BottomNav';
 import { Sidebar } from './components/Sidebar';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
@@ -68,21 +68,31 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-const PageWrapper = ({ children, hasSidebar = false }: { children: ReactNode; hasSidebar?: boolean }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.98 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.98 }}
-    transition={{ duration: 0.2, ease: "easeOut" }}
-    className={`min-h-screen bg-black ${hasSidebar ? 'lg:ml-[var(--sidebar-width)]' : ''}`}
-  >
-    {children}
-  </motion.div>
-);
+const PageWrapper = ({ children, hasSidebar = false }: { children: ReactNode; hasSidebar?: boolean }) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
+      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
+      transition={
+        shouldReduceMotion
+          ? { duration: 0.1 }
+          : { type: "spring", stiffness: 350, damping: 35, mass: 0.8 }
+      }
+      className={`min-h-screen bg-black ${hasSidebar ? 'lg:ml-[var(--sidebar-width)]' : ''}`}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 function AppContent() {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  const isNavHidden = location.pathname.startsWith('/reader/') || location.pathname === '/auth';
 
   return (
     <div className="min-h-screen bg-black overflow-x-hidden">
@@ -127,21 +137,11 @@ function AppContent() {
         </Suspense>
       </AnimatePresence>
 
-      {/* Show nav only if authenticated and not on Auth page */}
-      {user && (
+      {/* Show navigation only if authenticated and not in reader or auth mode */}
+      {user && !isNavHidden && (
         <>
-          {/* Desktop Sidebar */}
-          <Routes>
-            <Route path="/reader/:id" element={null} />
-            <Route path="/auth" element={null} />
-            <Route path="*" element={<Sidebar />} />
-          </Routes>
-          {/* Mobile Bottom Nav */}
-          <Routes>
-            <Route path="/reader/:id" element={null} />
-            <Route path="/auth" element={null} />
-            <Route path="*" element={<BottomNav />} />
-          </Routes>
+          <Sidebar />
+          <BottomNav />
         </>
       )}
     </div>

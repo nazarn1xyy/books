@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
@@ -65,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     table: 'user_books',
                     filter: `user_id=eq.${user.id}`,
                 },
-                (_payload) => {
+                () => {
                     debouncedSync();
                 }
             )
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
     }, [user]);
 
-    const signIn = async (_email: string) => {
+    const signIn = async () => {
         // Placeholder as actual sign in is handled in Auth page
         return Promise.resolve();
     };

@@ -45,8 +45,8 @@ export function Home() {
                 const fetchedBooks = await fetchBooks('Толстой');
                 _homeCache = { books: fetchedBooks, timestamp: Date.now() };
                 setBooks(fetchedBooks);
-            } catch (error) {
-                console.error('Failed to load books', error);
+            } catch {
+                // Keep empty on error
             } finally {
                 setLoading(false);
                 loadingRef.current = false;
@@ -56,6 +56,7 @@ export function Home() {
     }, []);
 
     const booksInProgress = useMemo(() => {
+        void progressTick;
         if (loading) return [];
         const state = getAppState();
         return Object.keys(state.readingProgress)
@@ -87,13 +88,13 @@ export function Home() {
             <div className="px-5 pt-8 desktop-container">
                 {/* Header */}
                 <header className="mb-6 mt-2">
-                    <h1 className="text-3xl font-bold text-white">{t('home.title')}</h1>
+                    <h1 className="text-3xl font-bold text-white lg:text-4xl">{t('home.title')}</h1>
                 </header>
 
                 {/* Install PWA Banner */}
                 {canInstall && showInstallBanner && (
                     <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                        <Download className="text-blue-400 flex-shrink-0 mt-0.5" size={24} />
+                        <Download className="text-blue-400 flex-shrink-0 mt-0.5" size={24} aria-hidden="true" />
                         <div className="flex-1">
                             <h3 className="text-white font-semibold mb-1">{t('home.installTitle')}</h3>
                             <p className="text-gray-300 text-sm mb-3">{t('home.installDesc')}</p>
@@ -137,7 +138,7 @@ export function Home() {
                         {booksInProgress.length > 0 && (
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.continueReading')}</h2>
-                                <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
+                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {booksInProgress.map((item, index) => (
                                         <BookCard
                                             key={item!.book.id}
@@ -155,7 +156,7 @@ export function Home() {
                         {recommendedBooks.length > 0 && (
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
-                                <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
+                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {recommendedBooks.map((book, index) => (
                                         <BookCard
                                             key={book.id}
@@ -171,7 +172,7 @@ export function Home() {
                         {/* Recently Added */}
                         <section className="mb-8">
                             <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
-                            <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+                            <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                 {recentBooks.map((book) => (
                                     <BookCard key={book.id} book={book} size="small" />
                                 ))}

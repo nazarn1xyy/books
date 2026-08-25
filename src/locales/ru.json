@@ -9,7 +9,8 @@
         "delete": "Удалить",
         "search": "Поиск",
         "settings": "Настройки",
-        "logout": "Выйти"
+        "logout": "Выйти",
+        "close": "Закрыть"
     },
     "nav": {
         "home": "Главная",
@@ -41,7 +42,14 @@
         "bookmarks": "Закладки",
         "booksCount": "{count} книг",
         "noBooks": "У вас ещё нет книг",
-        "addFirst": "Найдите первую книгу"
+        "addFirst": "Найдите первую книгу",
+        "noQuotes": "Здесь пока пусто. Выделяйте текст в книгах и сохраняйте цитаты",
+        "noBookmarks": "Здесь пока пусто. Добавляйте закладки в читалке",
+        "paragraph": "Абзац {index}",
+        "exportAll": "Экспортировать все книги",
+        "exportTitle": "Экспорт библиотеки",
+        "exportPacking": "Упаковка книг...",
+        "addBook": "Добавить книгу"
     },
     "reader": {
         "page": "Страница",
@@ -57,7 +65,31 @@
         "theme": "Тема",
         "readingMode": "Режим чтения",
         "scroll": "Прокрутка",
-        "pageFlip": "Перелистывание"
+        "pageFlip": "Страницы",
+        "brightness": "Яркость",
+        "fontFamily": "Шрифт",
+        "fontSans": "Без засечек",
+        "fontSerif": "С засечками",
+        "fontMono": "Моноширинный",
+        "fontRounded": "Скругленный",
+        "themeLight": "Светлая",
+        "themeSepia": "Сепия",
+        "themeDark": "Темная",
+        "themeOled": "OLED",
+        "aiSummaryTitle": "Краткий пересказ",
+        "aiSummaryDisclaimer": "Генерируется с помощью AI. Может содержать неточности.",
+        "aiAnalyzing": "Анализ контекста и генерация пересказа...",
+        "translateModalTitle": "🌐 Перевести книгу",
+        "selectLanguage": "Выберите язык для перевода книги:",
+        "disableTranslation": "Выключить перевод",
+        "tocTitle": "Содержание",
+        "chapter": "Глава {index}",
+        "quoteSaved": "Цитата сохранена! ✨",
+        "quoteFailed": "Не удалось сохранить цитату",
+        "bookmarkAdded": "🔖 Закладка добавлена!",
+        "bookmarkFailed": "Не удалось добавить закладку",
+        "pdfNotSupportedAi": "AI справка пока не поддерживается для PDF.",
+        "speed": "Скорость"
     },
     "auth": {
         "title": "Libify",
@@ -86,12 +118,47 @@
         "bookNotFound": "Книга не найдена на Флибусте",
         "serverUnavailable": "Сервер временно недоступен",
         "networkError": "Ошибка сети",
-        "translationFailed": "Не удалось перевести"
+        "translationFailed": "Не удалось перевести",
+        "connectionError": "Ошибка соединения. Проверьте интернет.",
+        "invalidCredentials": "Неверный email или пароль.",
+        "userAlreadyExists": "Пользователь с таким email уже зарегистрирован.",
+        "passwordTooShort": "Пароль должен быть не менее 6 символов.",
+        "unknownAuthError": "Произошла ошибка при авторизации."
     },
     "language": {
         "title": "Язык",
         "uk": "Українська",
         "ru": "Русский",
         "en": "English"
+    },
+    "aria": {
+        "addFavorite": "Добавить в избранное",
+        "removeFavorite": "Удалить из избранного",
+        "shareBook": "Поделиться книгой",
+        "addBookmark": "Добавить закладку",
+        "deleteBookmark": "Удалить закладку",
+        "deleteQuote": "Удалить цитату",
+        "readAloud": "Озвучить",
+        "pauseReadAloud": "Приостановить озвучивание",
+        "nextParagraph": "Следующий абзац",
+        "prevParagraph": "Предыдущий абзац",
+        "openSettings": "Настройки",
+        "closeSettings": "Закрыть настройки",
+        "openToc": "Содержание",
+        "closeToc": "Закрыть содержание",
+        "previousPage": "Предыдущая страница",
+        "nextPage": "Следующая страница",
+        "decreaseFontSize": "Уменьшить шрифт",
+        "increaseFontSize": "Увеличить шрифт",
+        "exportBooks": "Экспортировать все книги",
+        "addBook": "Добавить книгу",
+        "switchLanguage": "Выбрать язык",
+        "aiSummary": "AI пересказ",
+        "translateBook": "Перевести книгу"
+    },
+    "sort": {
+        "byDate": "По дате",
+        "byTitle": "По названию",
+        "byAuthor": "По автору"
     }
 }

@@ -116,9 +116,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Gemini / Antigravity
+# Gemini / Antigravity / Agents
 .gemini
 .antigravity
+.agent
+.agents
 
 # OS
 .DS_Store

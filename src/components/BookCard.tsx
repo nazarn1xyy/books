@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Share2, Download, Check } from 'lucide-react';
 import type { Book } from '../types';
@@ -10,6 +10,7 @@ import { addFavorite, removeFavorite, isBookFavorite } from '../services/db';
 import { getCachedBookIds, markBookCached, cacheBook } from '../utils/cache';
 import { fetchBookContent } from '../services/flibustaApi';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface BookCardProps {
     book: Book;
@@ -29,31 +30,49 @@ export const BookCard = memo(function BookCard({
     initialFavorite
 }: BookCardProps) {
     const { user } = useAuth();
-    const progress = getReadingProgress(book.id);
+    const { t } = useLanguage();
+    
+    // Memoize progress calculation to avoid sync JSON parsing on every render
+    const progress = useMemo(() => getReadingProgress(book.id), [book.id]);
     const coverSrc = useBookCover(book.id, book.cover);
     const [isFavorite, setIsFavorite] = useState(initialFavorite ?? false);
     const [isLoading, setIsLoading] = useState(false);
     const [isOffline, setIsOffline] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [cardToast, setCardToast] = useState<string | null>(null);
-    const showCardToast = (msg: string) => { setCardToast(msg); setTimeout(() => setCardToast(null), 2000); };
+
+    const showCardToast = (msg: string) => {
+        setCardToast(msg);
+        setTimeout(() => setCardToast(null), 2000);
+    };
 
     // Check favorite status on mount if user is logged in and showActions is true
     useEffect(() => {
         if (showActions && user && initialFavorite === undefined) {
-            isBookFavorite(book.id).then(setIsFavorite).catch(console.error);
+            isBookFavorite(book.id).then(setIsFavorite).catch(() => {});
         }
     }, [book.id, user, showActions, initialFavorite]);
 
-    // Check if book is cached (offline) using shared Set — one IDB read per session
+    // Check if book is cached (offline) using shared Set
     useEffect(() => {
-        getCachedBookIds().then(ids => setIsOffline(ids.has(book.id))).catch(() => setIsOffline(false));
+        let isMounted = true;
+        getCachedBookIds()
+            .then(ids => {
+                if (isMounted) setIsOffline(ids.has(book.id));
+            })
+            .catch(() => {
+                if (isMounted) setIsOffline(false);
+            });
+        return () => {
+            isMounted = false;
+        };
     }, [book.id]);
 
-    const rawPercentage = progress && progress.totalPages > 0
-        ? Math.round(((progress.currentPage + 1) / progress.totalPages) * 100)
-        : 0;
-    const percentage = isNaN(rawPercentage) ? 0 : rawPercentage;
+    const percentage = useMemo(() => {
+        if (!progress || progress.totalPages <= 0) return 0;
+        const raw = progress.scrollPercentage ?? Math.round(((progress.currentPage + 1) / progress.totalPages) * 100);
+        return isNaN(raw) ? 0 : raw;
+    }, [progress]);
 
     const sizeClasses = {
         small: 'w-28',
@@ -86,8 +105,8 @@ export const BookCard = memo(function BookCard({
                 }, user.id);
                 setIsFavorite(true);
             }
-        } catch (err) {
-            console.error('Failed to toggle favorite:', err);
+        } catch {
+            showCardToast(t('common.error'));
         } finally {
             setIsLoading(false);
         }
@@ -99,7 +118,7 @@ export const BookCard = memo(function BookCard({
 
         const shareData = {
             title: book.title,
-            text: `Читаю "${book.title}" от ${book.author}`,
+            text: `${book.title} - ${book.author}`,
             url: `https://libify.store/reader/${book.id}`
         };
 
@@ -107,13 +126,12 @@ export const BookCard = memo(function BookCard({
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                // Fallback: copy to clipboard
                 await navigator.clipboard.writeText(shareData.url);
-                showCardToast('Ссылка скопирована!');
+                showCardToast(t('reader.quoteSaved'));
             }
         } catch (err) {
             if ((err as Error).name !== 'AbortError') {
-                console.error('Share failed:', err);
+                showCardToast(t('common.error'));
             }
         }
     };
@@ -132,15 +150,20 @@ export const BookCard = memo(function BookCard({
                     bookData.text || '',
                     coverSrc || '',
                     bookData.pdfData,
-                    { title: bookData.title, author: bookData.author, series: bookData.series, seriesNumber: bookData.seriesNumber, chapters: bookData.chapters }
+                    {
+                        title: bookData.title,
+                        author: bookData.author,
+                        series: bookData.series,
+                        seriesNumber: bookData.seriesNumber,
+                        chapters: bookData.chapters
+                    }
                 );
                 markBookCached(book.id);
                 setIsOffline(true);
-                showCardToast('Скачано!');
+                showCardToast(t('common.save'));
             }
-        } catch (err) {
-            console.error('Failed to download book:', err);
-            showCardToast('Не удалось скачать книгу');
+        } catch {
+            showCardToast(t('errors.networkError'));
         } finally {
             setIsDownloading(false);
         }
@@ -149,8 +172,8 @@ export const BookCard = memo(function BookCard({
     return (
         <Link
             to={`/reader/${book.id}`}
-            aria-label={`Читать книгу ${book.title}, автор ${book.author}`}
-            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative`}
+            aria-label={`${book.title}, ${book.author}`}
+            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative snap-start`}
         >
             {cardToast && (
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg">
@@ -178,7 +201,7 @@ export const BookCard = memo(function BookCard({
                                 ? 'bg-green-500/90 text-white'
                                 : 'bg-black/50 text-white/80 hover:bg-black/70'
                                 }`}
-                            aria-label={isOffline ? 'Доступно офлайн' : 'Скачать для офлайн'}
+                            aria-label={isOffline ? 'Offline ready' : t('aria.addFavorite')}
                         >
                             {isOffline ? (
                                 <Check size={16} />
@@ -193,7 +216,7 @@ export const BookCard = memo(function BookCard({
                                 ? 'bg-red-500/90 text-white'
                                 : 'bg-black/50 text-white/80 hover:bg-black/70'
                                 }`}
-                            aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                            aria-label={isFavorite ? t('aria.removeFavorite') : t('aria.addFavorite')}
                         >
                             <Heart
                                 size={16}
@@ -204,24 +227,24 @@ export const BookCard = memo(function BookCard({
                         <button
                             onClick={handleShareClick}
                             className="p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-black/70 backdrop-blur-md transition-all duration-200"
-                            aria-label="Поделиться книгой"
+                            aria-label={t('aria.shareBook')}
                         >
                             <Share2 size={16} />
                         </button>
                     </div>
                 )}
 
-                {/* Offline Badge (non-actions mode) */}
+                {/* Offline Badge */}
                 {!showActions && isOffline && (
                     <div className="absolute top-2 left-2 px-2 py-1 bg-green-500/90 backdrop-blur-md rounded-full z-10">
-                        <span className="text-xs text-white font-medium">✓ Офлайн</span>
+                        <span className="text-xs text-white font-medium">✓</span>
                     </div>
                 )}
 
                 {showProgress && percentage > 0 && (
                     <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
                         <ProgressBar percentage={percentage} height={4} />
-                        <p className="text-[10px] text-gray-400 mt-1">{percentage}% прочитано</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{percentage}%</p>
                     </div>
                 )}
             </div>

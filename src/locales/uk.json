@@ -9,7 +9,8 @@
         "delete": "Видалити",
         "search": "Пошук",
         "settings": "Налаштування",
-        "logout": "Вийти"
+        "logout": "Вийти",
+        "close": "Закрити"
     },
     "nav": {
         "home": "Головна",
@@ -41,7 +42,14 @@
         "bookmarks": "Закладки",
         "booksCount": "{count} книг",
         "noBooks": "У вас ще немає книг",
-        "addFirst": "Знайдіть першу книгу"
+        "addFirst": "Знайдіть першу книгу",
+        "noQuotes": "Тут поки порожньо. Виділяйте текст у книгах та зберігайте цитати",
+        "noBookmarks": "Тут поки порожньо. Додавайте закладки в читалці",
+        "paragraph": "Абзац {index}",
+        "exportAll": "Експортувати всі книги",
+        "exportTitle": "Експорт бібліотеки",
+        "exportPacking": "Пакування книг...",
+        "addBook": "Додати книгу"
     },
     "reader": {
         "page": "Сторінка",
@@ -57,7 +65,31 @@
         "theme": "Тема",
         "readingMode": "Режим читання",
         "scroll": "Прокрутка",
-        "pageFlip": "Перегортання"
+        "pageFlip": "Сторінки",
+        "brightness": "Яскравість",
+        "fontFamily": "Шрифт",
+        "fontSans": "Без зарубок",
+        "fontSerif": "Із зарубками",
+        "fontMono": "Моноширинний",
+        "fontRounded": "Закруглений",
+        "themeLight": "Світла",
+        "themeSepia": "Сепія",
+        "themeDark": "Темна",
+        "themeOled": "OLED",
+        "aiSummaryTitle": "Короткий переказ",
+        "aiSummaryDisclaimer": "Генерується за допомогою AI. Може містити неточності.",
+        "aiAnalyzing": "Аналіз контексту та генерація переказу...",
+        "translateModalTitle": "🌐 Перекласти книгу",
+        "selectLanguage": "Оберіть мову для перекладу книги:",
+        "disableTranslation": "Вимкнути переклад",
+        "tocTitle": "Зміст",
+        "chapter": "Розділ {index}",
+        "quoteSaved": "Цитату збережено! ✨",
+        "quoteFailed": "Не вдалося зберегти цитату",
+        "bookmarkAdded": "🔖 Закладку додано!",
+        "bookmarkFailed": "Не вдалося додати закладку",
+        "pdfNotSupportedAi": "AI довідка поки не підтримується для PDF.",
+        "speed": "Швидкість"
     },
     "auth": {
         "title": "Libify",
@@ -86,12 +118,47 @@
         "bookNotFound": "Книгу не знайдено на Флібусті",
         "serverUnavailable": "Сервер тимчасово недоступний",
         "networkError": "Помилка мережі",
-        "translationFailed": "Не вдалося перекласти"
+        "translationFailed": "Не вдалося перекласти",
+        "connectionError": "Помилка з'єднання. Перевірте інтернет.",
+        "invalidCredentials": "Невірний email або пароль.",
+        "userAlreadyExists": "Користувач з таким email вже зареєстрований.",
+        "passwordTooShort": "Пароль повинен містити не менше 6 символів.",
+        "unknownAuthError": "Сталася помилка при авторизації."
     },
     "language": {
         "title": "Мова",
         "uk": "Українська",
         "ru": "Русский",
         "en": "English"
+    },
+    "aria": {
+        "addFavorite": "Додати в улюблене",
+        "removeFavorite": "Видалити з улюбленого",
+        "shareBook": "Поділитися книгою",
+        "addBookmark": "Додати закладку",
+        "deleteBookmark": "Видалити закладку",
+        "deleteQuote": "Видалити цитату",
+        "readAloud": "Озвучити",
+        "pauseReadAloud": "Призупинити озвучення",
+        "nextParagraph": "Наступний абзац",
+        "prevParagraph": "Попередній абзац",
+        "openSettings": "Налаштування",
+        "closeSettings": "Закрити налаштування",
+        "openToc": "Зміст",
+        "closeToc": "Закрити зміст",
+        "previousPage": "Попередня сторінка",
+        "nextPage": "Наступна сторінка",
+        "decreaseFontSize": "Зменшити шрифт",
+        "increaseFontSize": "Збільшити шрифт",
+        "exportBooks": "Експортувати всі книги",
+        "addBook": "Додати книгу",
+        "switchLanguage": "Обрати мову",
+        "aiSummary": "AI переказ",
+        "translateBook": "Перекласти книгу"
+    },
+    "sort": {
+        "byDate": "За датою",
+        "byTitle": "За назвою",
+        "byAuthor": "За автором"
     }
 }

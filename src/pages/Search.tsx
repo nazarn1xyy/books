@@ -20,7 +20,7 @@ export function Search() {
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedQuery(query);
-        }, 800);
+        }, 600);
         return () => clearTimeout(timer);
     }, [query]);
 
@@ -36,8 +36,12 @@ export function Search() {
             const cacheKey = `search_cache_${debouncedQuery.trim()}`;
             const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
-                setResults(JSON.parse(cached));
-                return;
+                try {
+                    setResults(JSON.parse(cached));
+                    return;
+                } catch {
+                    sessionStorage.removeItem(cacheKey);
+                }
             }
 
             setLoading(true);
@@ -48,8 +52,7 @@ export function Search() {
                 if (books.length > 0) {
                     sessionStorage.setItem(cacheKey, JSON.stringify(books));
                 }
-            } catch (error) {
-                console.error('Search failed:', error);
+            } catch {
                 setResults([]);
             } finally {
                 setLoading(false);
@@ -59,26 +62,16 @@ export function Search() {
         searchBooks();
     }, [debouncedQuery]);
 
-    // Determine if scrolling should be allowed
-    const hasResults = results.length > 0;
-    const shouldAllowScroll = hasResults && !isKeyboardOpen;
-
     return (
-        <div
-            className="bg-black pt-[env(safe-area-inset-top)] overflow-hidden"
-            style={{
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column'
-            }}
-        >
+        <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden">
             {/* Fixed Search Header */}
             <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4 lg:px-8">
                 <h1 className="text-3xl font-bold text-white mb-4 lg:text-4xl">{t('search.title')}</h1>
                 <div className="relative lg:max-w-xl">
                     <SearchIcon
                         size={20}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                        aria-hidden="true"
                     />
                     <input
                         type="search"
@@ -106,10 +99,9 @@ export function Search() {
 
             {/* Scrollable Results Area */}
             <div
-                className="flex-1 px-5"
+                className="flex-1 px-5 overflow-y-auto overflow-x-hidden touch-pan-y"
                 style={{
-                    overflowY: shouldAllowScroll ? 'auto' : 'hidden',
-                    paddingBottom: isKeyboardOpen ? keyboardHeight : 96, // 96 = bottom nav height + padding
+                    paddingBottom: isKeyboardOpen ? Math.max(keyboardHeight, 80) : 96,
                     WebkitOverflowScrolling: 'touch'
                 }}
             >
@@ -119,7 +111,7 @@ export function Search() {
                         <p className="text-gray-400">{t('search.searching')}</p>
                     </div>
                 ) : results.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-4 pb-4 lg:grid-cols-4 xl:grid-cols-6 desktop-container">
+                    <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-4 desktop-container">
                         {results.map((book) => (
                             <BookCard key={book.id} book={book} size="small" />
                         ))}

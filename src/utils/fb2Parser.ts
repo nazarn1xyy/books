@@ -28,7 +28,7 @@ function detectEncoding(buffer: Uint8Array): string {
         if (match && match[1]) {
             return match[1];
         }
-    } catch (_e) {
+    } catch {
         // Ignore
     }
     return 'utf-8';

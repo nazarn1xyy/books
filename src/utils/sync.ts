@@ -113,7 +113,7 @@ export async function syncData(userId: string) {
                 cover: coverToSave,
                 description: '',
                 genre: 'Cloud',
-                format: b.format as any || 'fb2'
+                format: b.format === 'pdf' ? 'pdf' : 'fb2'
             };
             // Add to myBooks list if not exists (check again to be safe)
             if (!localState.myBooks.includes(b.book_id)) {

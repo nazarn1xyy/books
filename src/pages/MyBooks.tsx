@@ -14,18 +14,14 @@ import { useBookCover } from '../hooks/useBookCover';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
-import { useLanguage, type Language } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { LANGUAGES } from '../constants/languages';
 
 type TabType = 'books' | 'favorites' | 'quotes' | 'bookmarks';
 
 export function MyBooks() {
     const { user } = useAuth();
     const { t, language, setLanguage } = useLanguage();
-    const LANGUAGES: { code: Language; name: string; flag: string }[] = [
-        { code: 'uk', name: 'Українська', flag: '🇺🇦' },
-        { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-        { code: 'en', name: 'English', flag: '🇬🇧' },
-    ];
     const navigate = useNavigate();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
     const [isUploading, setIsUploading] = useState(false);
@@ -54,7 +50,7 @@ export function MyBooks() {
     const [bookmarks, setBookmarks] = useState<BookmarkType[]>([]);
     const [loadingData, setLoadingData] = useState(false);
 
-    // Refresh books when storage changes (e.g. from Realtime sync)
+    // Refresh books when storage changes
     useEffect(() => {
         const handleStorageUpdate = () => {
             setMyBookIds(getMyBookIds());
@@ -84,8 +80,8 @@ export function MyBooks() {
                 setFavorites(favs);
                 setQuotes(qs);
                 setBookmarks(bms);
-            } catch (err) {
-                console.error('Failed to fetch data:', err);
+            } catch {
+                // Ignore fetch errors
             } finally {
                 setLoadingData(false);
             }
@@ -94,26 +90,36 @@ export function MyBooks() {
         fetchData();
     }, [user]);
 
-    // Handle delete quote
-    const handleDeleteQuote = (id: string) => confirmDelete('Удалить эту цитату?', async () => {
-        try { await deleteQuote(id); setQuotes(prev => prev.filter(q => q.id !== id)); }
-        catch (err) { console.error('Failed to delete quote:', err); }
+    const handleDeleteQuote = (id: string) => confirmDelete(t('aria.deleteQuote') + '?', async () => {
+        try {
+            await deleteQuote(id);
+            setQuotes(prev => prev.filter(q => q.id !== id));
+        } catch {
+            // Ignore
+        }
     });
 
-    const handleRemoveFavorite = (bookId: string) => confirmDelete('Удалить из избранного?', async () => {
-        try { await removeFavorite(bookId); setFavorites(prev => prev.filter(f => f.book_id !== bookId)); }
-        catch (err) { console.error('Failed to remove favorite:', err); }
+    const handleRemoveFavorite = (bookId: string) => confirmDelete(t('aria.removeFavorite') + '?', async () => {
+        try {
+            await removeFavorite(bookId);
+            setFavorites(prev => prev.filter(f => f.book_id !== bookId));
+        } catch {
+            // Ignore
+        }
     });
 
-    // Handle delete bookmark
-    const handleDeleteBookmark = (id: string) => confirmDelete('Удалить закладку?', async () => {
-        try { await deleteBookmark(id); setBookmarks(prev => prev.filter(b => b.id !== id)); }
-        catch (err) { console.error('Failed to delete bookmark:', err); }
+    const handleDeleteBookmark = (id: string) => confirmDelete(t('aria.deleteBookmark') + '?', async () => {
+        try {
+            await deleteBookmark(id);
+            setBookmarks(prev => prev.filter(b => b.id !== id));
+        } catch {
+            // Ignore
+        }
     });
 
     const items = useMemo(() => {
-        const singles: { book: Book; progress: any }[] = [];
-        const seriesMap = new Map<string, { book: Book; progress: any }[]>();
+        const singles: { book: Book; progress: ReturnType<typeof getReadingProgress> }[] = [];
+        const seriesMap = new Map<string, { book: Book; progress: ReturnType<typeof getReadingProgress> }[]>();
 
         const state = getAppState();
         myBookIds.forEach((id) => {
@@ -133,12 +139,11 @@ export function MyBooks() {
         });
 
         // Combine
-        const result: (({ type: 'book'; data: { book: Book; progress: any } } | { type: 'series'; name: string; books: { book: Book; progress: any }[] }))[] = [];
+        const result: (({ type: 'book'; data: { book: Book; progress: ReturnType<typeof getReadingProgress> } } | { type: 'series'; name: string; books: { book: Book; progress: ReturnType<typeof getReadingProgress> }[] }))[] = [];
 
         singles.forEach(s => result.push({ type: 'book', data: s }));
 
         seriesMap.forEach((seriesBooks, name) => {
-            // Sort books inside series by number
             seriesBooks.sort((a, b) => (a.book.seriesNumber || 0) - (b.book.seriesNumber || 0));
             result.push({ type: 'series', name, books: seriesBooks });
         });
@@ -153,7 +158,6 @@ export function MyBooks() {
             if (sortBy === 'author') {
                 return (label(a)?.author || '').localeCompare(label(b)?.author || '', undefined, { sensitivity: 'base' });
             }
-            // date (default)
             const ts = (item: typeof result[0]) =>
                 item.type === 'book' ? item.data.progress?.lastRead || 0
                     : Math.max(...item.books.map(b => b.progress?.lastRead || 0));
@@ -162,12 +166,12 @@ export function MyBooks() {
     }, [myBookIds, sortBy]);
 
     const handleRemove = (bookId: string) => {
-        confirmDelete('Удалить эту книгу из списка?', () => {
+        confirmDelete(t('common.delete') + '?', () => {
             removeFromMyBooks(bookId);
             setMyBookIds(getMyBookIds());
             addToPendingDeletions(bookId);
             if (user) {
-                removeBookFromCloud(user.id, bookId).then(() => { });
+                removeBookFromCloud(user.id, bookId).catch(() => {});
             }
         });
     };
@@ -198,11 +202,9 @@ export function MyBooks() {
             } else {
                 const parsed = await parseBookData(buffer);
                 text = parsed.text;
-                // Use parsed title if valid, otherwise fallback to filename (cleaned up)
                 if (parsed.title && parsed.title !== 'Без названия' && parsed.title.trim() !== '') {
                     title = parsed.title;
                 } else {
-                    // Clean up filename title: replace underscores with spaces
                     title = title.replace(/_/g, ' ');
                 }
 
@@ -236,17 +238,14 @@ export function MyBooks() {
 
             addToMyBooks(newBook);
             setMyBookIds(getMyBookIds());
-
-        } catch (error) {
-            console.error('Failed to upload book:', error);
-            setUploadError('Не удалось открыть файл. Поддерживаются FB2, FB2.ZIP и PDF.');
+        } catch {
+            setUploadError(t('errors.networkError'));
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
-    // Helper to open/close series
     const toggleSeries = (name: string) => {
         if (expandedSeries === name) setExpandedSeries(null);
         else setExpandedSeries(name);
@@ -254,7 +253,7 @@ export function MyBooks() {
 
     const handleExportAll = async () => {
         if (myBookIds.length === 0) {
-            setUploadError('Нет книг для экспорта!');
+            setUploadError(t('myBooks.noBooks'));
             return;
         }
 
@@ -264,8 +263,7 @@ export function MyBooks() {
                 setExportProgress(progress);
             });
         } catch (error) {
-            console.error('Export failed:', error);
-            setUploadError(error instanceof Error ? error.message : 'Не удалось экспортировать книги');
+            setUploadError(error instanceof Error ? error.message : t('common.error'));
         } finally {
             setIsExporting(false);
             setExportProgress({ current: 0, total: 0, bookTitle: '' });
@@ -284,8 +282,6 @@ export function MyBooks() {
             setFavorites(favs);
             setQuotes(qs);
             setBookmarks(bms);
-        } catch (err) {
-            console.error('Failed to refresh data:', err);
         } finally {
             setLoadingData(false);
         }
@@ -294,7 +290,7 @@ export function MyBooks() {
     const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-black pb-24 lg:pb-8 pt-[env(safe-area-inset-top)] relative overflow-y-auto overscroll-contain h-screen">
+        <div ref={containerRef} className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)] relative overflow-y-auto overscroll-contain">
             {/* Pull to Refresh Indicator */}
             <div
                 className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
@@ -304,11 +300,13 @@ export function MyBooks() {
                 }}
             >
                 <div className="bg-[#1C1C1E] rounded-full p-2 shadow-xl border border-white/10">
-                    <div className={`w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full ${isRefreshing ? 'animate-spin' : ''}`}
+                    <div
+                        className={`w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full ${isRefreshing ? 'animate-spin' : ''}`}
                         style={{ transform: `rotate(${pullProgress * 2}deg)` }}
                     />
                 </div>
             </div>
+
             <div className="px-5 pt-8 desktop-container">
                 {/* Header */}
                 <header className="mb-4 flex items-center justify-between">
@@ -331,21 +329,21 @@ export function MyBooks() {
                             onClick={handleExportAll}
                             disabled={isExporting}
                             className="p-3 min-w-[44px] min-h-[44px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
-                            title="Экспортировать все книги"
-                            aria-label="Экспортировать все книги"
+                            title={t('myBooks.exportAll')}
+                            aria-label={t('myBooks.exportAll')}
                         >
-                            <Download size={20} className="text-white" />
+                            <Download size={20} className="text-white" aria-hidden="true" />
                         </button>
                     )}
                 </header>
 
-                {/* Sort Bar — books tab only */}
+                {/* Sort Bar */}
                 {activeTab === 'books' && items.length > 1 && (
-                    <div className="flex gap-2 mb-4">
+                    <div className="flex gap-2 mb-4" role="group" aria-label={t('sort.byDate')}>
                         {([
-                            { key: 'date', label: 'По дате' },
-                            { key: 'title', label: 'По названию' },
-                            { key: 'author', label: 'По автору' },
+                            { key: 'date', label: t('sort.byDate') },
+                            { key: 'title', label: t('sort.byTitle') },
+                            { key: 'author', label: t('sort.byAuthor') },
                         ] as const).map(s => (
                             <button
                                 key={s.key}
@@ -358,63 +356,75 @@ export function MyBooks() {
                     </div>
                 )}
 
-                {/* Tab Bar */}
+                {/* Tab Bar with ARIA */}
                 {user && (
-                    <div className="flex gap-2 mb-6 overflow-x-auto py-1 -mx-1 px-1">
+                    <div className="flex gap-2 mb-6 overflow-x-auto py-1 -mx-1 px-1" role="tablist" aria-label="Sections">
                         <button
+                            role="tab"
+                            aria-selected={activeTab === 'books'}
+                            aria-controls="panel-books"
                             onClick={() => setActiveTab('books')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'books'
-                                ? 'bg-white text-black'
+                                ? 'bg-white text-black font-semibold shadow-sm'
                                 : 'bg-white/10 text-white hover:bg-white/20'
                                 }`}
                         >
-                            <Library size={18} />
-                            <span className="font-medium">{t('myBooks.books')}</span>
+                            <Library size={18} aria-hidden="true" />
+                            <span>{t('myBooks.books')}</span>
                         </button>
                         <button
+                            role="tab"
+                            aria-selected={activeTab === 'favorites'}
+                            aria-controls="panel-favorites"
                             onClick={() => setActiveTab('favorites')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'favorites'
-                                ? 'bg-red-500 text-white'
+                                ? 'bg-red-500 text-white font-semibold shadow-sm'
                                 : 'bg-white/10 text-white hover:bg-white/20'
                                 }`}
                         >
-                            <Heart size={18} fill={activeTab === 'favorites' ? 'currentColor' : 'none'} />
-                            <span className="font-medium">{t('myBooks.favorites')}</span>
+                            <Heart size={18} fill={activeTab === 'favorites' ? 'currentColor' : 'none'} aria-hidden="true" />
+                            <span>{t('myBooks.favorites')}</span>
                         </button>
                         <button
+                            role="tab"
+                            aria-selected={activeTab === 'quotes'}
+                            aria-controls="panel-quotes"
                             onClick={() => setActiveTab('quotes')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'quotes'
-                                ? 'bg-purple-500 text-white'
+                                ? 'bg-purple-500 text-white font-semibold shadow-sm'
                                 : 'bg-white/10 text-white hover:bg-white/20'
                                 }`}
                         >
-                            <MessageSquareQuote size={18} />
-                            <span className="font-medium">{t('myBooks.quotes')}</span>
+                            <MessageSquareQuote size={18} aria-hidden="true" />
+                            <span>{t('myBooks.quotes')}</span>
                         </button>
                         <button
+                            role="tab"
+                            aria-selected={activeTab === 'bookmarks'}
+                            aria-controls="panel-bookmarks"
                             onClick={() => setActiveTab('bookmarks')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap ${activeTab === 'bookmarks'
-                                ? 'bg-blue-500 text-white'
+                                ? 'bg-blue-500 text-white font-semibold shadow-sm'
                                 : 'bg-white/10 text-white hover:bg-white/20'
                                 }`}
                         >
-                            <Bookmark size={18} />
-                            <span className="font-medium">{t('myBooks.bookmarks')}</span>
+                            <Bookmark size={18} aria-hidden="true" />
+                            <span>{t('myBooks.bookmarks')}</span>
                         </button>
                     </div>
                 )}
 
                 {/* Export Progress Modal */}
                 {isExporting && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
-                        <div className="bg-[#1C1C1E] rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl">
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-[#1C1C1E] rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-white/10">
                             <div className="flex items-center gap-3 mb-4">
-                                <Download className="text-blue-400 animate-bounce" size={28} />
-                                <h2 className="text-xl font-semibold text-white">Экспорт библиотеки</h2>
+                                <Download className="text-blue-400 animate-bounce" size={24} />
+                                <h2 className="text-lg font-semibold text-white">{t('myBooks.exportTitle')}</h2>
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-gray-400 text-sm mb-2">Упаковка книг...</p>
+                                    <p className="text-gray-400 text-xs mb-2">{t('myBooks.exportPacking')}</p>
                                     <ProgressBar percentage={Math.round((exportProgress.current / exportProgress.total) * 100)} height={6} />
                                 </div>
                                 <p className="text-gray-500 text-xs truncate">
@@ -425,82 +435,78 @@ export function MyBooks() {
                     </div>
                 )}
 
-                {/* Book List - only show when books tab is active */}
-                {activeTab === 'books' && items.length > 0 && (
-                    <div className="space-y-4">
-                        <AnimatePresence mode="popLayout">
-                            {items.map((item) => {
-                                if (item.type === 'book') {
-                                    return (
-                                        <BookListItem
-                                            key={item.data.book.id}
-                                            book={item.data.book}
-                                            onRemove={() => handleRemove(item.data.book.id)}
-                                        />
-                                    );
-                                } else {
-                                    // Series Folder
-                                    const isExpanded = expandedSeries === item.name;
-                                    return (
-                                        <div key={`series-${item.name}`} className="space-y-4">
-                                            <div
-                                                onClick={() => toggleSeries(item.name)}
-                                                className="bg-[#1C1C1E]/50 border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer"
-                                            >
-                                                <div className="w-16 h-24 bg-[#2C2C2E] rounded-lg flex items-center justify-center text-white/20">
-                                                    <div className="flex flex-col items-center">
-                                                        {/* Stack effect */}
-                                                        <div className="w-10 h-10 border-2 border-white/20 rounded mb-1 bg-[#3A3A3C]"></div>
-                                                        <div className="w-12 h-1 bg-white/20 rounded-full"></div>
+                {/* Book List Tab */}
+                {activeTab === 'books' && (
+                    <div id="panel-books" role="tabpanel">
+                        {items.length > 0 ? (
+                            <div className="space-y-4">
+                                <AnimatePresence mode="popLayout">
+                                    {items.map((item) => {
+                                        if (item.type === 'book') {
+                                            return (
+                                                <BookListItem
+                                                    key={item.data.book.id}
+                                                    book={item.data.book}
+                                                    onRemove={() => handleRemove(item.data.book.id)}
+                                                />
+                                            );
+                                        } else {
+                                            const isExpanded = expandedSeries === item.name;
+                                            return (
+                                                <div key={`series-${item.name}`} className="space-y-4">
+                                                    <div
+                                                        onClick={() => toggleSeries(item.name)}
+                                                        className="bg-[#1C1C1E]/50 border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer"
+                                                    >
+                                                        <div className="w-16 h-24 bg-[#2C2C2E] rounded-lg flex items-center justify-center text-white/20">
+                                                            <div className="flex flex-col items-center">
+                                                                <div className="w-10 h-10 border-2 border-white/20 rounded mb-1 bg-[#3A3A3C]"></div>
+                                                                <div className="w-12 h-1 bg-white/20 rounded-full"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <h3 className="font-semibold text-white text-lg">{item.name}</h3>
+                                                            <p className="text-sm text-gray-500">{item.books.length} {t('myBooks.books').toLowerCase()}</p>
+                                                        </div>
+                                                        <div className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                                                            <ChevronLeft size={20} className="rotate-180" />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="font-semibold text-white text-lg">{item.name}</h3>
-                                                    <p className="text-sm text-gray-500">{item.books.length} книг</p>
-                                                </div>
-                                                <div className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
-                                                    <ChevronLeft size={20} className="rotate-180" />
-                                                </div>
-                                            </div>
 
-                                            {/* Expanded Content */}
-                                            {isExpanded && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="pl-4 space-y-4 border-l-2 border-white/10 ml-8"
-                                                >
-                                                    {item.books.map(b => (
-                                                        <BookListItem
-                                                            key={b.book.id}
-                                                            book={b.book}
-                                                            onRemove={() => handleRemove(b.book.id)}
-                                                        />
-                                                    ))}
-                                                </motion.div>
-                                            )}
-                                        </div>
-                                    );
-                                }
-                            })}
-                        </AnimatePresence>
-                    </div>
-                )}
-
-                {activeTab === 'books' && items.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <BookOpen size={48} className="text-gray-600 mb-4" />
-                        <p className="text-gray-500 text-center">
-                            Здесь пока пусто<br />
-                            Начните читать книгу или добавьте свою
-                        </p>
+                                                    {isExpanded && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            className="pl-4 space-y-4 border-l-2 border-white/10 ml-8"
+                                                        >
+                                                            {item.books.map(b => (
+                                                                <BookListItem
+                                                                    key={b.book.id}
+                                                                    book={b.book}
+                                                                    onRemove={() => handleRemove(b.book.id)}
+                                                                />
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+                                    })}
+                                </AnimatePresence>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16">
+                                <BookOpen size={48} className="text-gray-600 mb-4" />
+                                <p className="text-gray-500 text-center">{t('myBooks.noBooks')}</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {/* Favorites List */}
                 {activeTab === 'favorites' && (
-                    <>
+                    <div id="panel-favorites" role="tabpanel">
                         {loadingData ? (
                             <div className="flex justify-center py-16">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
@@ -510,28 +516,30 @@ export function MyBooks() {
                                 {favorites.map((fav) => (
                                     <div
                                         key={fav.id}
-                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-4 flex items-center gap-4"
+                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99] transition-all"
+                                        onClick={() => navigate(`/reader/${fav.book_id}`)}
                                     >
-                                        <div
-                                            className="w-16 h-20 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer"
-                                            onClick={() => navigate(`/reader/${fav.book_id}`)}
-                                        >
-                                            <img
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <ImageWithLoader
                                                 src={fav.book_cover || 'https://placehold.co/300x450?text=No+Cover'}
-                                                alt={fav.book_title || ''}
-                                                className="w-full h-full object-cover"
+                                                alt={fav.book_title}
+                                                className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                                                wrapperClassName="w-12 h-16 rounded-lg flex-shrink-0 bg-[#2C2C2E]"
                                             />
-                                        </div>
-                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/reader/${fav.book_id}`)}>
-                                            <h3 className="text-white font-semibold truncate">{fav.book_title || 'Без названия'}</h3>
-                                            <p className="text-gray-500 text-sm truncate">{fav.book_author || 'Неизвестный автор'}</p>
+                                            <div className="min-w-0">
+                                                <h3 className="text-white font-semibold text-sm truncate">{fav.book_title}</h3>
+                                                <p className="text-gray-400 text-xs truncate mt-0.5">{fav.book_author}</p>
+                                            </div>
                                         </div>
                                         <button
-                                            onClick={() => handleRemoveFavorite(fav.book_id)}
-                                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                            aria-label="Удалить из избранного"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveFavorite(fav.book_id);
+                                            }}
+                                            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                            aria-label={t('aria.removeFavorite')}
                                         >
-                                            <Heart size={20} fill="currentColor" />
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
                                 ))}
@@ -539,18 +547,15 @@ export function MyBooks() {
                         ) : (
                             <div className="flex flex-col items-center justify-center py-16">
                                 <Heart size={48} className="text-gray-600 mb-4" />
-                                <p className="text-gray-500 text-center">
-                                    Здесь пока пусто<br />
-                                    Добавляйте книги в избранное
-                                </p>
+                                <p className="text-gray-500 text-center">{t('myBooks.noBooks')}</p>
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
 
                 {/* Quotes List */}
                 {activeTab === 'quotes' && (
-                    <>
+                    <div id="panel-quotes" role="tabpanel">
                         {loadingData ? (
                             <div className="flex justify-center py-16">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
@@ -560,31 +565,28 @@ export function MyBooks() {
                                 {quotes.map((quote) => (
                                     <div
                                         key={quote.id}
-                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-4"
+                                        className="bg-[#1C1C1E] border border-white/5 rounded-2xl p-5"
                                     >
-                                        <p className="text-white text-sm leading-relaxed mb-3 italic">
+                                        <p className="text-white text-sm font-serif italic leading-relaxed mb-4">
                                             "{quote.text}"
                                         </p>
-                                        <div className="flex items-center justify-between">
-                                            <div
-                                                className="text-gray-500 text-xs cursor-pointer hover:text-gray-300"
-                                                onClick={() => navigate(`/reader/${quote.book_id}`)}
-                                            >
-                                                <span className="font-medium">{quote.book_title || 'Книга'}</span>
-                                                {quote.book_author && ` — ${quote.book_author}`}
+                                        <div className="flex items-center justify-between border-t border-white/10 pt-3">
+                                            <div>
+                                                <p className="text-white font-medium text-xs truncate">{quote.book_title}</p>
+                                                <p className="text-gray-500 text-[11px] truncate">{quote.book_author}</p>
                                             </div>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => copyQuote(quote.id, quote.text)}
-                                                    className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                                                    aria-label="Скопировать цитату"
+                                                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                                                    aria-label="Copy quote"
                                                 >
                                                     {copiedQuoteId === quote.id ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteQuote(quote.id)}
-                                                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                                    aria-label="Удалить цитату"
+                                                    className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                                                    aria-label={t('aria.deleteQuote')}
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -596,18 +598,15 @@ export function MyBooks() {
                         ) : (
                             <div className="flex flex-col items-center justify-center py-16">
                                 <MessageSquareQuote size={48} className="text-gray-600 mb-4" />
-                                <p className="text-gray-500 text-center">
-                                    Здесь пока пусто<br />
-                                    Выделяйте текст в книгах и сохраняйте цитаты
-                                </p>
+                                <p className="text-gray-500 text-center">{t('myBooks.noQuotes')}</p>
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
 
                 {/* Bookmarks List */}
                 {activeTab === 'bookmarks' && (
-                    <>
+                    <div id="panel-bookmarks" role="tabpanel">
                         {loadingData ? (
                             <div className="flex justify-center py-16">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
@@ -624,7 +623,7 @@ export function MyBooks() {
                                             onClick={() => navigate(`/reader/${bm.book_id}?p=${bm.paragraph_index}`)}
                                         >
                                             <h3 className="text-white font-medium text-sm mb-1">
-                                                {bm.book_title || 'Книга'}
+                                                {bm.book_title || t('myBooks.books')}
                                             </h3>
                                             <p className="text-gray-400 text-xs line-clamp-2 italic">
                                                 "{bm.preview_text || '...'}"
@@ -632,12 +631,12 @@ export function MyBooks() {
                                         </div>
                                         <div className="flex items-center justify-between mt-3">
                                             <span className="text-gray-500 text-xs">
-                                                Абзац {bm.paragraph_index + 1}
+                                                {t('myBooks.paragraph', { index: bm.paragraph_index + 1 })}
                                             </span>
                                             <button
                                                 onClick={() => handleDeleteBookmark(bm.id)}
                                                 className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                                aria-label="Удалить закладку"
+                                                aria-label={t('aria.deleteBookmark')}
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -648,25 +647,22 @@ export function MyBooks() {
                         ) : (
                             <div className="flex flex-col items-center justify-center py-16">
                                 <Bookmark size={48} className="text-gray-600 mb-4" />
-                                <p className="text-gray-500 text-center">
-                                    Здесь пока пусто<br />
-                                    Добавляйте закладки, нажав 🔖 в читалке
-                                </p>
+                                <p className="text-gray-500 text-center">{t('myBooks.noBookmarks')}</p>
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
             </div>
 
             {/* Mobile Language Switcher */}
-            <div className="mobile-only mt-10 mb-6 flex flex-col gap-3">
+            <div className="mobile-only mt-10 mb-6 px-5 flex flex-col gap-3">
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-widest px-1">{t('language.title')}</p>
                 <div className="flex gap-2">
                     {LANGUAGES.map(lang => (
                         <button
                             key={lang.code}
                             onClick={() => setLanguage(lang.code)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${language === lang.code ? 'bg-white text-black' : 'bg-white/10 text-gray-400'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${language === lang.code ? 'bg-white text-black font-semibold' : 'bg-white/10 text-gray-400'}`}
                         >
                             <span>{lang.flag}</span>
                             <span>{lang.name}</span>
@@ -677,8 +673,8 @@ export function MyBooks() {
 
             {/* Confirm Delete Dialog */}
             {pendingDelete && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center pb-[env(safe-area-inset-bottom)]">
-                    <div className="bg-[#1C1C1E] rounded-t-3xl w-full max-w-lg p-6 border-t border-white/10">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center pb-[env(safe-area-inset-bottom)] p-4">
+                    <div className="bg-[#1C1C1E] rounded-3xl w-full max-w-md p-6 border border-white/10 shadow-2xl">
                         <p className="text-white font-semibold text-center mb-5">{pendingDelete.label}</p>
                         <div className="flex gap-3">
                             <button
@@ -702,14 +698,14 @@ export function MyBooks() {
             {uploadError && (
                 <div
                     onClick={() => setUploadError(null)}
-                    className="fixed bottom-52 left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
+                    className="fixed bottom-32 left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
                 >
                     {uploadError}
                 </div>
             )}
 
-            {/* Upload Button */}
-            <div className="fixed bottom-32 right-5 z-20 pb-[env(safe-area-inset-bottom)]">
+            {/* Upload Floating Button */}
+            <div className="fixed bottom-24 right-5 z-20 pb-[env(safe-area-inset-bottom)]">
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -720,8 +716,8 @@ export function MyBooks() {
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="w-14 h-14 min-w-[56px] min-h-[56px] bg-white text-black rounded-full flex items-center justify-center shadow-lg shadow-white/10 active:scale-90 transition-transform disabled:opacity-50"
-                    aria-label="Добавить книгу"
+                    className="w-14 h-14 min-w-[56px] min-h-[56px] bg-white text-black rounded-full flex items-center justify-center shadow-xl active:scale-90 transition-transform disabled:opacity-50"
+                    aria-label={t('myBooks.addBook')}
                 >
                     {isUploading ? (
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-black border-t-transparent" />
@@ -748,16 +744,19 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
     const [swiped, setSwiped] = useState(false);
     const coverSrc = useBookCover(book.id, book.cover);
 
-    const handleDragEnd = (_e: any, info: PanInfo) => {
+    const handleDragEnd = (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         setIsDragging(false);
-        // More conservative threshold: -150px AND minimum velocity
-        if (info.offset.x < -150 && Math.abs(info.velocity.x) > 200) {
+        // Momentum projected distance following Apple Fluid Interfaces
+        const projectedOffset = info.offset.x + info.velocity.x * 0.2;
+        if (projectedOffset < -140) {
             setSwiped(true);
-            // Haptic feedback on successful swipe
             if ('vibrate' in navigator) {
-                navigator.vibrate(10);
+                try {
+                    navigator.vibrate(10);
+                } catch {
+                    /* ignore vibrate failure */
+                }
             }
-            // Trigger remove logic
             onRemove();
         } else {
             setSwiped(false);
@@ -767,17 +766,18 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
     return (
         <div className="relative group">
             {/* Delete Background Layer */}
-            <div className="absolute inset-y-0 right-0 w-full bg-red-600 rounded-2xl flex items-center justify-end px-6 z-0">
+            <div className="absolute inset-y-0 right-0 w-full bg-red-600 rounded-2xl flex items-center justify-end px-6 z-0" aria-hidden="true">
                 <Trash2 className="text-white" size={24} />
             </div>
 
-            {/* Swipeable Card */}
+            {/* Swipeable Card with Spring Physics */}
             <motion.div
                 layout
                 drag="x"
-                dragConstraints={{ left: -200, right: 0 }}
-                dragElastic={0.15}
+                dragConstraints={{ left: -180, right: 0 }}
+                dragElastic={0.55}
                 dragDirectionLock
+                transition={{ type: "spring", stiffness: 400, damping: 35 }}
                 onDragStart={() => setIsDragging(true)}
                 onDragEnd={handleDragEnd}
                 onClick={() => {
@@ -785,7 +785,7 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                         navigate(`/reader/${book.id}`);
                     }
                 }}
-                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none"
+                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none cursor-pointer"
                 style={{ width: '100%', overscrollBehavior: 'contain' }}
                 exit={{ height: 0, opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                 whileDrag={{ cursor: "grabbing" }}

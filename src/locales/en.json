@@ -9,7 +9,8 @@
         "delete": "Delete",
         "search": "Search",
         "settings": "Settings",
-        "logout": "Log out"
+        "logout": "Log out",
+        "close": "Close"
     },
     "nav": {
         "home": "Home",
@@ -41,7 +42,14 @@
         "bookmarks": "Bookmarks",
         "booksCount": "{count} books",
         "noBooks": "You don't have any books yet",
-        "addFirst": "Find your first book"
+        "addFirst": "Find your first book",
+        "noQuotes": "Empty here. Highlight text in books to save quotes",
+        "noBookmarks": "Empty here. Add bookmarks while reading",
+        "paragraph": "Paragraph {index}",
+        "exportAll": "Export all books",
+        "exportTitle": "Library Export",
+        "exportPacking": "Packing books...",
+        "addBook": "Add book"
     },
     "reader": {
         "page": "Page",
@@ -57,7 +65,31 @@
         "theme": "Theme",
         "readingMode": "Reading mode",
         "scroll": "Scroll",
-        "pageFlip": "Page flip"
+        "pageFlip": "Page flip",
+        "brightness": "Brightness",
+        "fontFamily": "Font",
+        "fontSans": "Sans-serif",
+        "fontSerif": "Serif",
+        "fontMono": "Monospace",
+        "fontRounded": "Rounded",
+        "themeLight": "Light",
+        "themeSepia": "Sepia",
+        "themeDark": "Dark",
+        "themeOled": "OLED",
+        "aiSummaryTitle": "Brief Summary",
+        "aiSummaryDisclaimer": "Generated with AI. May contain inaccuracies.",
+        "aiAnalyzing": "Analyzing context and generating summary...",
+        "translateModalTitle": "🌐 Translate Book",
+        "selectLanguage": "Choose a language to translate the book:",
+        "disableTranslation": "Turn off translation",
+        "tocTitle": "Table of Contents",
+        "chapter": "Chapter {index}",
+        "quoteSaved": "Quote saved! ✨",
+        "quoteFailed": "Failed to save quote",
+        "bookmarkAdded": "🔖 Bookmark added!",
+        "bookmarkFailed": "Failed to add bookmark",
+        "pdfNotSupportedAi": "AI summary is not yet supported for PDF.",
+        "speed": "Speed"
     },
     "auth": {
         "title": "Libify",
@@ -86,12 +118,47 @@
         "bookNotFound": "Book not found on Flibusta",
         "serverUnavailable": "Server temporarily unavailable",
         "networkError": "Network error",
-        "translationFailed": "Translation failed"
+        "translationFailed": "Translation failed",
+        "connectionError": "Connection error. Please check your internet.",
+        "invalidCredentials": "Invalid email or password.",
+        "userAlreadyExists": "User with this email is already registered.",
+        "passwordTooShort": "Password must be at least 6 characters.",
+        "unknownAuthError": "An error occurred during authentication."
     },
     "language": {
         "title": "Language",
         "uk": "Українська",
         "ru": "Русский",
         "en": "English"
+    },
+    "aria": {
+        "addFavorite": "Add to favorites",
+        "removeFavorite": "Remove from favorites",
+        "shareBook": "Share book",
+        "addBookmark": "Add bookmark",
+        "deleteBookmark": "Delete bookmark",
+        "deleteQuote": "Delete quote",
+        "readAloud": "Read aloud",
+        "pauseReadAloud": "Pause reading aloud",
+        "nextParagraph": "Next paragraph",
+        "prevParagraph": "Previous paragraph",
+        "openSettings": "Settings",
+        "closeSettings": "Close settings",
+        "openToc": "Table of Contents",
+        "closeToc": "Close Table of Contents",
+        "previousPage": "Previous page",
+        "nextPage": "Next page",
+        "decreaseFontSize": "Decrease font size",
+        "increaseFontSize": "Increase font size",
+        "exportBooks": "Export all books",
+        "addBook": "Add book",
+        "switchLanguage": "Select language",
+        "aiSummary": "AI summary",
+        "translateBook": "Translate book"
+    },
+    "sort": {
+        "byDate": "By date",
+        "byTitle": "By title",
+        "byAuthor": "By author"
     }
 }

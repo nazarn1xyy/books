@@ -39,8 +39,10 @@ export function useTextToSpeech() {
             speechSynthesis.onvoiceschanged = loadVoices;
         }
 
+        const synth = synthesis.current;
+
         return () => {
-            synthesis.current.cancel();
+            synth?.cancel();
             if (speechSynthesis.onvoiceschanged !== undefined) {
                 speechSynthesis.onvoiceschanged = null;
             }

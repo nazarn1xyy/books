@@ -133,8 +133,8 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/flibusta/, ''),
         agent: torAgent,
-        configure: (proxy, _options) => {
-          proxy.on('proxyRes', (proxyRes, _req, _res) => {
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
             let location = proxyRes.headers['location'] || proxyRes.headers['Location'];
             if (location) {
               if (Array.isArray(location)) location = location[0];

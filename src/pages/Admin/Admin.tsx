@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, Bell, Cpu, HardDrive, X as XIcon, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { getGenres, getNotifications, getActivityByPeriod, type UserStat } from '../../services/mockStats';
+import { getGenres, getNotifications, getActivityByPeriod, type UserStat, type ManagedBook } from '../../services/mockStats';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,7 +26,7 @@ export function Admin() {
     const notifications = getNotifications();
 
     const [activeUsers, setActiveUsers] = useState<UserStat[]>([]);
-    const [managedBooks, setManagedBooks] = useState<any[]>([]);
+    const [managedBooks, setManagedBooks] = useState<ManagedBook[]>([]);
 
     const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
     const [activityData, setActivityData] = useState(getActivityByPeriod('week'));
@@ -306,7 +306,7 @@ export function Admin() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={genres as any[]}
+                                        data={genres}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}

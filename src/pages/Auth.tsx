@@ -1,14 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Mail, Lock, Loader2, CheckCircle, Eye, EyeOff, Globe } from 'lucide-react';
-import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-import { useLanguage, type Language } from '../contexts/LanguageContext';
-
-const LANGUAGES: { code: Language; name: string; flag: string }[] = [
-    { code: 'uk', name: 'UA', flag: '🇺🇦' },
-    { code: 'ru', name: 'RU', flag: '🇷🇺' },
-    { code: 'en', name: 'EN', flag: '🇬🇧' },
-];
+import { useLanguage } from '../contexts/LanguageContext';
+import { LANGUAGES } from '../constants/languages';
 
 export function Auth() {
     const [isLogin, setIsLogin] = useState(true);
@@ -21,11 +15,35 @@ export function Auth() {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [showLangDropdown, setShowLangDropdown] = useState(false);
+    const langDropdownRef = useRef<HTMLDivElement>(null);
 
-    const { isKeyboardOpen } = useKeyboardHeight();
     const { language, setLanguage, t } = useLanguage();
 
     const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
+
+    // Dismiss language menu on outside click or Escape
+    useEffect(() => {
+        if (!showLangDropdown) return;
+
+        const handleClickOutside = (e: MouseEvent) => {
+            if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+                setShowLangDropdown(false);
+            }
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowLangDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [showLangDropdown]);
 
     const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -88,35 +106,18 @@ export function Auth() {
                 }
             }
         } catch (err: unknown) {
-            console.error('Auth error:', err);
             const errorObj = err as { message?: string };
-            let message = errorObj?.message || t('common.error');
+            const rawMsg = (errorObj?.message || '').toLowerCase();
 
-            const lower = (message || '').toLowerCase();
-            if (lower.includes('load failed') || lower.includes('failed to fetch')) {
-                message = language === 'en'
-                    ? 'Connection error. Check your internet connection.'
-                    : language === 'uk'
-                    ? 'Помилка з’єднання. Перевірте інтернет або вимкніть VPN.'
-                    : 'Ошибка соединения. Проверьте интернет или отключите VPN.';
-            } else if (lower.includes('invalid login credentials')) {
-                message = language === 'en'
-                    ? 'Invalid email or password.'
-                    : language === 'uk'
-                    ? 'Невірний email або пароль.'
-                    : 'Неверный email или пароль.';
-            } else if (lower.includes('email not confirmed')) {
-                message = language === 'en'
-                    ? 'Email is not confirmed. Please check your inbox/spam folder.'
-                    : language === 'uk'
-                    ? 'Email не підтверджено. Перевірте пошту та папку спам.'
-                    : 'Email не подтверждён. Проверьте почту и папку спам.';
-            } else if (lower.includes('user already registered')) {
-                message = language === 'en'
-                    ? 'This email is already registered. Please log in.'
-                    : language === 'uk'
-                    ? 'Цей email вже зареєстровано. Спробуйте увійти.'
-                    : 'Этот email уже зарегистрирован. Попробуйте войти.';
+            let message = t('errors.unknownAuthError');
+            if (rawMsg.includes('load failed') || rawMsg.includes('failed to fetch')) {
+                message = t('errors.connectionError');
+            } else if (rawMsg.includes('invalid login credentials')) {
+                message = t('errors.invalidCredentials');
+            } else if (rawMsg.includes('user already registered') || rawMsg.includes('already exists')) {
+                message = t('errors.userAlreadyExists');
+            } else if (rawMsg.includes('at least 6 characters')) {
+                message = t('errors.passwordTooShort');
             }
 
             setError(message);
@@ -126,31 +127,26 @@ export function Auth() {
     };
 
     return (
-        <div
-            className="min-h-screen w-full bg-black flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden select-none"
-            style={{
-                position: isKeyboardOpen ? 'fixed' : 'relative',
-                height: isKeyboardOpen ? '100vh' : 'auto',
-                overflow: isKeyboardOpen ? 'hidden' : 'visible'
-            }}
-        >
+        <div className="min-h-[100dvh] w-full bg-black flex flex-col items-center justify-center p-4 sm:p-6 relative select-none overflow-y-auto">
             {/* Ambient Background Glow */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_40%,rgba(120,119,198,0.08),rgba(0,0,0,0))] pointer-events-none" />
 
             {/* Language Selector Top Right */}
-            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" ref={langDropdownRef}>
                 <div className="relative">
                     <button
                         type="button"
                         onClick={() => setShowLangDropdown(!showLangDropdown)}
+                        aria-expanded={showLangDropdown}
+                        aria-label={t('aria.switchLanguage')}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-neutral-300 text-xs font-medium backdrop-blur-md transition-all active:scale-95"
                     >
-                        <Globe size={14} className="text-neutral-400" />
+                        <Globe size={14} className="text-neutral-400" aria-hidden="true" />
                         <span>{currentLang.flag} {currentLang.name}</span>
                     </button>
 
                     {showLangDropdown && (
-                        <div className="absolute right-0 mt-2 w-32 bg-[#1C1C1E] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-30 py-1">
+                        <div className="absolute right-0 mt-2 w-36 bg-[#1C1C1E] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-30 py-1">
                             {LANGUAGES.map((lang) => (
                                 <button
                                     key={lang.code}
@@ -161,12 +157,12 @@ export function Auth() {
                                     }}
                                     className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors text-left ${
                                         language === lang.code
-                                            ? 'bg-white/15 text-white'
+                                            ? 'bg-white/15 text-white font-semibold'
                                             : 'text-neutral-400 hover:bg-white/5 hover:text-white'
                                     }`}
                                 >
                                     <span>{lang.flag}</span>
-                                    <span>{lang.code === 'uk' ? 'Українська' : lang.code === 'ru' ? 'Русский' : 'English'}</span>
+                                    <span>{lang.name}</span>
                                 </button>
                             ))}
                         </div>
@@ -174,7 +170,7 @@ export function Auth() {
                 </div>
             </div>
 
-            <div className="w-full max-w-[400px] z-10 my-auto">
+            <div className="w-full max-w-[400px] z-10 my-auto py-8">
                 {/* Brand Header */}
                 <div className="text-center mb-6">
                     <div className="mx-auto w-16 h-16 rounded-2xl shadow-xl shadow-black/50 border border-white/10 flex items-center justify-center mb-3 bg-[#18181b] overflow-hidden">
@@ -183,7 +179,6 @@ export function Auth() {
                             alt="Libify"
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                                // Fallback if image fails to load
                                 e.currentTarget.style.display = 'none';
                             }}
                         />
@@ -213,7 +208,7 @@ export function Auth() {
                             <div className="space-y-1.5">
                                 <label className="text-xs font-medium text-neutral-400 ml-0.5">{t('auth.email')}</label>
                                 <div className="relative">
-                                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" aria-hidden="true" />
                                     <input
                                         type="email"
                                         required
@@ -281,7 +276,7 @@ export function Auth() {
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-medium text-neutral-400 ml-0.5">{t('auth.nickname')}</label>
                                         <div className="relative">
-                                            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                                            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" aria-hidden="true" />
                                             <input
                                                 type="text"
                                                 required={!isLogin}
@@ -298,7 +293,7 @@ export function Auth() {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-medium text-neutral-400 ml-0.5">{t('auth.email')}</label>
                                     <div className="relative">
-                                        <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                                        <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" aria-hidden="true" />
                                         <input
                                             type="email"
                                             required
@@ -325,7 +320,7 @@ export function Auth() {
                                         )}
                                     </div>
                                     <div className="relative">
-                                        <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                                        <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" aria-hidden="true" />
                                         <input
                                             type={showPassword ? 'text' : 'password'}
                                             required

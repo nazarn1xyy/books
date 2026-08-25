@@ -32,9 +32,19 @@ body {
   min-height: -webkit-fill-available;
 }
 
-/* Smooth scrolling */
-html {
+/* Explicit smooth scroll class (not global on html to prevent Virtuoso and inertia scroll conflicts) */
+.smooth-scroll {
   scroll-behavior: smooth;
+}
+
+/* Scroll snap utilities for native-feeling carousels */
+.scroll-snap-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snap-start {
+  scroll-snap-align: start;
 }
 
 /* Hide scrollbar but keep functionality */
@@ -66,12 +76,9 @@ html {
 
 /* Animations */
 @keyframes pulse {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0.5;
   }
@@ -79,22 +86,6 @@ html {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out;
 }
 
 /* iOS safe area support */
@@ -108,7 +99,7 @@ html {
   }
 }
 
-/* Prevent pull-to-refresh on mobile */
+/* Prevent pull-to-refresh on mobile body */
 body {
   overscroll-behavior-y: contain;
 }
@@ -146,7 +137,6 @@ textarea:focus {
 
 /* Prevent iOS zoom on input focus */
 @supports (-webkit-touch-callout: none) {
-
   input[type="text"],
   input[type="search"],
   input[type="email"],
@@ -207,7 +197,6 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* ========== DESKTOP STYLES ========== */
 
-/* Desktop container with max-width for readability */
 .desktop-container {
   max-width: 100%;
 }
@@ -222,12 +211,10 @@ input[type="range"]::-webkit-slider-thumb {
   }
 }
 
-/* Desktop sidebar width */
 :root {
   --sidebar-width: 240px;
 }
 
-/* Hide on mobile, show on desktop */
 .desktop-only {
   display: none !important;
 }
@@ -238,14 +225,12 @@ input[type="range"]::-webkit-slider-thumb {
   }
 }
 
-/* Hide on desktop, show on mobile */
 @media (min-width: 1024px) {
   .mobile-only {
     display: none !important;
   }
 }
 
-/* Desktop hover effects for cards */
 @media (min-width: 1024px) {
   .card-hover {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -256,7 +241,6 @@ input[type="range"]::-webkit-slider-thumb {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   }
 
-  /* Show actions on hover */
   .hover-actions {
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -266,7 +250,6 @@ input[type="range"]::-webkit-slider-thumb {
     opacity: 1;
   }
 
-  /* Button hover effects */
   .btn-hover {
     transition: all 0.15s ease;
   }
@@ -275,32 +258,10 @@ input[type="range"]::-webkit-slider-thumb {
     transform: scale(1.05);
   }
 
-  /* Reader content max-width for readability */
   .reader-content {
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
-  }
-}
-
-/* Desktop grid utilities */
-@media (min-width: 1024px) {
-  .grid-desktop-4 {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .grid-desktop-5 {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .grid-desktop-6 {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1280px) {
-  .grid-desktop-6 {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -323,5 +284,25 @@ input[type="range"]::-webkit-slider-thumb {
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* =========================================================
+   Apple Design: Reduced Motion & Accessibility Support
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce {
+    animation: none !important;
   }
 }
