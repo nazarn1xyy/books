@@ -51,8 +51,9 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             const diffY = currentY - startY;
             const diffX = currentX - startX;
 
-            // If user is swiping horizontally or scrolling down the page, ignore
+            // If user is swiping horizontally or scrolling down the page, cancel pull-to-refresh
             if (diffY <= 0 || Math.abs(diffX) > Math.abs(diffY)) {
+                isTopPull = false;
                 if (pullProgressRef.current > 0) {
                     pullProgressRef.current = 0;
                     setPullProgress(0);
