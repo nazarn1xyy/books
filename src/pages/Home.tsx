@@ -83,13 +83,15 @@ export function Home() {
     }, [books]);
 
     return (
-        <div className="min-h-screen bg-black pb-24 lg:pb-8 pt-[env(safe-area-inset-top)]">
-            <div className="px-5 pt-8 desktop-container">
-                {/* Header */}
-                <header className="mb-6 mt-2">
-                    <h1 className="text-3xl font-bold text-white lg:text-4xl">{t('home.title')}</h1>
-                </header>
+        <div className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)]">
+            {/* Sticky Header with Status Bar Blur */}
+            <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-xl border-b border-white/5 pt-2 pb-3 px-5 mb-4">
+                <div className="desktop-container">
+                    <h1 className="text-2xl font-bold text-white lg:text-3xl">{t('home.title')}</h1>
+                </div>
+            </div>
 
+            <div className="px-5 desktop-container">
                 {/* Install PWA Banner */}
                 {canInstall && showInstallBanner && (
                     <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -137,7 +139,7 @@ export function Home() {
                         {booksInProgress.length > 0 && (
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.continueReading')}</h2>
-                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
+                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-4 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {booksInProgress.map((item, index) => (
                                         <BookCard
                                             key={item!.book.id}
@@ -155,7 +157,7 @@ export function Home() {
                         {recommendedBooks.length > 0 && (
                             <section className="mb-8">
                                 <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
-                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
+                                <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-4 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible">
                                     {recommendedBooks.map((book, index) => (
                                         <BookCard
                                             key={book.id}
@@ -171,7 +173,7 @@ export function Home() {
                         {/* Recently Added */}
                         <section className="mb-8">
                             <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
-                            <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                 {recentBooks.map((book, index) => (
                                     <BookCard key={book.id} book={book} size="small" priority={index < 4} />
                                 ))}

@@ -75,15 +75,15 @@ export const BookCard = memo(function BookCard({
     }, [progress]);
 
     const sizeClasses = {
-        small: 'w-28 min-[380px]:w-32',
-        medium: 'w-36 min-[380px]:w-40',
-        large: 'w-44 min-[380px]:w-48',
+        small: 'w-full',
+        medium: 'w-36 sm:w-40',
+        large: 'w-44 sm:w-48',
     };
 
     const imageHeights = {
-        small: 'h-40 min-[380px]:h-44',
-        medium: 'h-52 min-[380px]:h-56',
-        large: 'h-64 min-[380px]:h-68',
+        small: 'aspect-[2/3] w-full',
+        medium: 'h-52 sm:h-56 w-full',
+        large: 'h-64 sm:h-68 w-full',
     };
 
     const handleFavoriteClick = async (e: React.MouseEvent) => {
@@ -173,14 +173,14 @@ export const BookCard = memo(function BookCard({
         <Link
             to={`/reader/${book.id}`}
             aria-label={`${book.title}, ${book.author}`}
-            className={`${sizeClasses[size]} flex-shrink-0 text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative snap-start`}
+            className={`${sizeClasses[size]} ${size === 'small' ? 'w-full' : 'flex-shrink-0'} text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative snap-start`}
         >
             {cardToast && (
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg">
                     {cardToast}
                 </div>
             )}
-            <div className="relative overflow-hidden rounded-xl bg-[#1C1C1E]">
+            <div className="relative overflow-hidden rounded-2xl bg-[#1C1C1E] shadow-md">
                 <ImageWithLoader
                     src={coverSrc}
                     alt={book.title}
@@ -191,8 +191,8 @@ export const BookCard = memo(function BookCard({
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
                     fetchPriority={priority ? "high" : "low"}
-                    className={`w-full ${imageHeights[size]} object-cover transition-opacity duration-300 group-hover:opacity-90`}
-                    wrapperClassName="w-full bg-[#1C1C1E]"
+                    className={`w-full ${imageHeights[size]} object-cover transition-opacity duration-300 group-hover:opacity-90 rounded-2xl`}
+                    wrapperClassName="w-full bg-[#1C1C1E] rounded-2xl"
                 />
 
                 {/* Action Buttons */}
@@ -252,8 +252,8 @@ export const BookCard = memo(function BookCard({
                     </div>
                 )}
             </div>
-            <div className="flex-1 flex flex-col pt-2">
-                <h3 className="text-sm font-semibold text-white line-clamp-2 leading-tight min-h-[2.25rem] group-hover:text-gray-200 transition-colors">
+            <div className="flex-1 flex flex-col pt-2.5 px-0.5">
+                <h3 className="text-sm font-semibold text-white line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-gray-200 transition-colors">
                     {book.title}
                 </h3>
                 <p className="text-xs text-gray-400 mt-1 line-clamp-1">{book.author}</p>

@@ -65,41 +65,43 @@ export function Search() {
     return (
         <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden">
             {/* Fixed Search Header */}
-            <header className="flex-shrink-0 bg-black px-5 pt-8 pb-4 lg:px-8">
-                <h1 className="text-3xl font-bold text-white mb-4 lg:text-4xl">{t('search.title')}</h1>
-                <div className="relative lg:max-w-xl">
-                    <SearchIcon
-                        size={20}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                        aria-hidden="true"
-                    />
-                    <input
-                        type="search"
-                        inputMode="search"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={t('search.placeholder')}
-                        aria-label={t('search.title')}
-                        className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                    />
-                    {query && (
-                        <button
-                            onClick={() => setQuery('')}
-                            aria-label={t('common.cancel')}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
-                        >
-                            <X size={20} />
-                        </button>
-                    )}
+            <header className="flex-shrink-0 bg-black/95 backdrop-blur-xl border-b border-white/10 px-5 pt-2 pb-4 lg:px-8 z-30">
+                <div className="desktop-container">
+                    <h1 className="text-2xl font-bold text-white mb-3 lg:text-3xl">{t('search.title')}</h1>
+                    <div className="relative lg:max-w-xl">
+                        <SearchIcon
+                            size={20}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                            aria-hidden="true"
+                        />
+                        <input
+                            type="search"
+                            inputMode="search"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={t('search.placeholder')}
+                            aria-label={t('search.title')}
+                            className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-base"
+                        />
+                        {query && (
+                            <button
+                                onClick={() => setQuery('')}
+                                aria-label={t('common.cancel')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
+                            >
+                                <X size={20} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
             {/* Scrollable Results Area */}
             <div
-                className="flex-1 px-5 overflow-y-auto overflow-x-hidden touch-pan-y"
+                className="flex-1 px-5 pt-4 overflow-y-auto overflow-x-hidden touch-pan-y"
                 style={{
                     paddingBottom: isKeyboardOpen ? Math.max(keyboardHeight, 80) : 96,
                     WebkitOverflowScrolling: 'touch'
@@ -111,7 +113,7 @@ export function Search() {
                         <p className="text-gray-400">{t('search.searching')}</p>
                     </div>
                 ) : results.length > 0 ? (
-                    <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4 pb-4 desktop-container">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-8 desktop-container">
                         {results.map((book) => (
                             <BookCard key={book.id} book={book} size="small" />
                         ))}
