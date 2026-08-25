@@ -9,51 +9,82 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
     onRefreshRef.current = onRefresh;
 
     useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
         let startY = 0;
-        let isDragging = false;
+        let startX = 0;
+        let isTopPull = false;
+
+        const isAtTop = () => {
+            return (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+        };
 
         const handleTouchStart = (e: TouchEvent) => {
-            if (container.scrollTop === 0) {
+            if (isAtTop() && e.touches.length === 1) {
                 startY = e.touches[0].clientY;
-                isDragging = true;
+                startX = e.touches[0].clientX;
+                isTopPull = true;
+            } else {
+                isTopPull = false;
             }
         };
 
         const handleTouchMove = (e: TouchEvent) => {
-            if (!isDragging) return;
+            if (!isTopPull || e.touches.length !== 1) {
+                if (pullProgressRef.current > 0) {
+                    pullProgressRef.current = 0;
+                    setPullProgress(0);
+                }
+                return;
+            }
+
+            // If user scrolled down into the page, disable pull-to-refresh
+            if (!isAtTop()) {
+                isTopPull = false;
+                if (pullProgressRef.current > 0) {
+                    pullProgressRef.current = 0;
+                    setPullProgress(0);
+                }
+                return;
+            }
 
             const currentY = e.touches[0].clientY;
-            const diff = currentY - startY;
+            const currentX = e.touches[0].clientX;
+            const diffY = currentY - startY;
+            const diffX = currentX - startX;
 
-            if (diff > 0 && container.scrollTop === 0) {
-                const progress = Math.min(diff * 0.5, 120);
+            // If user is swiping horizontally or scrolling down the page, ignore
+            if (diffY <= 0 || Math.abs(diffX) > Math.abs(diffY)) {
+                if (pullProgressRef.current > 0) {
+                    pullProgressRef.current = 0;
+                    setPullProgress(0);
+                }
+                return;
+            }
+
+            // Only activate pull indicator when pulling down from the very top
+            if (diffY > 10) {
+                const progress = Math.min(diffY * 0.4, 90);
                 pullProgressRef.current = progress;
                 setPullProgress(progress);
-                if (e.cancelable) e.preventDefault();
-            } else {
-                pullProgressRef.current = 0;
-                setPullProgress(0);
+                if (e.cancelable) {
+                    e.preventDefault();
+                }
             }
         };
 
         const handleTouchEnd = async () => {
-            if (!isDragging) return;
-            isDragging = false;
+            isTopPull = false;
 
-            if (pullProgressRef.current > 80) {
+            if (pullProgressRef.current > 60) {
                 setIsRefreshing(true);
-                setPullProgress(80);
-                pullProgressRef.current = 80;
+                setPullProgress(60);
+                pullProgressRef.current = 60;
 
                 try {
                     const start = Date.now();
                     await onRefreshRef.current();
                     const elapsed = Date.now() - start;
-                    if (elapsed < 1000) {
-                        await new Promise(r => setTimeout(r, 1000 - elapsed));
+                    if (elapsed < 800) {
+                        await new Promise(r => setTimeout(r, 800 - elapsed));
                     }
                 } finally {
                     setIsRefreshing(false);
@@ -66,16 +97,18 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
             }
         };
 
-        container.addEventListener('touchstart', handleTouchStart, { passive: true });
-        container.addEventListener('touchmove', handleTouchMove, { passive: false });
-        container.addEventListener('touchend', handleTouchEnd);
+        window.addEventListener('touchstart', handleTouchStart, { passive: true });
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleTouchEnd, { passive: true });
+        window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
         return () => {
-            container.removeEventListener('touchstart', handleTouchStart);
-            container.removeEventListener('touchmove', handleTouchMove);
-            container.removeEventListener('touchend', handleTouchEnd);
+            window.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleTouchEnd);
+            window.removeEventListener('touchcancel', handleTouchEnd);
         };
-    }, []); // stable — no deps needed with refs
+    }, []);
 
     return { containerRef, isRefreshing, pullProgress };
 }

@@ -290,7 +290,7 @@ export function MyBooks() {
     const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(refreshData);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)] relative overflow-y-auto overscroll-contain">
+        <div ref={containerRef} className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)] relative">
             {/* Pull to Refresh Indicator */}
             <div
                 className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none transition-transform duration-200"
@@ -779,7 +779,6 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                 drag="x"
                 dragConstraints={{ left: -180, right: 0 }}
                 dragElastic={0.55}
-                dragDirectionLock
                 transition={{ type: "spring", stiffness: 400, damping: 35 }}
                 onDragStart={() => setIsDragging(true)}
                 onDragEnd={handleDragEnd}
@@ -788,8 +787,7 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                         navigate(`/reader/${book.id}`);
                     }
                 }}
-                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none cursor-pointer"
-                style={{ width: '100%', overscrollBehavior: 'contain' }}
+                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none cursor-pointer w-full"
                 exit={{ height: 0, opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                 whileDrag={{ cursor: "grabbing" }}
             >

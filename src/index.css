@@ -99,10 +99,7 @@ body {
   }
 }
 
-/* Prevent pull-to-refresh on mobile body */
-body {
-  overscroll-behavior-y: contain;
-}
+
 
 /* Smooth touch scrolling */
 .overflow-x-auto,
