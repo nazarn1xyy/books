@@ -68,13 +68,13 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-const PageWrapper = ({ children }: { children: ReactNode }) => (
+const PageWrapper = ({ children, hasSidebar = false }: { children: ReactNode; hasSidebar?: boolean }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.98 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.98 }}
     transition={{ duration: 0.2, ease: "easeOut" }}
-    className="min-h-screen bg-black lg:ml-[var(--sidebar-width)]"
+    className={`min-h-screen bg-black ${hasSidebar ? 'lg:ml-[var(--sidebar-width)]' : ''}`}
   >
     {children}
   </motion.div>
@@ -92,33 +92,33 @@ function AppContent() {
           <ErrorBoundary key={location.pathname}>
             <Routes location={location} key={location.pathname}>
               <Route path="/auth" element={
-                <PageWrapper>
+                <PageWrapper hasSidebar={false}>
                   {loading ? <LoadingFallback /> : user ? <Navigate to="/" replace /> : <Auth />}
                 </PageWrapper>
               } />
 
               <Route path="/" element={
-                <PageWrapper>
+                <PageWrapper hasSidebar={!!user}>
                   <ProtectedRoute><Home /></ProtectedRoute>
                 </PageWrapper>
               } />
               <Route path="/search" element={
-                <PageWrapper>
+                <PageWrapper hasSidebar={!!user}>
                   <ProtectedRoute><Search /></ProtectedRoute>
                 </PageWrapper>
               } />
               <Route path="/my-books" element={
-                <PageWrapper>
+                <PageWrapper hasSidebar={!!user}>
                   <ProtectedRoute><MyBooks /></ProtectedRoute>
                 </PageWrapper>
               } />
               <Route path="/reader/:id" element={
-                <PageWrapper>
+                <PageWrapper hasSidebar={false}>
                   <ProtectedRoute><Reader /></ProtectedRoute>
                 </PageWrapper>
               } />
               <Route path="/admin" element={
-                <PageWrapper>
+                <PageWrapper hasSidebar={!!user}>
                   <ProtectedRoute><Admin /></ProtectedRoute>
                 </PageWrapper>
               } />

@@ -60,13 +60,27 @@
         "pageFlip": "Перегортання"
     },
     "auth": {
-        "login": "Увійти",
-        "register": "Зареєструватися",
+        "title": "Libify",
+        "tagline": "Ваша бібліотека книг",
+        "login": "Вхід",
+        "register": "Реєстрація",
+        "loginAction": "Увійти",
+        "registerAction": "Створити акаунт",
+        "nickname": "Нікнейм",
+        "nicknamePlaceholder": "Придумайте нікнейм",
         "email": "Email",
+        "emailPlaceholder": "example@mail.com",
         "password": "Пароль",
+        "passwordPlaceholder": "••••••••",
         "forgotPassword": "Забули пароль?",
+        "resetPassword": "Скидання пароля",
+        "resetPasswordDesc": "Введіть email — надішлемо посилання для скидання",
+        "sendResetLink": "Надіслати посилання",
+        "backToLogin": "Назад до входу",
         "noAccount": "Немає акаунту?",
-        "hasAccount": "Вже є акаунт?"
+        "hasAccount": "Вже є акаунт?",
+        "resetLinkSent": "Посилання для скидання пароля надіслано на {email}",
+        "accountCreated": "Акаунт створено! Перевірте пошту {email} та підтвердіть реєстрацію."
     },
     "errors": {
         "bookNotFound": "Книгу не знайдено на Флібусті",

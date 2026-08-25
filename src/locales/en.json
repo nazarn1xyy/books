@@ -60,13 +60,27 @@
         "pageFlip": "Page flip"
     },
     "auth": {
+        "title": "Libify",
+        "tagline": "Your digital book library",
         "login": "Log in",
         "register": "Sign up",
+        "loginAction": "Log in",
+        "registerAction": "Create account",
+        "nickname": "Username",
+        "nicknamePlaceholder": "Choose a username",
         "email": "Email",
+        "emailPlaceholder": "example@mail.com",
         "password": "Password",
+        "passwordPlaceholder": "••••••••",
         "forgotPassword": "Forgot password?",
+        "resetPassword": "Reset password",
+        "resetPasswordDesc": "Enter your email to receive a reset link",
+        "sendResetLink": "Send reset link",
+        "backToLogin": "Back to log in",
         "noAccount": "Don't have an account?",
-        "hasAccount": "Already have an account?"
+        "hasAccount": "Already have an account?",
+        "resetLinkSent": "Password reset link sent to {email}",
+        "accountCreated": "Account created! Check {email} to confirm your registration."
     },
     "errors": {
         "bookNotFound": "Book not found on Flibusta",

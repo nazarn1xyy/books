@@ -119,3 +119,8 @@ dist
 # Gemini / Antigravity
 .gemini
 .antigravity
+
+# OS
+.DS_Store
+*/.DS_Store
+

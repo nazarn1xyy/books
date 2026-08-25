@@ -60,13 +60,27 @@
         "pageFlip": "Перелистывание"
     },
     "auth": {
-        "login": "Войти",
-        "register": "Зарегистрироваться",
+        "title": "Libify",
+        "tagline": "Ваша библиотека книг",
+        "login": "Вход",
+        "register": "Регистрация",
+        "loginAction": "Войти",
+        "registerAction": "Создать аккаунт",
+        "nickname": "Никнейм",
+        "nicknamePlaceholder": "Придумайте никнейм",
         "email": "Email",
+        "emailPlaceholder": "example@mail.com",
         "password": "Пароль",
+        "passwordPlaceholder": "••••••••",
         "forgotPassword": "Забыли пароль?",
+        "resetPassword": "Сброс пароля",
+        "resetPasswordDesc": "Введите email — пришлём ссылку для сброса",
+        "sendResetLink": "Отправить ссылку",
+        "backToLogin": "Назад ко входу",
         "noAccount": "Нет аккаунта?",
-        "hasAccount": "Уже есть аккаунт?"
+        "hasAccount": "Уже есть аккаунт?",
+        "resetLinkSent": "Ссылка для сброса пароля отправлена на {email}",
+        "accountCreated": "Аккаунт создан! Проверьте почту {email} и подтвердите регистрацию."
     },
     "errors": {
         "bookNotFound": "Книга не найдена на Флибусте",
