@@ -28,9 +28,7 @@ export function createApp(container: Container): Hono<AppEnv> {
   app.use(originCheck(container.config.APP_ORIGIN));
 
   for (const controller of container.controllers) {
-    if (controller.usesSession && container.sessionMiddleware) {
-      app.use(`${controller.basePath}/*`, container.sessionMiddleware);
-    }
+    if (controller.usesSession) app.use(`${controller.basePath}/*`, container.sessionMiddleware);
   }
   app.use(rateLimit(container.apiLimiter, userOrIpKey('api')));
 

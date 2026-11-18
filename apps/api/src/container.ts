@@ -5,6 +5,9 @@ import type { Database } from './core/db';
 import type { AppEnv, Controller } from './core/http';
 import type { Logger } from './core/logger';
 import { FixedWindowRateLimiter } from './core/rate-limiter';
+import { AdminController } from './modules/admin/admin.controller';
+import { AdminRepository } from './modules/admin/admin.repository';
+import { AdminService } from './modules/admin/admin.service';
 import { AiController } from './modules/ai/ai.controller';
 import { AiService } from './modules/ai/ai.service';
 import { AuthController } from './modules/auth/auth.controller';
@@ -40,33 +43,33 @@ export interface Container {
   config: Config;
   logger: Logger;
   apiLimiter: FixedWindowRateLimiter;
-  controllers: Controller[];
   sessionMiddleware: MiddlewareHandler<AppEnv>;
+  controllers: Controller[];
   auth: AuthService;
   users: UserRepository;
 }
 
 export function createContainer(config: Config, deps: ContainerDeps): Container {
   const clock = deps.clock ?? systemClock;
-  const apiLimiter = new FixedWindowRateLimiter(120, 60_000, clock);
+  const fetchFn = deps.fetch ?? fetch;
+  const { db } = deps;
 
-  const users = new UserRepository(deps.db);
-  const auth = new AuthService(users, new SessionRepository(deps.db), new PasswordHasher(), clock);
+  const users = new UserRepository(db);
+  const auth = new AuthService(users, new SessionRepository(db), new PasswordHasher(), clock);
   const cookie = new SessionCookie(config.cookieSecure);
 
   const sync = new SyncService(
-    deps.db,
+    db,
     {
-      book: new BookSyncRepository(deps.db),
-      progress: new ProgressSyncRepository(deps.db),
-      quote: new QuoteSyncRepository(deps.db),
-      bookmark: new BookmarkSyncRepository(deps.db),
-      favorite: new FavoriteSyncRepository(deps.db),
+      book: new BookSyncRepository(db),
+      progress: new ProgressSyncRepository(db),
+      quote: new QuoteSyncRepository(db),
+      bookmark: new BookmarkSyncRepository(db),
+      favorite: new FavoriteSyncRepository(db),
     },
     clock,
   );
 
-  const fetchFn = deps.fetch ?? fetch;
   const [primaryCatalogHost = 'flibusta.is'] = config.catalogHosts;
   const catalog = new CatalogService(
     new CatalogClient(config.catalogHosts, fetchFn),
@@ -74,7 +77,7 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
   );
 
   const controllers: Controller[] = [
-    new HealthController(new HealthService(deps.db)),
+    new HealthController(new HealthService(db)),
     new AuthController(auth, cookie, {
       ip: new FixedWindowRateLimiter(5, 60_000, clock),
       nickname: new FixedWindowRateLimiter(10, 60 * 60_000, clock),
@@ -82,15 +85,16 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
     new SyncController(sync),
     new CatalogController(catalog),
     new AiController(new AiService(config.ai, fetchFn), new FixedWindowRateLimiter(20, 60_000, clock)),
+    new AdminController(new AdminService(new AdminRepository(db))),
   ];
 
   return {
     config,
     logger: deps.logger,
-    apiLimiter,
+    apiLimiter: new FixedWindowRateLimiter(120, 60_000, clock),
+    sessionMiddleware: sessionMiddleware(auth, cookie),
     controllers,
     auth,
     users,
-    sessionMiddleware: sessionMiddleware(auth, cookie),
   };
 }
