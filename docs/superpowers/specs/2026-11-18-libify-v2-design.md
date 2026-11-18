@@ -130,9 +130,11 @@ src/cli/make-admin.ts  назначение роли admin по нику
 - `quotes`: `id uuid pk` (генерируется клиентом), `user_id`, `book_id`, `text`, `note`,
   `color`, `created_at`, `updated_at`, `deleted_at`.
 - `bookmarks`: `id uuid pk`, `user_id`, `book_id`, `paragraph_index`, `preview_text`,
-  `unique(user_id, book_id, paragraph_index)`, `updated_at`, `deleted_at`.
+  `updated_at`, `deleted_at`. Уникальности `(user_id, book_id, paragraph_index)` нет: ключ закладки —
+  `id`, дубликаты разрешает клиент.
 - `favorites`: `pk(user_id, book_id)`, `title`, `author`, `cover_url`, `updated_at`, `deleted_at`.
-- Индексы `(user_id, updated_at)` на всех синхронизируемых таблицах.
+- У всех синхронизируемых таблиц есть `synced_at` — серверное время записи, курсор pull
+  (`updated_at` — клиентское время для last-write-wins). Индексы `(user_id, synced_at)`.
 
 Обложки хранятся как URL, а не base64.
 
@@ -156,20 +158,20 @@ src/cli/make-admin.ts  назначение роли admin по нику
   до 200 операций в пачке, выполняется в одной транзакции. Конфликты решаются по принципу
   «последняя запись побеждает»: запись применяется, только если
   `clientUpdatedAt > updated_at` в базе. Ответ `{applied, rejected, serverTime}`.
-- Обычные REST-эндпоинты (`/api/library`, `/api/quotes`…) тоже есть для онлайн-операций
-  и админки, но клиент пишет через sync.
+- Все пользовательские данные пишутся и читаются только через `/api/sync/push|pull`; отдельных REST-эндпоинтов
+  для библиотеки нет (YAGNI).
 
-**Каталог (прокси Flibusta):** `GET /api/catalog/search?q=`, `/api/catalog/book/:id`,
-`/api/catalog/download/:id/:format`, `/api/catalog/cover/*`.
+**Каталог (прокси Flibusta):** `GET /api/catalog/search?q=` (OPDS XML),
+`GET /api/catalog/book/:id/:format` (fb2|epub|mobi), `GET /api/catalog/image?src=`.
 - Белый список хостов задаётся в конфиге (`flibusta.is`, `static.flibusta.is`), клиент
   не передаёт хост. Таймаут 15 с, 2 ретрая с паузой, `User-Agent` свой.
-- LRU-кеш в памяти: поиск 10 минут / 200 записей, метаданные 1 час / 500 записей,
-  ограничение кеша ~20 МБ. Файлы книг не кешируются на сервере, это делает клиент в IndexedDB.
+- LRU-кеш в памяти: поиск 10 минут / 200 записей, ограничение кеша ~10 МБ. Файлы книг не кешируются на сервере, это делает клиент в IndexedDB.
 - Ответы потоковые (stream), без буферизации книги целиком в памяти.
 
-**AI:** `POST /api/ai/explain {text}` требует авторизацию, лимит 20 запросов в минуту на
+**AI:** `POST /api/ai/summarize {text}` (пересказ отрывка) требует авторизацию, лимит 20 запросов в минуту на
 пользователя. Провайдер и ключ задаются в env (`AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`,
-совместимо с OpenAI). Если ключа нет, возвращается `503 AI_DISABLED`, и UI скрывает кнопку.
+совместимо с OpenAI). Если ключа нет, возвращается `503 AI_DISABLED`, и UI скрывает кнопку
+(узнаёт через `GET /api/ai/status` → `{enabled}`).
 
 **Админка:** `GET /api/admin/stats`: число пользователей, активные за 24 ч и 7 дней,
 книги в библиотеках, топ книг, регистрации по дням. Доступ только с `role=admin`.
