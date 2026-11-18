@@ -34,7 +34,7 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string | un
 // Detect browser language and map to supported languages
 function detectBrowserLanguage(): Language {
     const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'uk';
-    const langCode = browserLang.split('-')[0].toLowerCase();
+    const langCode = (browserLang.split('-')[0] ?? '').toLowerCase();
 
     if (langCode === 'en') return 'en';
     if (langCode === 'uk') return 'uk';
@@ -44,7 +44,7 @@ function detectBrowserLanguage(): Language {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const [loadedLocale, setLoadedLocale] = useState<LocaleData>(ukLocale);
+    const [fetchedLocale, setFetchedLocale] = useState<{ language: Language; data: LocaleData } | null>(null);
 
     const [language, setLanguageState] = useState<Language>(() => {
         // First check localStorage
@@ -65,12 +65,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         document.documentElement.lang = language;
-        if (language === 'uk') {
-            setLoadedLocale(ukLocale);
-        } else {
-            import(`../locales/${language}.json`).then(m => setLoadedLocale(m.default));
-        }
+        if (language === 'uk') return;
+        let cancelled = false;
+        import(`../locales/${language}.json`).then(m => {
+            if (!cancelled) setFetchedLocale({ language, data: m.default });
+        });
+        return () => {
+            cancelled = true;
+        };
     }, [language]);
+
+    // Ukrainian is bundled; other locales show Ukrainian until their chunk arrives.
+    const loadedLocale = language !== 'uk' && fetchedLocale?.language === language ? fetchedLocale.data : ukLocale;
 
     const t = useCallback((key: string, params?: Record<string, string | number>): string => {
         let value = getNestedValue(loadedLocale as unknown as Record<string, unknown>, key);

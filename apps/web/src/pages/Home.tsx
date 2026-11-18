@@ -11,8 +11,9 @@ let _homeCache: { books: Book[]; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000;
 
 export function Home() {
-    const [books, setBooks] = useState<Book[]>([]);
-    const [loading, setLoading] = useState(true);
+    const freshCache = () => (_homeCache && Date.now() - _homeCache.timestamp < CACHE_TTL ? _homeCache : null);
+    const [books, setBooks] = useState<Book[]>(() => freshCache()?.books ?? []);
+    const [loading, setLoading] = useState(() => !freshCache());
     const { canInstall, promptInstall } = useInstallPrompt();
     const [showInstallBanner, setShowInstallBanner] = useState(true);
     const { t } = useLanguage();
@@ -33,11 +34,7 @@ export function Home() {
     }, []);
 
     useEffect(() => {
-        if (_homeCache && Date.now() - _homeCache.timestamp < CACHE_TTL) {
-            setBooks(_homeCache.books);
-            setLoading(false);
-            return;
-        }
+        if (freshCache()) return;
         if (loadingRef.current) return;
         loadingRef.current = true;
         const loadBooks = async () => {

@@ -3,7 +3,7 @@ import { Eye, EyeOff, Globe, Loader2, Lock, User } from 'lucide-react';
 import { NICKNAME_PATTERN } from '@libify/shared/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { LANGUAGES } from '../constants/languages';
+import { DEFAULT_LANGUAGE, LANGUAGES } from '../constants/languages';
 import { ApiError } from '../shared/api/ApiError';
 
 const inputClass =
@@ -20,7 +20,7 @@ export function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
-  const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const currentLang = LANGUAGES.find((l) => l.code === language) ?? DEFAULT_LANGUAGE;
 
   useEffect(() => {
     if (!showLangDropdown) return;

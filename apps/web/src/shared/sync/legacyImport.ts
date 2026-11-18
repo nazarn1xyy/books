@@ -62,7 +62,8 @@ export async function importLegacyState(
 
   const now = new Date().toISOString();
   for (const id of bookIds) {
-    const book = state.bookMetadata![id];
+    const book = state.bookMetadata?.[id];
+    if (!book) continue;
     const data: BookData = {
       bookId: id,
       title: (book.title || 'Untitled').slice(0, 500),

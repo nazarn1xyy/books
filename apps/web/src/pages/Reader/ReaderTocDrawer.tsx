@@ -40,7 +40,7 @@ export function ReaderTocDrawer({
                         <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
                             {chapters.map((ch, i) => {
                                 const isCurrent = currentParagraphIndex >= ch.paragraphIndex &&
-                                    (i === chapters.length - 1 || currentParagraphIndex < chapters[i + 1].paragraphIndex);
+                                    currentParagraphIndex < (chapters[i + 1]?.paragraphIndex ?? Infinity);
                                 return (
                                     <button
                                         key={i}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, Bell, Cpu, HardDrive, X as XIcon, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { getGenres, getNotifications, getActivityByPeriod, type UserStat, type ManagedBook } from '../../services/mockStats';
@@ -26,7 +26,6 @@ export function Admin() {
     const [managedBooks, setManagedBooks] = useState<ManagedBook[]>([]);
 
     const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
-    const [activityData, setActivityData] = useState(getActivityByPeriod('week'));
     const [showNotifications, setShowNotifications] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserStat | null>(null);
     const [systemStats, setSystemStats] = useState({ cpu: 45, ram: 62 });
@@ -61,10 +60,7 @@ export function Admin() {
         return () => clearInterval(interval);
     }, [isAdmin]);
 
-    // Update charts on period change
-    useEffect(() => {
-        setActivityData(getActivityByPeriod(period));
-    }, [period]);
+    const activityData = useMemo(() => getActivityByPeriod(period), [period]);
 
     // Simulate system stats updates
     useEffect(() => {

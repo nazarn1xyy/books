@@ -49,24 +49,20 @@ export function ReaderPdfViewer({
                 backgroundColor: 'var(--reader-bg)',
             }}
             onTouchStart={(e) => {
-                if (e.touches.length === 2) {
-                    const dist = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
+                const [a, b] = [e.touches[0], e.touches[1]];
+                if (e.touches.length === 2 && a && b) {
+                    const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
                     (e.currentTarget as HTMLDivElement).dataset.initialPinchDist = String(dist);
                     (e.currentTarget as HTMLDivElement).dataset.initialScale = String(pdfScale);
                 }
             }}
             onTouchMove={(e) => {
-                if (e.touches.length === 2) {
+                const [a, b] = [e.touches[0], e.touches[1]];
+                if (e.touches.length === 2 && a && b) {
                     const initialDist = parseFloat((e.currentTarget as HTMLDivElement).dataset.initialPinchDist || '0');
                     const initialScale = parseFloat((e.currentTarget as HTMLDivElement).dataset.initialScale || '1');
                     if (initialDist > 0) {
-                        const dist = Math.hypot(
-                            e.touches[0].clientX - e.touches[1].clientX,
-                            e.touches[0].clientY - e.touches[1].clientY
-                        );
+                        const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
                         const newScale = Math.min(3, Math.max(0.5, initialScale * (dist / initialDist)));
                         setPdfScale(newScale);
                     }

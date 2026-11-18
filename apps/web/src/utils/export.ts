@@ -18,8 +18,7 @@ export async function exportAllBooks(
     const zip = new JSZip();
     let successful = 0;
 
-    for (let i = 0; i < bookIds.length; i++) {
-        const bookId = bookIds[i];
+    for (const [i, bookId] of bookIds.entries()) {
         const metadata = getBookMetadata(bookId);
 
         if (onProgress && metadata) {

@@ -13,17 +13,13 @@ export function useSwipeGesture({ onSwipeLeft, onSwipeRight }: SwipeHandlers) {
 
     const onTouchStart = useCallback((e: React.TouchEvent) => {
         touchEnd.current = null;
-        touchStart.current = {
-            x: e.targetTouches[0].clientX,
-            y: e.targetTouches[0].clientY,
-        };
+        const touch = e.targetTouches[0];
+        touchStart.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
     }, []);
 
     const onTouchMove = useCallback((e: React.TouchEvent) => {
-        touchEnd.current = {
-            x: e.targetTouches[0].clientX,
-            y: e.targetTouches[0].clientY,
-        };
+        const touch = e.targetTouches[0];
+        if (touch) touchEnd.current = { x: touch.clientX, y: touch.clientY };
     }, []);
 
     const onTouchEnd = useCallback(() => {

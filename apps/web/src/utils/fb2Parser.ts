@@ -131,7 +131,7 @@ function extractFb2Content(doc: Document): ParsedBookData {
     // Helper to find first element by local name, ignoring namespace
     const getFirstText = (tagName: string, root: Document | Element = doc): string | null => {
         const elements = root.getElementsByTagNameNS('*', tagName);
-        return elements.length > 0 ? elements[0].textContent : null;
+        return elements[0]?.textContent ?? null;
     };
 
     let title = 'Без назви';
@@ -179,8 +179,8 @@ function extractFb2Content(doc: Document): ParsedBookData {
         .flatMap(cp => Array.from(cp.getElementsByTagNameNS('*', 'image')));
     
     let targetBinaryId = '';
-    if (coverpageImages.length > 0) {
-        const img = coverpageImages[0];
+    const img = coverpageImages[0];
+    if (img) {
         const href = img.getAttribute('href') || img.getAttribute('l:href') || img.getAttribute('xlink:href') || '';
         targetBinaryId = href.replace(/^#/, '');
     }

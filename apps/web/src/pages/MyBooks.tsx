@@ -62,12 +62,8 @@ export function MyBooks() {
 
     // Fetch favorites, quotes, and bookmarks when user is logged in
     useEffect(() => {
-        if (!user) {
-            setFavorites([]);
-            setQuotes([]);
-            setBookmarks([]);
-            return;
-        }
+        // The page is only reachable signed in; on sign-out it unmounts.
+        if (!user) return;
 
         const fetchData = async () => {
             setLoadingData(true);

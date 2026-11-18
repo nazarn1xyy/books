@@ -322,22 +322,21 @@ export function Reader() {
     }, [paragraphs, currentPageIndex]);
 
     // TTS Logic
+    /** Nearest paragraph with text from `from` in direction `step`; null past either end. */
+    const findSpeakable = useCallback((from: number, step: 1 | -1): number | null => {
+        for (let i = from; i >= 0 && i < paragraphs.length; i += step) {
+            if (paragraphs[i]?.trim()) return i;
+        }
+        return null;
+    }, [paragraphs]);
+
     const speakParagraph = useCallback((index: number) => {
-        if (index >= paragraphs.length) {
-            setTtsActiveParagraph(null);
-            return;
-        }
-
         const text = paragraphs[index];
-        if (!text.trim()) {
-            setTtsActiveParagraph(index + 1);
-            return;
-        }
-
+        if (!text) return;
         speak(text, { rate: ttsRate }, () => {
-            setTtsActiveParagraph(prev => (prev === index ? prev + 1 : prev));
+            setTtsActiveParagraph(prev => (prev === index ? findSpeakable(index + 1, 1) : prev));
         });
-    }, [paragraphs, speak, ttsRate]);
+    }, [paragraphs, speak, ttsRate, findSpeakable]);
 
     useEffect(() => {
         if (ttsActiveParagraph !== null && !isPaused && !isSpeaking) {
@@ -358,19 +357,19 @@ export function Reader() {
             pause();
         } else {
             const startIndex = visibleRange.startIndex;
-            setTtsActiveParagraph(startIndex);
+            setTtsActiveParagraph(findSpeakable(startIndex, 1));
             setShowTtsControls(true);
         }
     };
 
     const handleTtsNext = () => {
         cancel();
-        setTtsActiveParagraph(prev => (prev !== null && prev < paragraphs.length - 1 ? prev + 1 : prev));
+        setTtsActiveParagraph(prev => (prev === null ? prev : findSpeakable(prev + 1, 1) ?? prev));
     };
 
     const handleTtsPrev = () => {
         cancel();
-        setTtsActiveParagraph(prev => (prev !== null && prev > 0 ? prev - 1 : prev));
+        setTtsActiveParagraph(prev => (prev === null ? prev : findSpeakable(prev - 1, -1) ?? prev));
     };
 
     // Text selection for quotes
