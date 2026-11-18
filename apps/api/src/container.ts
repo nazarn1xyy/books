@@ -14,6 +14,15 @@ import { SessionRepository } from './modules/auth/session.repository';
 import { UserRepository } from './modules/auth/user.repository';
 import { HealthController } from './modules/health/health.controller';
 import { HealthService } from './modules/health/health.service';
+import {
+  BookmarkSyncRepository,
+  BookSyncRepository,
+  FavoriteSyncRepository,
+  ProgressSyncRepository,
+  QuoteSyncRepository,
+} from './modules/sync/entity.repositories';
+import { SyncController } from './modules/sync/sync.controller';
+import { SyncService } from './modules/sync/sync.service';
 
 export interface ContainerDeps {
   db: Database;
@@ -40,12 +49,25 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
   const auth = new AuthService(users, new SessionRepository(deps.db), new PasswordHasher(), clock);
   const cookie = new SessionCookie(config.cookieSecure);
 
+  const sync = new SyncService(
+    deps.db,
+    {
+      book: new BookSyncRepository(deps.db),
+      progress: new ProgressSyncRepository(deps.db),
+      quote: new QuoteSyncRepository(deps.db),
+      bookmark: new BookmarkSyncRepository(deps.db),
+      favorite: new FavoriteSyncRepository(deps.db),
+    },
+    clock,
+  );
+
   const controllers: Controller[] = [
     new HealthController(new HealthService(deps.db)),
     new AuthController(auth, cookie, {
       ip: new FixedWindowRateLimiter(5, 60_000, clock),
       nickname: new FixedWindowRateLimiter(10, 60 * 60_000, clock),
     }),
+    new SyncController(sync),
   ];
 
   return {
