@@ -8,11 +8,13 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.91.0",
+    "@libify/shared": "^2.0.0",
     "framer-motion": "^12.27.2",
+    "idb": "^8.0.4",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
@@ -33,12 +35,13 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "fake-indexeddb": "^6.2.8",
     "globals": "^16.5.0",
-    "socks-proxy-agent": "^8.0.5",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
-    "vite-plugin-compression2": "^2.4.0"
+    "vite-plugin-compression2": "^2.4.0",
+    "vitest": "^5.1.1"
   }
 }
