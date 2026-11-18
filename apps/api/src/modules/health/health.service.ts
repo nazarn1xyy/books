@@ -7,14 +7,19 @@ export class HealthService {
   constructor(private readonly db: Database) {}
 
   async isDatabaseUp(): Promise<boolean> {
+    let timer: NodeJS.Timeout | undefined;
     try {
       await Promise.race([
         this.db.execute(sql`select 1`),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('db timeout')), HealthService.DB_TIMEOUT_MS)),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('db timeout')), HealthService.DB_TIMEOUT_MS);
+        }),
       ]);
       return true;
     } catch {
       return false;
+    } finally {
+      clearTimeout(timer);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { credentialsSchema, loginSchema, type AuthResponse } from '@libify/shared';
-import { RateLimitError } from '../../core/errors';
+import { InvalidCredentialsError, RateLimitError } from '../../core/errors';
 import { clientIp, currentUser, readJson, type AppEnv, type Controller } from '../../core/http';
 import { rateLimit, requireAuth } from '../../core/middleware';
 import type { FixedWindowRateLimiter } from '../../core/rate-limiter';
@@ -10,8 +10,11 @@ import type { SessionCookie } from './session-cookie';
 export interface AuthLimiters {
   /** Per IP: register + login attempts. */
   ip: FixedWindowRateLimiter;
-  /** Per nickname: login attempts, against password guessing from many IPs. */
-  nickname: FixedWindowRateLimiter;
+  /**
+   * Per nickname + IP: failed logins only, reset on success. Keyed by IP too, so nobody can
+   * lock the owner out by failing logins for their nickname from elsewhere.
+   */
+  failedLogins: FixedWindowRateLimiter;
 }
 
 export class AuthController implements Controller {
@@ -35,9 +38,17 @@ export class AuthController implements Controller {
       })
       .post('/login', ipLimit, async (c) => {
         const input = await readJson(c, loginSchema);
-        const byNick = this.limiters.nickname.consume(`auth-nick:${input.nickname.toLowerCase()}`);
-        if (!byNick.allowed) throw new RateLimitError(byNick.retryAfterSec);
-        const session = await this.auth.login(input, c.req.header('user-agent') ?? null);
+        const failKey = `auth-fail:${input.nickname.toLowerCase()}:${clientIp(c)}`;
+        const blocked = this.limiters.failedLogins.peek(failKey);
+        if (!blocked.allowed) throw new RateLimitError(blocked.retryAfterSec);
+        let session: IssuedSession;
+        try {
+          session = await this.auth.login(input, c.req.header('user-agent') ?? null);
+        } catch (err) {
+          if (err instanceof InvalidCredentialsError) this.limiters.failedLogins.consume(failKey);
+          throw err;
+        }
+        this.limiters.failedLogins.reset(failKey);
         return this.respondWithSession(c, session, 200);
       })
       .post('/logout', async (c) => {

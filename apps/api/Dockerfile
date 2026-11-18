@@ -12,7 +12,9 @@ RUN npm run build -w @libify/api
 FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
-RUN npm install --no-save --omit=dev @node-rs/argon2@2.2.2 && npm cache clean --force
+# argon2 is the only external (native) dependency of the bundle. Copy it from the build stage,
+# which installed the exact lockfile version for this same platform (alpine/musl).
+COPY --from=build /repo/node_modules/@node-rs ./node_modules/@node-rs
 COPY --from=build /repo/apps/api/dist ./dist
 COPY --from=build /repo/apps/api/drizzle ./drizzle
 USER node

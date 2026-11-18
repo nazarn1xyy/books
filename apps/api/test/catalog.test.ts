@@ -27,6 +27,17 @@ describe('CatalogClient', () => {
     expect(calls).toEqual([]);
   });
 
+  it('refuses non-default ports on allowed hosts', async () => {
+    await expect(client.get(new URL('https://flibusta.is:8443/opds'))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    await expect(client.get(new URL('http://flibusta.is:22/x'))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    expect(calls).toEqual([]);
+  });
+
+  it('accepts an explicit default port', async () => {
+    handler = () => new Response('ok');
+    await expect(client.get(new URL('https://flibusta.is:443/opds'))).resolves.toBeInstanceOf(Response);
+  });
+
   it('refuses redirects to foreign hosts', async () => {
     handler = () => new Response(null, { status: 302, headers: { location: 'http://evil.test/x' } });
     await expect(client.get(new URL('https://flibusta.is/b/1/fb2'))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });

@@ -64,8 +64,9 @@ export class CatalogClient {
   }
 
   private assertAllowed(url: URL): void {
-    if (!['http:', 'https:'].includes(url.protocol) || !this.allowedHosts.includes(url.hostname)) {
-      throw new ValidationError(`Host not allowed: ${url.hostname}`);
+    // URL normalises the scheme's default port to '', so any explicit port here is non-default.
+    if (!['http:', 'https:'].includes(url.protocol) || url.port !== '' || !this.allowedHosts.includes(url.hostname)) {
+      throw new ValidationError(`Host not allowed: ${url.host}`);
     }
   }
 }

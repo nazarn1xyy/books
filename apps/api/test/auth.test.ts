@@ -78,6 +78,40 @@ describe('auth', () => {
     expect((await client.get('/api/auth/me')).status).toBe(401);
   });
 
+  it('blocks repeated failed logins from one IP without locking out the owner elsewhere', async () => {
+    await register(ctx.client());
+    const attacker = ctx.client();
+    const login = (client: TestClient, password: string, ip: string) =>
+      client.post('/api/auth/login', { nickname: 'Reader_1', password }, { 'x-forwarded-for': ip });
+
+    // Per-IP limit is 5/min, so spread attempts over time; failures are what count.
+    for (let i = 0; i < 10; i++) {
+      expect((await login(attacker, 'wrong-password', '203.0.113.50')).status).toBe(401);
+      ctx.clock.advance(61_000);
+    }
+    const blocked = await login(attacker, creds.password, '203.0.113.50');
+    expect(blocked.status).toBe(429);
+
+    const owner = await login(ctx.client(), creds.password, '198.51.100.200');
+    expect(owner.status).toBe(200);
+  });
+
+  it('a successful login resets the failure counter', async () => {
+    await register(ctx.client());
+    const client = ctx.client();
+    const login = (password: string) =>
+      client.post('/api/auth/login', { nickname: 'Reader_1', password }, { 'x-forwarded-for': '203.0.113.60' });
+    for (let i = 0; i < 9; i++) {
+      await login('wrong-password');
+      ctx.clock.advance(61_000);
+    }
+    expect((await login(creds.password)).status).toBe(200);
+    ctx.clock.advance(61_000);
+    for (let i = 0; i < 4; i++) expect((await login('wrong-password')).status).toBe(401);
+    ctx.clock.advance(61_000);
+    expect((await login(creds.password)).status).toBe(200);
+  });
+
   it('rate limits registration attempts per IP', async () => {
     const headers = { 'x-forwarded-for': '203.0.113.7' };
     const client = ctx.client();

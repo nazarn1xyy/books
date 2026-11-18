@@ -25,4 +25,14 @@ describe('FixedWindowRateLimiter', () => {
     limiter.consume('a');
     expect(limiter.consume('b').allowed).toBe(true);
   });
+  it('peek reports a block without counting, reset clears the key', () => {
+    const limiter = new FixedWindowRateLimiter(2, 60_000, new FakeClock());
+    expect(limiter.peek('k').allowed).toBe(true);
+    limiter.consume('k');
+    limiter.consume('k');
+    expect(limiter.peek('k')).toEqual({ allowed: false, retryAfterSec: 60 });
+    expect(limiter.peek('k').allowed).toBe(false);
+    limiter.reset('k');
+    expect(limiter.peek('k').allowed).toBe(true);
+  });
 });
