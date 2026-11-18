@@ -1,6 +1,5 @@
 import { Suspense, lazy, type ReactNode, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { BottomNav } from './components/BottomNav';
 import { Sidebar } from './components/Sidebar';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
@@ -68,21 +67,11 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-const PageWrapper = ({ children, hasSidebar = false }: { children: ReactNode; hasSidebar?: boolean }) => {
-  const shouldReduceMotion = useReducedMotion();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0.05 : 0.15 }}
-      className={`min-h-screen bg-black ${hasSidebar ? 'lg:ml-[var(--sidebar-width)]' : ''}`}
-    >
-      {children}
-    </motion.div>
-  );
-};
+const PageWrapper = ({ children, hasSidebar = false }: { children: ReactNode; hasSidebar?: boolean }) => (
+  <div className={`min-h-screen bg-black animate-page-in ${hasSidebar ? 'lg:ml-[var(--sidebar-width)]' : ''}`}>
+    {children}
+  </div>
+);
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -93,10 +82,9 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-black overflow-x-hidden">
       <ScrollHandler />
-      <AnimatePresence mode="sync">
         <Suspense fallback={<LoadingFallback />}>
           <ErrorBoundary key={location.pathname}>
-            <Routes location={location} key={location.pathname}>
+            <Routes location={location}>
               <Route path="/auth" element={
                 <PageWrapper hasSidebar={false}>
                   {loading ? <LoadingFallback /> : user ? <Navigate to="/" replace /> : <Auth />}
@@ -131,7 +119,6 @@ function AppContent() {
             </Routes>
           </ErrorBoundary>
         </Suspense>
-      </AnimatePresence>
 
       {/* Show navigation only if authenticated and not in reader or auth mode */}
       {user && !isNavHidden && (

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, Bell, Cpu, HardDrive, X as XIcon, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { getGenres, getNotifications, getActivityByPeriod, type UserStat, type ManagedBook } from '../../services/mockStats';
@@ -119,13 +118,8 @@ export function Admin() {
                                 <Bell size={20} className={showNotifications ? 'text-white' : 'text-gray-400'} />
                                 <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-black" />
                             </button>
-
-                            <AnimatePresence>
                                 {showNotifications && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    <div
                                         className="absolute right-0 top-12 w-80 bg-[#1C1C1E] rounded-2xl shadow-2xl border border-white/10 overflow-hidden z-50 p-2"
                                     >
                                         <h3 className="text-sm font-semibold px-4 py-2 text-gray-400">Уведомления</h3>
@@ -141,9 +135,8 @@ export function Admin() {
                                                 </div>
                                             </div>
                                         ))}
-                                    </motion.div>
+                                    </div>
                                 )}
-                            </AnimatePresence>
                         </div>
                     </div>
                 </div>
@@ -154,9 +147,9 @@ export function Admin() {
                         <span className="text-xs text-gray-400">CPU Load</span>
                         <div className="flex items-center gap-2">
                             <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
-                                <motion.div
+                                <div
                                     className="h-full bg-blue-500"
-                                    animate={{ width: `${systemStats.cpu}%` }}
+ style={{ width: `${systemStats.cpu}%` }}
                                 />
                             </div>
                             <span className="text-xs font-mono">{systemStats.cpu}%</span>
@@ -166,9 +159,9 @@ export function Admin() {
                         <span className="text-xs text-gray-400">RAM Usage</span>
                         <div className="flex items-center gap-2">
                             <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
-                                <motion.div
+                                <div
                                     className="h-full bg-purple-500"
-                                    animate={{ width: `${systemStats.ram}%` }}
+ style={{ width: `${systemStats.ram}%` }}
                                 />
                             </div>
                             <span className="text-xs font-mono">{systemStats.ram}%</span>
@@ -304,12 +297,9 @@ export function Admin() {
                     <section>
                         <h2 className="text-lg font-bold mb-4">Пользователи Online</h2>
                         <div className="space-y-3">
-                            {activeUsers.map((user, i) => (
-                                <motion.div
+                            {activeUsers.map((user) => (
+                                <div
                                     key={user.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.1 }}
                                     onClick={() => setSelectedUser(user)}
                                     className="bg-[#1C1C1E] p-4 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer"
                                 >
@@ -324,15 +314,13 @@ export function Admin() {
                                         </div>
                                         <p className="text-xs text-gray-400 truncate mb-2">{user.currentBook}</p>
                                         <div className="h-1.5 bg-[#2C2C2E] rounded-full overflow-hidden">
-                                            <motion.div
+                                            <div
                                                 className="h-full bg-blue-500 rounded-full"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${user.progress}%` }}
-                                                transition={{ duration: 1, delay: 0.5 }}
+ style={{ width: `${user.progress}%` }}
                                             />
                                         </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             ))}
                         </div>
                     </section>
@@ -375,21 +363,13 @@ export function Admin() {
             </main>
 
             {/* User Details Modal */}
-            <AnimatePresence>
                 {selectedUser && (
                     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                        <div
                             onClick={() => setSelectedUser(null)}
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto"
                         />
-                        <motion.div
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        <div
                             className="bg-[#1C1C1E] w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 pointer-events-auto relative z-50 border-t border-white/10"
                         >
                             <button
@@ -434,10 +414,9 @@ export function Admin() {
                             <button className="w-full mt-6 bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-200 transition-colors">
                                 Написать сообщение
                             </button>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
         </div>
     );
 }

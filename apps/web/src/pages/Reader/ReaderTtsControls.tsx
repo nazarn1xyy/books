@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { usePresence } from '../../shared/ui/usePresence';
 
 interface ReaderTtsControlsProps {
     isVisible: boolean;
@@ -26,16 +26,12 @@ export function ReaderTtsControls({
     onNext
 }: ReaderTtsControlsProps) {
     const { t } = useLanguage();
+    const { mounted, visible } = usePresence(isVisible);
+    if (!mounted) return null;
 
     return (
-        <AnimatePresence>
-            {isVisible && (
-                <motion.div
-                    initial={{ y: 80, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 80, opacity: 0 }}
-                    transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-                    className="fixed bottom-24 left-4 right-4 z-40 flex justify-center pointer-events-none"
+                <div
+                    className={`fixed bottom-24 left-4 right-4 z-40 flex justify-center pointer-events-none transition-[opacity,transform] duration-200 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}
                 >
                     <div className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-4 max-w-md w-full justify-between px-6 pointer-events-auto">
                         <button
@@ -85,8 +81,6 @@ export function ReaderTtsControls({
                             <X size={24} />
                         </button>
                     </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                </div>
     );
 }

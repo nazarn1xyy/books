@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { Drawer } from '../../shared/ui/Drawer';
 
 interface ReaderTocDrawerProps {
     isOpen: boolean;
@@ -20,30 +20,12 @@ export function ReaderTocDrawer({
     const { t } = useLanguage();
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        onClick={onClose}
-                        aria-hidden="true"
-                    />
-
-                    {/* Drawer Panel Sliding in from Right */}
-                    <motion.div
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
-                        transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-                        className="relative w-full max-w-xs h-full bg-[var(--reader-bg)] border-l border-white/10 flex flex-col shadow-2xl z-10"
-                        style={{ backgroundColor: 'var(--reader-bg)' }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
+        <Drawer
+            open={isOpen}
+            onClose={onClose}
+            title={t('reader.tocTitle')}
+            className="h-full bg-[var(--reader-bg)] border-l border-white/10 flex flex-col shadow-2xl"
+        >
                         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 pt-[calc(env(safe-area-inset-top)+1rem)]">
                             <h2 className="text-[var(--reader-text)] font-semibold text-lg">{t('reader.tocTitle')}</h2>
                             <button
@@ -76,9 +58,6 @@ export function ReaderTocDrawer({
                                 );
                             })}
                         </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
+        </Drawer>
     );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Quote, X } from 'lucide-react';
+import { usePresence } from '../shared/ui/usePresence';
 
 interface QuoteMenuProps {
     isVisible: boolean;
@@ -12,6 +12,7 @@ interface QuoteMenuProps {
 
 export function QuoteMenu({ isVisible, position, selectedText, onSave, onClose }: QuoteMenuProps) {
     const menuRef = useRef<HTMLDivElement>(null);
+    const { mounted, visible } = usePresence(isVisible, 150);
 
     // Position adjustment to keep menu in viewport
     useEffect(() => {
@@ -55,18 +56,12 @@ export function QuoteMenu({ isVisible, position, selectedText, onSave, onClose }
         };
     }, [isVisible, onClose]);
 
-    if (!selectedText.trim()) return null;
+    if (!selectedText.trim() || !mounted) return null;
 
     return (
-        <AnimatePresence>
-            {isVisible && (
-                <motion.div
+                <div
                     ref={menuRef}
-                    initial={{ opacity: 0, scale: 0.9, y: 5 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                    transition={{ duration: 0.15 }}
-                    className="fixed z-50 bg-[#2C2C2E] rounded-xl shadow-xl border border-white/10 overflow-hidden"
+                    className={`fixed z-50 bg-[#2C2C2E] rounded-xl shadow-xl border border-white/10 overflow-hidden transition-[opacity,transform] duration-150 ${visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-1'}`}
                     style={{
                         left: position.x,
                         top: position.y,
@@ -97,8 +92,6 @@ export function QuoteMenu({ isVisible, position, selectedText, onSave, onClose }
                             <X size={16} />
                         </button>
                     </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                </div>
     );
 }

@@ -1,7 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark, Copy, Check } from 'lucide-react';
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book, Quote, Favorite, Bookmark as BookmarkType } from '../types';
 import { getMyBookIds, getAppState, getReadingProgress, addToMyBooks, removeFromMyBooks } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
@@ -11,6 +10,7 @@ import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { useReplicaVersion } from '../shared/sync/useReplicaVersion';
 import { useBookCover } from '../hooks/useBookCover';
+import { useSwipeToRemove } from '../hooks/useSwipeToRemove';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -433,7 +433,6 @@ export function MyBooks() {
                     <div id="panel-books" role="tabpanel">
                         {items.length > 0 ? (
                             <div className="space-y-4">
-                                <AnimatePresence mode="popLayout">
                                     {items.map((item) => {
                                         if (item.type === 'book') {
                                             return (
@@ -467,12 +466,7 @@ export function MyBooks() {
                                                     </div>
 
                                                     {isExpanded && (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, height: 0 }}
-                                                            animate={{ opacity: 1, height: 'auto' }}
-                                                            exit={{ opacity: 0, height: 0 }}
-                                                            className="pl-4 space-y-4 border-l-2 border-white/10 ml-8"
-                                                        >
+                                                        <div className="pl-4 space-y-4 border-l-2 border-white/10 ml-8 animate-page-in">
                                                             {item.books.map(b => (
                                                                 <BookListItem
                                                                     key={b.book.id}
@@ -480,13 +474,12 @@ export function MyBooks() {
                                                                     onRemove={() => handleRemove(b.book.id)}
                                                                 />
                                                             ))}
-                                                        </motion.div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             );
                                         }
                                     })}
-                                </AnimatePresence>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-16">
@@ -719,28 +712,9 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
             : 0
     );
 
-    const [isDragging, setIsDragging] = useState(false);
-    const [swiped, setSwiped] = useState(false);
     const coverSrc = useBookCover(book.id, book.cover);
-
-    const handleDragEnd = (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        setIsDragging(false);
-        // Momentum projected distance following Apple Fluid Interfaces
-        const projectedOffset = info.offset.x + info.velocity.x * 0.2;
-        if (projectedOffset < -140) {
-            setSwiped(true);
-            if ('vibrate' in navigator) {
-                try {
-                    navigator.vibrate(10);
-                } catch {
-                    /* ignore vibrate failure */
-                }
-            }
-            onRemove();
-        } else {
-            setSwiped(false);
-        }
-    };
+    const { t } = useLanguage();
+    const swipe = useSwipeToRemove(onRemove);
 
     return (
         <div className="relative group">
@@ -749,24 +723,22 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                 <Trash2 className="text-white" size={24} />
             </div>
 
-            {/* Swipeable Card with Spring Physics */}
-            <motion.div
-                layout
-                drag="x"
-                dragDirectionLock
-                dragConstraints={{ left: -180, right: 0 }}
-                dragElastic={0.55}
-                transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                onDragStart={() => setIsDragging(true)}
-                onDragEnd={handleDragEnd}
+            {/* Swipeable card: drag left past the threshold to remove */}
+            <div
+                role="link"
+                tabIndex={0}
+                onPointerDown={swipe.onPointerDown}
+                onPointerMove={swipe.onPointerMove}
+                onPointerUp={swipe.onPointerUp}
+                onPointerCancel={swipe.onPointerUp}
                 onClick={() => {
-                    if (!isDragging && !swiped) {
-                        navigate(`/reader/${book.id}`);
-                    }
+                    if (!swipe.consumeClick()) navigate(`/reader/${book.id}`);
                 }}
-                className="relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none cursor-pointer w-full"
-                exit={{ height: 0, opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                whileDrag={{ cursor: "grabbing" }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') navigate(`/reader/${book.id}`);
+                }}
+                style={{ transform: `translateX(${swipe.offset}px)` }}
+                className={`relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none cursor-pointer w-full ${swipe.dragging ? 'cursor-grabbing' : 'transition-transform duration-200 ease-out'}`}
             >
                 <div className="flex gap-4 p-4 pointer-events-none select-none">
                     <ImageWithLoader
@@ -793,7 +765,15 @@ function BookListItem({ book, onRemove }: { book: Book; onRemove: () => void }) 
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
+            {/* Keyboard access to removal: visible only when focused */}
+            <button
+                type="button"
+                onClick={onRemove}
+                className="sr-only focus:not-sr-only focus:absolute focus:right-3 focus:top-3 focus:z-20 focus:px-3 focus:py-2 focus:rounded-lg focus:bg-red-600 focus:text-white focus:text-sm"
+            >
+                {t('common.delete')}
+            </button>
         </div>
     );
 }

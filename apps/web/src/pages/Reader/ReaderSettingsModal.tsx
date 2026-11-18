@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Sun, AlignLeft, Layers } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { Sheet } from '../../shared/ui/Sheet';
 
 import type { UserSettings } from '../../types';
 
@@ -37,38 +37,15 @@ export function ReaderSettingsModal({
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        onClick={onClose}
-                        aria-hidden="true"
-                    />
-
-                    {/* Bottom Sheet */}
-                    <motion.div
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
-                        transition={{ type: 'spring', damping: 32, stiffness: 350 }}
-                        drag="y"
-                        dragConstraints={{ top: 0 }}
-                        dragElastic={0.2}
-                        onDragEnd={(_e, info) => {
-                            if (info.offset.y > 100 || info.velocity.y > 500) {
-                                onClose();
-                            }
-                        }}
-                        className="relative w-full max-w-lg bg-[var(--reader-ui-bg)] rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl z-10 touch-pan-y max-h-[85vh] overflow-y-auto"
-                        style={{ backgroundColor: 'var(--reader-ui-bg)' }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
+        <Sheet
+            open={isOpen}
+            onClose={onClose}
+            title={t('reader.settings')}
+            placement="bottom"
+            swipeToClose
+            surfaceClassName="bg-[var(--reader-ui-bg)] rounded-t-3xl"
+            className="p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] touch-pan-y"
+        >
                         {/* Drag Handle */}
                         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
@@ -206,9 +183,6 @@ export function ReaderSettingsModal({
                                 <span className="text-[var(--reader-text)] font-semibold text-sm w-10 text-right">{settings.brightness}%</span>
                             </div>
                         </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
+        </Sheet>
     );
 }

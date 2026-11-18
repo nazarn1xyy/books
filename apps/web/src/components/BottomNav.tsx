@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Search, BookOpen } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePresence } from '../shared/ui/usePresence';
 
 export function BottomNav() {
     const { isKeyboardOpen } = useKeyboardHeight();
     const { t } = useLanguage();
+    const { mounted, visible } = usePresence(!isKeyboardOpen);
 
     const navItems = [
         { to: '/', icon: Home, label: t('nav.home') },
@@ -14,16 +15,12 @@ export function BottomNav() {
         { to: '/my-books', icon: BookOpen, label: t('nav.myBooks') },
     ];
 
+    if (!mounted) return null;
+
     return (
-        <AnimatePresence>
-            {!isKeyboardOpen && (
-                <motion.nav
+                <nav
                     aria-label="Mobile Navigation"
-                    initial={{ y: 100, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 100, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                    className="mobile-only fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)] pointer-events-auto"
+                    className={`mobile-only fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)] pointer-events-auto transition-[opacity,transform] duration-200 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
                 >
                     <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
                         {navItems.map(({ to, icon: Icon, label }) => (
@@ -51,8 +48,6 @@ export function BottomNav() {
                             </NavLink>
                         ))}
                     </div>
-                </motion.nav>
-            )}
-        </AnimatePresence>
+                </nav>
     );
 }

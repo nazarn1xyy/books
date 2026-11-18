@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import { TRANSLATION_LANGUAGES, type TranslationLanguage } from '../../services/translationService';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { Sheet } from '../../shared/ui/Sheet';
 
 interface ReaderTranslateModalProps {
     isOpen: boolean;
@@ -25,38 +25,15 @@ export function ReaderTranslateModal({
     const { t } = useLanguage();
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        onClick={onClose}
-                        aria-hidden="true"
-                    />
-
-                    {/* Bottom Sheet */}
-                    <motion.div
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
-                        transition={{ type: 'spring', damping: 32, stiffness: 350 }}
-                        drag="y"
-                        dragConstraints={{ top: 0 }}
-                        dragElastic={0.2}
-                        onDragEnd={(_e, info) => {
-                            if (info.offset.y > 100 || info.velocity.y > 500) {
-                                onClose();
-                            }
-                        }}
-                        className="relative w-full max-w-lg bg-[var(--reader-ui-bg)] rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl z-10 touch-pan-y"
-                        style={{ backgroundColor: 'var(--reader-ui-bg)' }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
+        <Sheet
+            open={isOpen}
+            onClose={onClose}
+            title={t('reader.translate')}
+            placement="bottom"
+            swipeToClose
+            surfaceClassName="bg-[var(--reader-ui-bg)] rounded-t-3xl"
+            className="p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] touch-pan-y"
+        >
                         {/* Drag Handle */}
                         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
@@ -113,9 +90,6 @@ export function ReaderTranslateModal({
                                 )}
                             </>
                         )}
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
+        </Sheet>
     );
 }
