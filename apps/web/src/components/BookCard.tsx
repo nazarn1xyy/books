@@ -102,7 +102,7 @@ export const BookCard = memo(function BookCard({
                     title: book.title,
                     author: book.author,
                     cover: coverSrc || ''
-                }, user.id);
+                });
                 setIsFavorite(true);
             }
         } catch {

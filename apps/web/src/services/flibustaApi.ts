@@ -1,64 +1,12 @@
 import type { Book } from '../types';
 import { getCachedBook, cacheBook } from '../utils/cache';
 import { parseBookData } from '../utils/fb2Parser';
+import { CATALOG_ORIGIN, catalogImageUrl } from '../shared/api/CatalogApi';
+import { services } from '../shared/services';
 
 // Re-export parseBookData for backward compatibility
 // (used by MyBooks.tsx via `import { parseBookData } from '../services/flibustaApi'`)
 export { parseBookData } from '../utils/fb2Parser';
-
-const PROXY_URL = '/flibusta';
-const FLIBUSTA_BASE = 'http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion';
-
-// Helper to fetch via proxy with retry logic
-async function fetchViaProxy(
-    url: string,
-    responseType: 'text' | 'blob' | 'arraybuffer' = 'text',
-    retries = 3,
-    timeout = 15000
-): Promise<string | Blob | ArrayBuffer> {
-    const targetUrl = new URL(url);
-    const pathAndQuery = targetUrl.pathname + targetUrl.search;
-
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-            try {
-                const response = await fetch(`${PROXY_URL}${pathAndQuery}`, {
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                if (responseType === 'text') return response.text();
-                if (responseType === 'blob') return response.blob();
-                return response.arrayBuffer();
-            } finally {
-                clearTimeout(timeoutId);
-            }
-        } catch (error) {
-            const isLastAttempt = attempt === retries;
-            const errorMsg = error instanceof Error ? error.message : String(error);
-
-            console.warn(`Attempt ${attempt}/${retries} failed for ${pathAndQuery}:`, errorMsg);
-
-            if (isLastAttempt) {
-                throw new Error(`Не удалось загрузить книгу после ${retries} попыток. ${errorMsg}`);
-            }
-
-            // Wait before retry (exponential backoff)
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-    }
-
-    throw new Error('Не удалось загрузить книгу');
-}
 
 export async function fetchBooks(query: string = ''): Promise<Book[]> {
     if (!query) {
@@ -66,8 +14,7 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
     }
 
     try {
-        const url = `${FLIBUSTA_BASE}/opds/search?searchType=books&searchTerm=${encodeURIComponent(query)}`;
-        const xmlText = await fetchViaProxy(url) as string;
+        const xmlText = await services().catalog.searchOpds(query);
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(xmlText, 'text/xml');
@@ -117,19 +64,7 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
 
             if (imageLink) {
                 const href = imageLink.getAttribute('href');
-                if (href) {
-                    // Handle relative URLs
-                    const coverUrl = href.startsWith('http') ? href : `${FLIBUSTA_BASE}${href}`;
-                    if (coverUrl.includes('static.flibusta')) {
-                        const u = new URL(coverUrl);
-                        cover = `/static_flibusta${u.pathname}${u.search}`;
-                    } else if (coverUrl.includes('flibusta') || coverUrl.includes('onion')) {
-                        const u = new URL(coverUrl);
-                        cover = `${PROXY_URL}${u.pathname}${u.search}`;
-                    } else {
-                        cover = coverUrl;
-                    }
-                }
+                if (href) cover = catalogImageUrl(href);
             }
 
             if (!books.find(b => b.id === id)) {
@@ -140,7 +75,7 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
                     cover: cover || '',
                     description: entry.querySelector('content')?.textContent || '',
                     genre: '',
-                    contentUrl: `${FLIBUSTA_BASE}/b/${id}/fb2`
+                    contentUrl: `${CATALOG_ORIGIN}/b/${id}/fb2`
                 });
             }
         });
@@ -169,10 +104,8 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
     }
 
     try {
-        const url = `${FLIBUSTA_BASE}/b/${bookId}/fb2`;
-
-        // Fetch as ArrayBuffer to handle ZIP (with retry logic)
-        const data = await fetchViaProxy(url, 'arraybuffer') as ArrayBuffer;
+        // Fetch as ArrayBuffer to handle ZIP
+        const data = await services().catalog.downloadBook(bookId, 'fb2');
 
         // Check if we got an empty response
         if (!data || data.byteLength === 0) {

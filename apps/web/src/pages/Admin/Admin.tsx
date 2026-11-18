@@ -4,10 +4,8 @@ import { Users, BookOpen, Clock, Activity, BarChart2, PieChart as PieChartIcon, 
 import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { getGenres, getNotifications, getActivityByPeriod, type UserStat, type ManagedBook } from '../../services/mockStats';
 
-import { supabase } from '../../lib/supabase';
+import { services } from '../../shared/services';
 import { useAuth } from '../../contexts/AuthContext';
-
-const ADMIN_EMAIL = 'nazarshikir2021@gmail.com';
 
 export function Admin() {
     const { user } = useAuth();
@@ -39,56 +37,17 @@ export function Admin() {
     useEffect(() => {
         async function fetchAdminData() {
             try {
-                // 1. Fetch all reading progress for "Active Now" and "Total Users" (approximation)
-                const { data: progressData } = await supabase
-                    .from('reading_progress')
-                    .select('user_id, last_read, book_id, scroll_percentage');
-
-                // 2. Fetch all books for "Total Books"
-                const { data: booksData } = await supabase
-                    .from('user_books')
-                    .select('*');
-
-                if (progressData && booksData) {
-                    // Calculate Unique Users
-                    const uniqueUsers = new Set(progressData.map(p => p.user_id));
-
-                    // Calculate Active Now (last 15 min)
-                    const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
-                    const activeCount = progressData.filter(p => p.last_read > fifteenMinsAgo).length;
-
-                    setStats(prev => ({
-                        ...prev,
-                        totalUsers: uniqueUsers.size,
-                        activeNow: activeCount,
-                        booksReadTotal: booksData.length
-                    }));
-
-                    // Map Active Users for List
-                    // We need user profiles, but we can't fetch them easily if they are in auth.users and we don't have a profiles table.
-                    // For now, let's mock the names/avatars based on user_id hash or similar, 
-                    // OR assume we have a profiles table. Let's fallback to "User {id.slice(0,4)}"
-                    const activeUserList = Array.from(uniqueUsers).map(uid => {
-                        const userProgress = progressData.filter(p => p.user_id === uid);
-                        const lastActivity = Math.max(...userProgress.map(p => p.last_read));
-                        const currentBookId = userProgress.find(p => p.last_read === lastActivity)?.book_id;
-                        const currentBook = booksData.find(b => b.book_id === currentBookId);
-
-                        return {
-                            id: uid,
-                            name: `User ${uid.slice(0, 4)}`,
-                            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`,
-                            currentBook: currentBook?.title || 'Reading...',
-                            progress: userProgress.find(p => p.book_id === currentBookId)?.scroll_percentage || 0,
-                            lastActive: new Date(lastActivity).toLocaleTimeString(),
-                            totalRead: 0 // Calc later
-                        };
-                    });
-
-                    setActiveUsers(activeUserList.slice(0, 5)); // Top 5
-                    setManagedBooks(booksData.slice(0, 5)); // Top 5 books
-                }
-
+                const stats = await services().admin.stats();
+                setStats((prev) => ({
+                    ...prev,
+                    totalUsers: stats.totalUsers,
+                    activeNow: stats.activeUsers24h,
+                    booksReadTotal: stats.totalLibraryBooks,
+                }));
+                setActiveUsers([]);
+                setManagedBooks(
+                    stats.topBooks.map((b) => ({ id: b.bookId, title: b.title, author: '', status: 'published' as const, downloads: b.readers })),
+                );
             } catch (error) {
                 console.error('Admin fetch error:', error);
             }
@@ -116,7 +75,7 @@ export function Admin() {
         return () => clearInterval(interval);
     }, []);
 
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (!user || user.role !== 'admin') {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center flex-col gap-3">
                 <p className="text-gray-400 text-lg">403 — Доступ запрещён</p>

@@ -404,7 +404,7 @@ export function Reader() {
                 book_title: book.title,
                 book_author: book.author,
                 text: selectedText.trim()
-            }, user.id);
+            });
 
             window.getSelection()?.removeAllRanges();
             setQuoteMenuVisible(false);
@@ -443,7 +443,7 @@ export function Reader() {
                 book_title: book.title,
                 paragraph_index: paragraphIndex,
                 preview_text: previewText
-            }, user.id);
+            });
             showToast(t('reader.bookmarkAdded'));
         } catch {
             showToast(t('reader.bookmarkFailed'));

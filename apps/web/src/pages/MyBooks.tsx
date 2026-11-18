@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Trash2, ChevronLeft, Download, Heart, MessageSquareQuote, Library, Bookmark, Copy, Check } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import type { Book, Quote, Favorite, Bookmark as BookmarkType } from '../types';
-import { getMyBookIds, getAppState, getReadingProgress, addToMyBooks, removeFromMyBooks, addToPendingDeletions } from '../utils/storage';
+import { getMyBookIds, getAppState, getReadingProgress, addToMyBooks, removeFromMyBooks } from '../utils/storage';
 import { ProgressBar } from '../components/ProgressBar';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { parseBookData } from '../services/flibustaApi';
 import { cacheBook } from '../utils/cache';
 import { useAuth } from '../contexts/AuthContext';
-import { removeBookFromCloud } from '../utils/sync';
+import { useReplicaVersion } from '../shared/sync/useReplicaVersion';
 import { useBookCover } from '../hooks/useBookCover';
 import { exportAllBooks } from '../utils/export';
 import { getFavorites, getQuotes, removeFavorite, deleteQuote, getBookmarks, deleteBookmark } from '../services/db';
@@ -20,6 +20,7 @@ type TabType = 'books' | 'favorites' | 'quotes' | 'bookmarks';
 
 export function MyBooks() {
     const { user } = useAuth();
+    const replicaVersion = useReplicaVersion();
     const { t, language, setLanguage } = useLanguage();
     const navigate = useNavigate();
     const [myBookIds, setMyBookIds] = useState(getMyBookIds());
@@ -87,7 +88,7 @@ export function MyBooks() {
         };
 
         fetchData();
-    }, [user]);
+    }, [user, replicaVersion]);
 
     const handleDeleteQuote = (id: string) => confirmDelete(t('aria.deleteQuote') + '?', async () => {
         try {
@@ -168,10 +169,6 @@ export function MyBooks() {
         confirmDelete(t('common.delete') + '?', () => {
             removeFromMyBooks(bookId);
             setMyBookIds(getMyBookIds());
-            addToPendingDeletions(bookId);
-            if (user) {
-                removeBookFromCloud(user.id, bookId).catch(() => {});
-            }
         });
     };
 
