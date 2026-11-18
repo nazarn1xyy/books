@@ -1,0 +1,13 @@
+{
+  "name": "@libify/shared",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": { "zod": "^4.6.7" },
+  "devDependencies": { "typescript": "~5.9.3", "vitest": "^5.1.1" }
+}
