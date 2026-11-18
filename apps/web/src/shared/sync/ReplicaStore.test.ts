@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { openLibifyDb, type LibifyDatabase } from '../db/libifyDb';
+import { openLibifyDb, type LibifyDatabase } from '@/shared/db/libifyDb';
 import { ReplicaStore } from './ReplicaStore';
 
 const fav = (bookId: string, title = 'T') => ({ bookId, title, author: null, coverUrl: null });

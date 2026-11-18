@@ -1,5 +1,5 @@
 import type { SyncDataMap, SyncEntity } from '@libify/shared';
-import { recordId, type LibifyDatabase, type ReplicaRecord } from '../db/libifyDb';
+import { recordId, type LibifyDatabase, type ReplicaRecord } from '@/shared/db/libifyDb';
 
 export interface ReplicaInput {
   entity: SyncEntity;

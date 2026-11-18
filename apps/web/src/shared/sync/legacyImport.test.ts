@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { openLibifyDb } from '../db/libifyDb';
-import { MetaStore } from '../db/MetaStore';
+import { openLibifyDb } from '@/shared/db/libifyDb';
+import { MetaStore } from '@/shared/db/MetaStore';
 import { importLegacyState, type LegacyRecorder } from './legacyImport';
 
 const legacy = JSON.stringify({

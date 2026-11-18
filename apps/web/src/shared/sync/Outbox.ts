@@ -1,5 +1,5 @@
 import type { SyncOp } from '@libify/shared';
-import { recordId, type LibifyDatabase, type OutboxEntry } from '../db/libifyDb';
+import { recordId, type LibifyDatabase, type OutboxEntry } from '@/shared/db/libifyDb';
 
 /** Persistent queue of local changes not yet confirmed by the server. */
 export class Outbox {

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SyncOp, SyncPullResponse, SyncPushResponse } from '@libify/shared';
-import { ApiError } from '../api/ApiError';
-import type { SyncApi } from '../api/SyncApi';
-import { openLibifyDb } from '../db/libifyDb';
-import { MetaStore } from '../db/MetaStore';
+import { ApiError } from '@/shared/api/ApiError';
+import type { SyncApi } from '@/shared/api/SyncApi';
+import { openLibifyDb } from '@/shared/db/libifyDb';
+import { MetaStore } from '@/shared/db/MetaStore';
 import { Outbox } from './Outbox';
 import { ReplicaStore } from './ReplicaStore';
 import { SyncEngine, type SyncSignals } from './SyncEngine';

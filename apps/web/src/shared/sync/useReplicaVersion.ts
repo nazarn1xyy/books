@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { services } from '../services';
+import { services } from '@/shared/services';
 
 /** Re-renders the component whenever any synced record changes. */
 export function useReplicaVersion(): number {

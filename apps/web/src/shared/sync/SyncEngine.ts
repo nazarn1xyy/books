@@ -1,8 +1,8 @@
 import { SYNC_PUSH_MAX_OPS } from '@libify/shared/constants';
 import type { SyncDataMap, SyncEntity } from '@libify/shared';
-import { ApiError } from '../api/ApiError';
-import type { SyncApi } from '../api/SyncApi';
-import type { MetaStore } from '../db/MetaStore';
+import { ApiError } from '@/shared/api/ApiError';
+import type { SyncApi } from '@/shared/api/SyncApi';
+import type { MetaStore } from '@/shared/db/MetaStore';
 import type { Outbox } from './Outbox';
 import type { ReplicaStore } from './ReplicaStore';
 

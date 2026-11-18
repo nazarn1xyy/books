@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SyncOp } from '@libify/shared';
-import { openLibifyDb } from '../db/libifyDb';
+import { openLibifyDb } from '@/shared/db/libifyDb';
 import { Outbox } from './Outbox';
 
 const op = (key: string, at: string): SyncOp => ({ entity: 'favorite', key, clientUpdatedAt: at, data: null });

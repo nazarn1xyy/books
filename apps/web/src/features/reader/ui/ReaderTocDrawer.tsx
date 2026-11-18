@@ -1,0 +1,63 @@
+import { X } from 'lucide-react';
+import { useLanguage } from '@/shared/i18n/LanguageContext';
+import { Drawer } from '@/shared/ui/Drawer';
+
+interface ReaderTocDrawerProps {
+    isOpen: boolean;
+    onClose: () => void;
+    chapters: { title: string; paragraphIndex: number }[];
+    currentParagraphIndex: number;
+    onSelectChapter: (paragraphIndex: number) => void;
+}
+
+export function ReaderTocDrawer({
+    isOpen,
+    onClose,
+    chapters,
+    currentParagraphIndex,
+    onSelectChapter
+}: ReaderTocDrawerProps) {
+    const { t } = useLanguage();
+
+    return (
+        <Drawer
+            open={isOpen}
+            onClose={onClose}
+            title={t('reader.tocTitle')}
+            className="h-full bg-[var(--reader-bg)] border-l border-white/10 flex flex-col shadow-2xl"
+        >
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 pt-[calc(env(safe-area-inset-top)+1rem)]">
+                            <h2 className="text-[var(--reader-text)] font-semibold text-lg">{t('reader.tocTitle')}</h2>
+                            <button
+                                onClick={onClose}
+                                aria-label={t('aria.closeToc')}
+                                className="p-2 text-gray-400 hover:text-[var(--reader-text)] transition-colors rounded-full active:scale-95"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
+                            {chapters.map((ch, i) => {
+                                const isCurrent = currentParagraphIndex >= ch.paragraphIndex &&
+                                    currentParagraphIndex < (chapters[i + 1]?.paragraphIndex ?? Infinity);
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => {
+                                            onSelectChapter(ch.paragraphIndex);
+                                            onClose();
+                                        }}
+                                        className={`w-full text-left px-5 py-3.5 transition-colors active:opacity-60 ${
+                                            isCurrent ? 'text-blue-400 bg-blue-400/10 font-semibold' : 'text-[var(--reader-text)] hover:bg-white/5'
+                                        }`}
+                                    >
+                                        <span className="text-xs text-gray-500 block mb-0.5">{t('reader.chapter', { index: i + 1 })}</span>
+                                        <span className="text-sm font-medium line-clamp-2">{ch.title}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+        </Drawer>
+    );
+}

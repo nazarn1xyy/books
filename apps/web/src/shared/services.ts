@@ -1,14 +1,14 @@
-import { AdminApi } from './api/AdminApi';
-import { ApiClient } from './api/ApiClient';
-import { AuthApi } from './api/AuthApi';
-import { CatalogApi } from './api/CatalogApi';
-import { SyncApi } from './api/SyncApi';
-import { openLibifyDb } from './db/libifyDb';
-import { MetaStore } from './db/MetaStore';
-import { browserSyncSignals } from './sync/browserSignals';
-import { Outbox } from './sync/Outbox';
-import { ReplicaStore } from './sync/ReplicaStore';
-import { SyncEngine } from './sync/SyncEngine';
+import { AdminApi } from '@/shared/api/AdminApi';
+import { ApiClient } from '@/shared/api/ApiClient';
+import { AuthApi } from '@/shared/api/AuthApi';
+import { CatalogApi } from '@/shared/api/CatalogApi';
+import { SyncApi } from '@/shared/api/SyncApi';
+import { openLibifyDb } from '@/shared/db/libifyDb';
+import { MetaStore } from '@/shared/db/MetaStore';
+import { browserSyncSignals } from '@/shared/sync/browserSignals';
+import { Outbox } from '@/shared/sync/Outbox';
+import { ReplicaStore } from '@/shared/sync/ReplicaStore';
+import { SyncEngine } from '@/shared/sync/SyncEngine';
 
 export interface AppServices {
   api: ApiClient;

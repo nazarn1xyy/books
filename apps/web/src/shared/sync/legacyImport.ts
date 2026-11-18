@@ -1,5 +1,5 @@
 import type { BookData, ProgressData, SyncDataMap, SyncEntity } from '@libify/shared';
-import type { MetaStore } from '../db/MetaStore';
+import type { MetaStore } from '@/shared/db/MetaStore';
 
 const LEGACY_KEY = 'book-library-state';
 const META_DONE = 'legacy.imported';

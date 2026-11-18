@@ -1,0 +1,123 @@
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import ukLocale from './locales/uk.json';
+
+export type Language = 'uk' | 'en';
+
+type LocaleData = typeof ukLocale;
+
+interface LanguageContextType {
+    language: Language;
+    setLanguage: (lang: Language) => void;
+    t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | null>(null);
+
+const STORAGE_KEY = 'libify_language';
+
+function getNestedValue(obj: Record<string, unknown>, path: string): string | undefined {
+    const keys = path.split('.');
+    let result: unknown = obj;
+
+    for (const key of keys) {
+        if (result && typeof result === 'object' && key in result) {
+            result = (result as Record<string, unknown>)[key];
+        } else {
+            return undefined;
+        }
+    }
+
+    return typeof result === 'string' ? result : undefined;
+}
+
+// Detect browser language and map to supported languages
+function detectBrowserLanguage(): Language {
+    const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'uk';
+    const langCode = (browserLang.split('-')[0] ?? '').toLowerCase();
+
+    if (langCode === 'en') return 'en';
+    if (langCode === 'uk') return 'uk';
+
+    // Default to Ukrainian
+    return 'uk';
+}
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+    const [fetchedLocale, setFetchedLocale] = useState<{ language: Language; data: LocaleData } | null>(null);
+
+    const [language, setLanguageState] = useState<Language>(() => {
+        // First check localStorage
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved && ['uk', 'en'].includes(saved)) {
+            return saved as Language;
+        }
+
+        // Auto-detect from browser
+        return detectBrowserLanguage();
+    });
+
+    const setLanguage = useCallback((lang: Language) => {
+        setLanguageState(lang);
+        localStorage.setItem(STORAGE_KEY, lang);
+        document.documentElement.lang = lang;
+    }, []);
+
+    useEffect(() => {
+        document.documentElement.lang = language;
+        if (language === 'uk') return;
+        let cancelled = false;
+        import(`./locales/${language}.json`).then(m => {
+            if (!cancelled) setFetchedLocale({ language, data: m.default });
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [language]);
+
+    // Ukrainian is bundled; other locales show Ukrainian until their chunk arrives.
+    const loadedLocale = language !== 'uk' && fetchedLocale?.language === language ? fetchedLocale.data : ukLocale;
+
+    const t = useCallback((key: string, params?: Record<string, string | number>): string => {
+        let value = getNestedValue(loadedLocale as unknown as Record<string, unknown>, key);
+
+        if (!value) {
+            // Fallback to Ukrainian
+            value = getNestedValue(ukLocale as unknown as Record<string, unknown>, key);
+        }
+
+        if (!value) {
+            console.warn(`Missing translation: ${key}`);
+            return key;
+        }
+
+        // Replace params like {count} with actual values
+        if (params) {
+            Object.entries(params).forEach(([paramKey, paramValue]) => {
+                value = value!.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue));
+            });
+        }
+
+        return value;
+    }, [loadedLocale]);
+
+    return (
+        <LanguageContext.Provider value={{ language, setLanguage, t }}>
+            {children}
+        </LanguageContext.Provider>
+    );
+}
+
+export function useLanguage() {
+    const context = useContext(LanguageContext);
+    if (!context) {
+        throw new Error('useLanguage must be used within a LanguageProvider');
+    }
+    return context;
+}
+
+// Shorthand hook for just translation
+export function useTranslation() {
+    const { t } = useLanguage();
+    return t;
+}

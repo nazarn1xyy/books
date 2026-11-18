@@ -31,6 +31,12 @@ export default defineConfig([
               message: 'Runtime imports pull zod into the bundle. Use @libify/shared/constants, or import type.',
             },
           ],
+          patterns: [
+            {
+              group: ['@/features/*/*'],
+              message: 'Import a feature only via its public entry (index.ts) or keep it inside the feature.',
+            },
+          ],
         },
       ],
     },
