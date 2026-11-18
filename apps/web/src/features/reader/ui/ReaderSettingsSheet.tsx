@@ -1,39 +1,29 @@
 import { X, Minus, Plus, Sun, AlignLeft, Layers } from 'lucide-react';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { Sheet } from '@/shared/ui/Sheet';
+import { FONT_FAMILIES } from '../model/fontFamilies';
+import type { ReaderSettings } from '../model/readerSettingsStore';
+import { useReaderSettings } from '../model/useReaderSettings';
 
-import type { UserSettings } from '@/entities/book/model/types';
-
-interface ReaderSettingsModalProps {
+interface ReaderSettingsSheetProps {
     isOpen: boolean;
     onClose: () => void;
-    settings: UserSettings;
     isPdf: boolean;
-    onUpdateTheme: (theme: 'light' | 'dark' | 'sepia' | 'oled') => void;
-    onUpdateFontSize: (delta: number) => void;
-    onUpdateFontFamily: (font: 'sans' | 'serif' | 'mono' | 'rounded') => void;
-    onUpdateReaderMode: (mode: 'scroll' | 'page') => void;
-    onUpdateBrightness: (brightness: number) => void;
+    /** Side effect of switching mode (e.g. open the page with the current paragraph). */
+    onReaderModeChange?: (mode: ReaderSettings['readerMode']) => void;
 }
 
-export function ReaderSettingsModal({
-    isOpen,
-    onClose,
-    settings,
-    isPdf,
-    onUpdateTheme,
-    onUpdateFontSize,
-    onUpdateFontFamily,
-    onUpdateReaderMode,
-    onUpdateBrightness
-}: ReaderSettingsModalProps) {
+/** Reader appearance settings; reads and writes the reader settings store directly. */
+export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange }: ReaderSettingsSheetProps) {
     const { t } = useLanguage();
-
-    const FONT_FAMILIES = {
-        sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        serif: "Georgia, 'Times New Roman', serif",
-        mono: "'Courier New', Courier, monospace",
-        rounded: "'Nunito', 'SF Pro Rounded', ui-rounded, sans-serif",
+    const settings = useReaderSettings((s) => s);
+    const onUpdateTheme = settings.setTheme;
+    const onUpdateFontSize = settings.changeFontSize;
+    const onUpdateFontFamily = settings.setFontFamily;
+    const onUpdateBrightness = settings.setBrightness;
+    const onUpdateReaderMode = (mode: ReaderSettings['readerMode']) => {
+        settings.setReaderMode(mode);
+        onReaderModeChange?.(mode);
     };
 
     return (

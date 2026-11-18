@@ -3,7 +3,7 @@ import { TRANSLATION_LANGUAGES, type TranslationLanguage } from '@/shared/lib/tr
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { Sheet } from '@/shared/ui/Sheet';
 
-interface ReaderTranslateModalProps {
+interface ReaderTranslateSheetProps {
     isOpen: boolean;
     onClose: () => void;
     isTranslating: boolean;
@@ -13,7 +13,7 @@ interface ReaderTranslateModalProps {
     onDisableTranslation: () => void;
 }
 
-export function ReaderTranslateModal({
+export function ReaderTranslateSheet({
     isOpen,
     onClose,
     isTranslating,
@@ -21,7 +21,7 @@ export function ReaderTranslateModal({
     translationProgress,
     onSelectLanguage,
     onDisableTranslation
-}: ReaderTranslateModalProps) {
+}: ReaderTranslateSheetProps) {
     const { t } = useLanguage();
 
     return (
