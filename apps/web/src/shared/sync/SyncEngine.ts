@@ -1,9 +1,19 @@
-import { SYNC_PUSH_MAX_OPS, syncOpSchema, type SyncDataMap, type SyncEntity } from '@libify/shared';
+import { SYNC_PUSH_MAX_OPS } from '@libify/shared/constants';
+import type { SyncDataMap, SyncEntity } from '@libify/shared';
 import { ApiError } from '../api/ApiError';
 import type { SyncApi } from '../api/SyncApi';
 import type { MetaStore } from '../db/MetaStore';
 import type { Outbox } from './Outbox';
 import type { ReplicaStore } from './ReplicaStore';
+
+type OpSchema = (typeof import('@libify/shared/sync'))['syncOpSchema'];
+let opSchemaLoaded: OpSchema | null = null;
+
+/** Loads zod + the op schema on demand (separate chunk). Exported for tests. */
+export async function preloadSyncSchema(): Promise<OpSchema> {
+  opSchemaLoaded ??= (await import('@libify/shared/sync')).syncOpSchema;
+  return opSchemaLoaded;
+}
 
 export type SyncStatus = 'idle' | 'syncing' | 'offline' | 'error';
 
@@ -59,6 +69,7 @@ export class SyncEngine {
 
   /** Begins syncing for a user. Local data of a different previous user is wiped first. */
   async start(userId: string): Promise<void> {
+    await preloadSyncSchema();
     this.stop();
     const owner = await this.deps.meta.get<string>(META_OWNER);
     if (owner && owner !== userId) await this.resetLocalData();
@@ -96,8 +107,10 @@ export class SyncEngine {
 
   /** Writes a local change (null = delete). Memory is updated before the returned promise settles. */
   async record<E extends SyncEntity>(entity: E, key: string, data: SyncDataMap[E] | null): Promise<void> {
+    // Preloaded by start(), so after start this does not yield before replica.apply.
+    const schema = opSchemaLoaded ?? (await preloadSyncSchema());
     const updatedAt = this.nextTimestamp(this.deps.replica.getRecord(entity, key)?.updatedAt);
-    const parsed = syncOpSchema.safeParse({ entity, key, clientUpdatedAt: updatedAt, data });
+    const parsed = schema.safeParse({ entity, key, clientUpdatedAt: updatedAt, data });
     if (!parsed.success) throw new Error(`Invalid ${entity} record: ${parsed.error.message}`);
 
     await this.deps.replica.apply([{ entity, key, updatedAt, data }]);

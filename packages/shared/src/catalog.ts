@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { BOOK_FORMATS } from './constants';
 
-export const BOOK_FORMATS = ['fb2', 'epub', 'mobi'] as const;
 export type BookFormat = (typeof BOOK_FORMATS)[number];
 
 export const catalogSearchQuerySchema = z.object({ q: z.string().trim().min(1).max(200) });

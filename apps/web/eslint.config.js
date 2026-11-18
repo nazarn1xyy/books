@@ -19,5 +19,20 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-restricted-imports': 'off',
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@libify/shared',
+              allowTypeImports: true,
+              message: 'Runtime imports pull zod into the bundle. Use @libify/shared/constants, or import type.',
+            },
+          ],
+        },
+      ],
+    },
   },
 ])

@@ -1,9 +1,8 @@
 import { z } from 'zod';
+import { BOOK_STATUSES, SYNC_ENTITIES, SYNC_PUSH_MAX_OPS } from './constants';
 
-export const SYNC_ENTITIES = ['book', 'progress', 'quote', 'bookmark', 'favorite'] as const;
 export type SyncEntity = (typeof SYNC_ENTITIES)[number];
 
-export const BOOK_STATUSES = ['reading', 'plan', 'finished', 'dropped'] as const;
 export type BookStatus = (typeof BOOK_STATUSES)[number];
 
 const bookId = z.string().min(1).max(64);
@@ -84,13 +83,6 @@ export const syncOpSchema = z.discriminatedUnion('entity', [
 ]);
 export type SyncOp = z.infer<typeof syncOpSchema>;
 
-export const SYNC_PUSH_MAX_OPS = 200;
-/**
- * Max serialized size of one push request. A batch of SYNC_PUSH_MAX_OPS long quotes can exceed it,
- * so clients must cap batches by both op count and byte size; a single op always fits.
- * The server answers 413 PAYLOAD_TOO_LARGE above this size.
- */
-export const SYNC_PUSH_MAX_BYTES = 4 * 1024 * 1024;
 export const syncPushRequestSchema = z.object({ ops: z.array(syncOpSchema).min(1).max(SYNC_PUSH_MAX_OPS) });
 export type SyncPushRequest = z.infer<typeof syncPushRequestSchema>;
 

@@ -1,9 +1,8 @@
 import { z } from 'zod';
-
-export const NICKNAME_PATTERN = /^[a-zA-Z0-9_]{3,24}$/;
+import { NICKNAME_PATTERN, PASSWORD_MIN_LENGTH, USER_ROLES } from './constants';
 
 export const nicknameSchema = z.string().trim().regex(NICKNAME_PATTERN, 'Nickname: 3-24 chars, letters, digits, _');
-export const passwordSchema = z.string().min(8, 'Password: at least 8 chars').max(128);
+export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH, `Password: at least ${PASSWORD_MIN_LENGTH} chars`).max(128);
 
 /** Registration: strict rules. */
 export const credentialsSchema = z.object({ nickname: nicknameSchema, password: passwordSchema });
@@ -16,7 +15,6 @@ export const loginSchema = z.object({
 export type Credentials = z.infer<typeof credentialsSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export const USER_ROLES = ['user', 'admin'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export interface PublicUser {

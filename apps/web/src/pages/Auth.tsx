@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Eye, EyeOff, Globe, Loader2, Lock, User } from 'lucide-react';
-import { NICKNAME_PATTERN } from '@libify/shared';
+import { NICKNAME_PATTERN } from '@libify/shared/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LANGUAGES } from '../constants/languages';
