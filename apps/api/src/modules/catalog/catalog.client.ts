@@ -1,0 +1,55 @@
+import { UpstreamError, ValidationError } from '../../core/errors';
+
+/** Fetches only from allow-listed hosts; follows redirects manually to re-check every hop. */
+export class CatalogClient {
+  private static readonly MAX_REDIRECTS = 3;
+  private static readonly USER_AGENT = 'LibifyBot/2.0 (+https://libify.store)';
+
+  constructor(
+    private readonly allowedHosts: readonly string[],
+    private readonly fetchFn: typeof fetch,
+    private readonly timeoutMs = 15_000,
+    private readonly retries = 2,
+    private readonly backoffMs = 500,
+  ) {}
+
+  async get(url: URL): Promise<Response> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        const res = await this.fetchFollowingRedirects(url);
+        if (res.status >= 500) throw new UpstreamError(`Catalog responded ${res.status}`);
+        return res;
+      } catch (err) {
+        if (err instanceof ValidationError) throw err;
+        lastError = err;
+        if (attempt < this.retries) await sleep(this.backoffMs * 2 ** attempt);
+      }
+    }
+    throw new UpstreamError(`Catalog unavailable: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+  }
+
+  private async fetchFollowingRedirects(start: URL): Promise<Response> {
+    let url = start;
+    for (let hop = 0; hop <= CatalogClient.MAX_REDIRECTS; hop++) {
+      this.assertAllowed(url);
+      const res = await this.fetchFn(url, {
+        headers: { 'User-Agent': CatalogClient.USER_AGENT },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+      const location = res.headers.get('location');
+      if (res.status < 300 || res.status >= 400 || !location) return res;
+      url = new URL(location, url);
+    }
+    throw new UpstreamError('Too many redirects');
+  }
+
+  private assertAllowed(url: URL): void {
+    if (!['http:', 'https:'].includes(url.protocol) || !this.allowedHosts.includes(url.hostname)) {
+      throw new ValidationError(`Host not allowed: ${url.hostname}`);
+    }
+  }
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

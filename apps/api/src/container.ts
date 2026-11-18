@@ -12,6 +12,9 @@ import { SessionCookie } from './modules/auth/session-cookie';
 import { sessionMiddleware } from './modules/auth/session.middleware';
 import { SessionRepository } from './modules/auth/session.repository';
 import { UserRepository } from './modules/auth/user.repository';
+import { CatalogClient } from './modules/catalog/catalog.client';
+import { CatalogController } from './modules/catalog/catalog.controller';
+import { CatalogService } from './modules/catalog/catalog.service';
 import { HealthController } from './modules/health/health.controller';
 import { HealthService } from './modules/health/health.service';
 import {
@@ -61,6 +64,13 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
     clock,
   );
 
+  const fetchFn = deps.fetch ?? fetch;
+  const [primaryCatalogHost = 'flibusta.is'] = config.catalogHosts;
+  const catalog = new CatalogService(
+    new CatalogClient(config.catalogHosts, fetchFn),
+    new URL(`https://${primaryCatalogHost}`),
+  );
+
   const controllers: Controller[] = [
     new HealthController(new HealthService(deps.db)),
     new AuthController(auth, cookie, {
@@ -68,6 +78,7 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
       nickname: new FixedWindowRateLimiter(10, 60 * 60_000, clock),
     }),
     new SyncController(sync),
+    new CatalogController(catalog),
   ];
 
   return {
