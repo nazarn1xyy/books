@@ -14,78 +14,74 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
         return [];
     }
 
-    try {
-        const xmlText = await services().catalog.searchOpds(query);
+    // Errors propagate: callers (TanStack Query) show an error state instead of caching an empty result.
+    const xmlText = await services().catalog.searchOpds(query);
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xmlText, 'text/xml');
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'text/xml');
 
-        const books: Book[] = [];
-        const entries = doc.querySelectorAll('entry');
+    const books: Book[] = [];
+    const entries = doc.querySelectorAll('entry');
 
-        entries.forEach((entry) => {
-            const title = entry.querySelector('title')?.textContent || 'Unknown Title';
+    entries.forEach((entry) => {
+        const title = entry.querySelector('title')?.textContent || 'Unknown Title';
 
-            // Author: <author><name>...</name></author>
-            const authorName = entry.querySelector('author name')?.textContent || 'Unknown Author';
+        // Author: <author><name>...</name></author>
+        const authorName = entry.querySelector('author name')?.textContent || 'Unknown Author';
 
-            // ID: <id>tag:book:123</id> or extract from link
-            // OPDS often uses URNs. Flibusta uses tag:book:{id}
-            const idText = entry.querySelector('id')?.textContent || '';
-            // Extract the number at the end
-            const idMatch = idText.match(/:(\d+)$/);
-            // Alternatively try finding a link with /b/{id}
-            let id = idMatch ? idMatch[1] : '';
+        // ID: <id>tag:book:123</id> or extract from link
+        // OPDS often uses URNs. Flibusta uses tag:book:{id}
+        const idText = entry.querySelector('id')?.textContent || '';
+        // Extract the number at the end
+        const idMatch = idText.match(/:(\d+)$/);
+        // Alternatively try finding a link with /b/{id}
+        let id = idMatch ? idMatch[1] : '';
 
-            if (!id) {
-                // Fallback: look for <link href="/b/123/fb2">
-                const fb2Link = Array.from(entry.querySelectorAll('link')).find(l => l.getAttribute('type')?.includes('fb2'));
-                if (fb2Link) {
-                    const href = fb2Link.getAttribute('href') || '';
-                    const match = href.match(/\/b\/(\d+)/);
-                    if (match) id = match[1];
-                }
+        if (!id) {
+            // Fallback: look for <link href="/b/123/fb2">
+            const fb2Link = Array.from(entry.querySelectorAll('link')).find(l => l.getAttribute('type')?.includes('fb2'));
+            if (fb2Link) {
+                const href = fb2Link.getAttribute('href') || '';
+                const match = href.match(/\/b\/(\d+)/);
+                if (match) id = match[1];
             }
+        }
 
-            if (!id) return;
+        if (!id) return;
 
-            // Cover: <link rel="http://opds-spec.org/image" href="...">
-            // or thumbnail or image MIME
-            let cover = '';
-            const imageLink = Array.from(entry.querySelectorAll('link')).find(l => {
-                const rel = (l.getAttribute('rel') || '').toLowerCase();
-                const type = (l.getAttribute('type') || '').toLowerCase();
-                return (
-                    rel.includes('image') ||
-                    rel.includes('thumbnail') ||
-                    rel.includes('cover') ||
-                    type.startsWith('image/')
-                );
-            });
-
-            if (imageLink) {
-                const href = imageLink.getAttribute('href');
-                if (href) cover = catalogImageUrl(href);
-            }
-
-            if (!books.find(b => b.id === id)) {
-                books.push({
-                    id,
-                    title,
-                    author: authorName,
-                    cover: cover || '',
-                    description: entry.querySelector('content')?.textContent || '',
-                    genre: '',
-                    contentUrl: `${CATALOG_ORIGIN}/b/${id}/fb2`
-                });
-            }
+        // Cover: <link rel="http://opds-spec.org/image" href="...">
+        // or thumbnail or image MIME
+        let cover = '';
+        const imageLink = Array.from(entry.querySelectorAll('link')).find(l => {
+            const rel = (l.getAttribute('rel') || '').toLowerCase();
+            const type = (l.getAttribute('type') || '').toLowerCase();
+            return (
+                rel.includes('image') ||
+                rel.includes('thumbnail') ||
+                rel.includes('cover') ||
+                type.startsWith('image/')
+            );
         });
 
-        return books;
-    } catch (error) {
-        console.error('Flibusta search failed:', error);
-        return [];
-    }
+        if (imageLink) {
+            const href = imageLink.getAttribute('href');
+            if (href) cover = catalogImageUrl(href);
+        }
+
+        if (!books.find(b => b.id === id)) {
+            books.push({
+                id,
+                title,
+                author: authorName,
+                cover: cover || '',
+                description: entry.querySelector('content')?.textContent || '',
+                genre: '',
+                contentUrl: `${CATALOG_ORIGIN}/b/${id}/fb2`
+            });
+        }
+    });
+
+    return books;
 }
 
 export async function fetchBookContent(bookId: string): Promise<{ text: string; cover?: string; pdfData?: ArrayBuffer; title?: string; author?: string; series?: string; seriesNumber?: number; chapters?: { title: string; paragraphIndex: number }[] }> {
