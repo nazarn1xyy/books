@@ -43,12 +43,18 @@ export class CatalogService {
       throw new ValidationError('Invalid image URL');
     }
     if (!IMAGE_PATH.test(url.pathname)) throw new ValidationError('Not an image path');
-    return this.ensureOk(await this.client.get(url));
+    const res = this.ensureOk(await this.client.get(url));
+    if (!res.headers.get('content-type')?.startsWith('image/')) {
+      await res.body?.cancel();
+      throw new UpstreamError('Catalog returned a non-image response');
+    }
+    return res;
   }
 
   private ensureOk(res: Response): Response {
+    if (res.ok) return res;
+    res.body?.cancel().catch(() => {});
     if (res.status === 404) throw new NotFoundError('Not found in catalog');
-    if (!res.ok) throw new UpstreamError(`Catalog responded ${res.status}`);
-    return res;
+    throw new UpstreamError(`Catalog responded ${res.status}`);
   }
 }

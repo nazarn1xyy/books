@@ -5,9 +5,11 @@ import { createTestContext } from './helpers';
 type Handler = (url: URL) => Response | Promise<Response>;
 let handler: Handler = () => new Response('not set', { status: 500 });
 const calls: string[] = [];
-const fakeFetch = (async (input: string | URL | Request) => {
+let lastSignal: AbortSignal | undefined;
+const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => {
   const url = new URL(String(input));
   calls.push(url.toString());
+  lastSignal = init?.signal ?? undefined;
   return handler(url);
 }) as typeof fetch;
 
@@ -28,6 +30,13 @@ describe('CatalogClient', () => {
   it('refuses redirects to foreign hosts', async () => {
     handler = () => new Response(null, { status: 302, headers: { location: 'http://evil.test/x' } });
     await expect(client.get(new URL('https://flibusta.is/b/1/fb2'))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+  });
+
+  it('does not abort the body stream once headers have arrived', async () => {
+    handler = () => new Response('ok');
+    await new CatalogClient(['flibusta.is'], fakeFetch, 20, 0, 0).get(new URL('https://flibusta.is/b/1/fb2'));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(lastSignal?.aborted).toBe(false);
   });
 
   it('retries on 5xx and then succeeds', async () => {
@@ -56,6 +65,28 @@ describe('catalog routes', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/zip');
     expect(await res.text()).toBe('BOOK');
+  });
+
+  it('does not forward Content-Length of an encoded upstream body', async () => {
+    handler = () =>
+      new Response('BOOK', { headers: { 'content-type': 'application/zip', 'content-encoding': 'gzip', 'content-length': '2' } });
+    const res = await ctx.client().get('/api/catalog/book/124/fb2');
+    expect(res.headers.get('content-length')).not.toBe('2');
+    expect(await res.text()).toBe('BOOK');
+  });
+
+  it('marks proxied files as non-sniffable and sandboxed', async () => {
+    handler = () => new Response('BOOK', { headers: { 'content-type': 'text/html' } });
+    const res = await ctx.client().get('/api/catalog/book/125/fb2');
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('content-security-policy')).toMatch(/sandbox/);
+    expect(res.headers.get('content-disposition')).toMatch(/attachment/);
+  });
+
+  it('rejects non-image upstream content on the image route', async () => {
+    handler = () => new Response('<script>', { headers: { 'content-type': 'text/html' } });
+    const res = await ctx.client().get(`/api/catalog/image?src=${encodeURIComponent('https://static.flibusta.is/i/2/x.jpg')}`);
+    expect(res.status).toBe(502);
   });
 
   it('validates book id and format', async () => {

@@ -104,6 +104,33 @@ describe('sync', () => {
     expect(entities).toEqual(['book', 'bookmark', 'favorite', 'progress', 'quote']);
   });
 
+  it('accepts a full batch of long quotes and rejects bodies above SYNC_PUSH_MAX_BYTES', async () => {
+    const quoteOps = (textLength: number, noteLength = 0) =>
+      Array.from({ length: 200 }, (_, i) => {
+        const id = `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`;
+        return {
+          entity: 'quote',
+          key: id,
+          clientUpdatedAt: at(1),
+          data: { id, bookId: '42', bookTitle: null, bookAuthor: null, text: 'ф'.repeat(textLength), note: noteLength ? 'ф'.repeat(noteLength) : null, color: 'yellow' },
+        };
+      });
+    // 200 × 9k Cyrillic chars ≈ 3.6 MB of UTF-8: over the old 2 MB global limit.
+    const big = await alice.post('/api/sync/push', { ops: quoteOps(9_000) });
+    expect(big.status).toBe(200);
+    expect((await big.json()).applied).toBe(200);
+
+    // Schema-valid but ≈ 6 MB: the client must split such a batch.
+    const tooBig = await alice.post('/api/sync/push', { ops: quoteOps(10_000, 5_000) });
+    expect(tooBig.status).toBe(413);
+    expect((await tooBig.json()).error.code).toBe('PAYLOAD_TOO_LARGE');
+  });
+
+  it('keeps a small body limit on other routes', async () => {
+    const res = await ctx.client().post('/api/auth/login', { nickname: 'x', password: 'p'.repeat(300_000) });
+    expect(res.status).toBe(413);
+  });
+
   it('clamps client timestamps from the future', async () => {
     await push(alice, [{ entity: 'book', key: '42', clientUpdatedAt: '2099-01-01T00:00:00.000Z', data: book('Future') }]);
     const { changes } = await pull(alice);
