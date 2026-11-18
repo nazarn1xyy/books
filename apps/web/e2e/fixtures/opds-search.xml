@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <title>Mocked Catalog Book</title>
+    <author><name>Mock Author</name></author>
+    <id>tag:book:777</id>
+    <link href="/b/777/fb2" type="application/fb2+zip"/>
+  </entry>
+</feed>

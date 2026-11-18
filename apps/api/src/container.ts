@@ -79,7 +79,7 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
   const controllers: Controller[] = [
     new HealthController(new HealthService(db)),
     new AuthController(auth, cookie, {
-      ip: new FixedWindowRateLimiter(5, 60_000, clock),
+      ip: new FixedWindowRateLimiter(config.AUTH_RATE_LIMIT_PER_MIN, 60_000, clock),
       failedLogins: new FixedWindowRateLimiter(10, 60 * 60_000, clock),
     }),
     new SyncController(sync),

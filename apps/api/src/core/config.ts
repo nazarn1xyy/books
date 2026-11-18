@@ -8,6 +8,8 @@ const envSchema = z.object({
   APP_ORIGIN: z.url(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   COOKIE_SECURE: z.stringbool().optional(),
+  /** Auth attempts (login + register) per IP per minute. Raised only for local e2e runs. */
+  AUTH_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(5),
   CATALOG_HOSTS: z.string().default('flibusta.is,static.flibusta.is'),
   AI_BASE_URL: z.url().optional(),
   AI_API_KEY: z.string().min(1).optional(),

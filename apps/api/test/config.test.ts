@@ -12,6 +12,10 @@ describe('loadConfig', () => {
     expect(c.catalogHosts).toEqual(['flibusta.is', 'static.flibusta.is']);
     expect(c.ai).toBeNull();
   });
+  it('limits auth attempts to 5 per minute unless overridden', () => {
+    expect(loadConfig(base).AUTH_RATE_LIMIT_PER_MIN).toBe(5);
+    expect(loadConfig({ ...base, AUTH_RATE_LIMIT_PER_MIN: '1000' }).AUTH_RATE_LIMIT_PER_MIN).toBe(1000);
+  });
   it('secure cookies by default in production', () => {
     expect(loadConfig({ ...base, NODE_ENV: 'production' }).cookieSecure).toBe(true);
   });
