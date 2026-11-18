@@ -1,5 +1,6 @@
 import type { BookData, ProgressData } from '@libify/shared';
 import { services } from '../shared/services';
+import { LEGACY_SYNCED_FIELDS } from '../shared/sync/legacyImport';
 import type { AppState, Book, ReadingProgress, UserSettings } from '../types';
 
 /**
@@ -33,11 +34,23 @@ function loadLocal(): LocalState {
   return cachedLocal;
 }
 
+function readStoredObject(): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
 function saveLocal(state: LocalState): void {
   cachedLocal = state;
   try {
-    // Keep unknown legacy fields (myBooks, readingProgress) out: they were imported into the replica.
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+    // Pre-v2 fields (myBooks, readingProgress) must survive until importLegacyState moves them to the replica.
+    const legacy: Record<string, unknown> = {};
+    const stored = readStoredObject();
+    for (const field of LEGACY_SYNCED_FIELDS) if (field in stored) legacy[field] = stored[field];
+    localStorage.setItem(LOCAL_KEY, JSON.stringify({ ...legacy, ...state }));
   } catch (err) {
     console.error('Failed to save local state', err);
   }
@@ -113,9 +126,11 @@ export function addToMyBooks(book: Book): void {
   const existing = services().replica.get('book', book.id);
   const next = toBookData(book, existing?.addedAt ?? new Date().toISOString());
   if (!existing || JSON.stringify(existing) !== JSON.stringify(next)) {
+    // The replica change itself emits 'storage-update' (see services.ts).
     services().sync.record('book', book.id, next).catch(logSyncError);
+  } else {
+    notify(); // only the local metadata changed
   }
-  notify();
 }
 
 export function removeFromMyBooks(bookId: string): void {

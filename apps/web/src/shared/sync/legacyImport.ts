@@ -3,6 +3,7 @@ import type { MetaStore } from '../db/MetaStore';
 
 const LEGACY_KEY = 'book-library-state';
 const META_DONE = 'legacy.imported';
+const META_DECLINED_PREFIX = 'legacy.declined:';
 
 export interface LegacyRecorder {
   record<E extends SyncEntity>(entity: E, key: string, data: SyncDataMap[E] | null): Promise<void>;
@@ -17,25 +18,51 @@ interface LegacyState {
 const isRemoteUrl = (value: string | undefined): value is string =>
   !!value && value.length <= 2048 && !value.startsWith('data:') && !value.startsWith('blob:');
 
-/** One-time upload of books/progress that lived only in localStorage before v2 (cloud data was lost). */
+/** Fields of the pre-v2 localStorage state that move to the synced replica. */
+export const LEGACY_SYNCED_FIELDS = ['myBooks', 'readingProgress'] as const;
+
+/** Asks whether the legacy books (count) belong to the current account. */
+export type ConfirmLegacyImport = (bookCount: number) => boolean | Promise<boolean>;
+
+function readLegacy(storage: Pick<Storage, 'getItem'>): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(storage.getItem(LEGACY_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {}; // corrupted legacy state: nothing to import
+  }
+}
+
+/**
+ * One-time upload of books/progress that lived only in localStorage before v2 (cloud data was lost).
+ * The device may be shared, so the user confirms the data is theirs; a refusal is remembered per account
+ * and the data stays for another account to claim.
+ */
 export async function importLegacyState(
   recorder: LegacyRecorder,
   meta: MetaStore,
-  storage: Pick<Storage, 'getItem'> = localStorage,
+  userId: string,
+  confirmImport: ConfirmLegacyImport,
+  storage: Pick<Storage, 'getItem' | 'setItem'> = localStorage,
 ): Promise<void> {
-  if (await meta.get<boolean>(META_DONE)) return;
+  const declinedKey = `${META_DECLINED_PREFIX}${userId}`;
+  if ((await meta.get<boolean>(META_DONE)) || (await meta.get<boolean>(declinedKey))) return;
 
-  let state: LegacyState = {};
-  try {
-    state = JSON.parse(storage.getItem(LEGACY_KEY) ?? '{}') as LegacyState;
-  } catch {
-    // corrupted legacy state: nothing to import
+  const raw = readLegacy(storage);
+  const state = raw as LegacyState;
+  const bookIds = (state.myBooks ?? []).filter((id) => state.bookMetadata?.[id]);
+  if (bookIds.length === 0) {
+    await meta.set(META_DONE, true);
+    return;
+  }
+  if (!(await confirmImport(bookIds.length))) {
+    await meta.set(declinedKey, true);
+    return;
   }
 
   const now = new Date().toISOString();
-  for (const id of state.myBooks ?? []) {
-    const book = state.bookMetadata?.[id];
-    if (!book) continue;
+  for (const id of bookIds) {
+    const book = state.bookMetadata![id];
     const data: BookData = {
       bookId: id,
       title: (book.title || 'Untitled').slice(0, 500),
@@ -61,4 +88,12 @@ export async function importLegacyState(
     }
   }
   await meta.set(META_DONE, true);
+
+  const rest = { ...readLegacy(storage) };
+  for (const field of LEGACY_SYNCED_FIELDS) delete rest[field];
+  try {
+    storage.setItem(LEGACY_KEY, JSON.stringify(rest));
+  } catch (err) {
+    console.warn('[legacy] could not clean up imported fields', err);
+  }
 }

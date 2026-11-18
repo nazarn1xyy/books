@@ -106,7 +106,8 @@
         "hasAccount": "Already have an account?",
         "nicknameHint": "3–24 characters: letters, digits, _",
         "passwordHint": "At least 8 characters",
-        "unsyncedSignOut": "Some changes have not been synced yet (no connection). Sign out anyway and lose them?"
+        "unsyncedSignOut": "Some changes have not been synced yet (no connection). Sign out anyway and lose them?",
+        "importLegacyLibrary": "Found {count} book(s) from the previous version of Libify on this device. Add them to this account?"
     },
     "errors": {
         "bookNotFound": "Book not found on Flibusta",
@@ -152,7 +153,9 @@
         "aiSummary": "AI summary",
         "translateBook": "Translate book",
         "showPassword": "Show password",
-        "hidePassword": "Hide password"
+        "hidePassword": "Hide password",
+        "downloadOffline": "Save for offline reading",
+        "offlineReady": "Available offline"
     },
     "sort": {
         "byDate": "By date",

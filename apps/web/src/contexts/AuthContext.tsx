@@ -1,8 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Credentials, LoginInput, PublicUser } from '@libify/shared';
 import { services } from '../shared/services';
 import { importLegacyState } from '../shared/sync/legacyImport';
+import { useLanguage } from './LanguageContext';
 
 interface AuthContextType {
   user: PublicUser | null;
@@ -37,6 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Cached user lets the app open offline; /auth/me confirms or clears it.
   const [user, setUser] = useState<PublicUser | null>(readCachedUser);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
+  // Read through a ref so a language switch does not restart sync.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   const applyUser = useCallback((next: PublicUser | null) => {
     writeCachedUser(next);
@@ -69,7 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     svc.sync
       .start(userId)
-      .then(() => importLegacyState(svc.sync, svc.meta))
+      .then(() =>
+        importLegacyState(svc.sync, svc.meta, userId, (count) =>
+          window.confirm(tRef.current('auth.importLegacyLibrary', { count })),
+        ),
+      )
       .catch((err) => console.error('[sync] start failed', err));
     return () => svc.sync.stop();
   }, [svc, userId]);

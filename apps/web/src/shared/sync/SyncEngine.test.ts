@@ -144,6 +144,17 @@ describe('SyncEngine', () => {
     expect(await meta.get('sync.cursor')).toBeUndefined();
   });
 
+  it('stamps records with server-corrected time when the device clock is off', async () => {
+    const { api, replica, engine } = await setup();
+    const serverNow = Date.now() - 60 * 60_000; // device clock is an hour ahead
+    api.pullImpl = async () => ({ serverTime: new Date(serverNow).toISOString(), changes: [] });
+    await engine.start('u1');
+    await engine.record('favorite', '1', fav('1'));
+    const stamped = Date.parse(replica.getRecord('favorite', '1')!.updatedAt);
+    expect(Math.abs(stamped - serverNow)).toBeLessThan(5_000);
+    engine.stop();
+  });
+
   it('reports pending changes', async () => {
     const { engine } = await setup();
     expect(await engine.pendingCount()).toBe(0);

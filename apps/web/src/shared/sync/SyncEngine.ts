@@ -35,7 +35,8 @@ export class SyncEngine {
   private running: Promise<void> | null = null;
   private rerunRequested = false;
   private failures = 0;
-  private lastIssuedMs = 0;
+  /** serverTime - device time, measured on each pull; keeps a wrong device clock out of LWW timestamps. */
+  private clockOffsetMs = 0;
   private status: SyncStatus = 'idle';
   private readonly statusListeners = new Set<(status: SyncStatus) => void>();
   private pushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -171,6 +172,7 @@ export class SyncEngine {
     if (generation !== this.generation) return;
     const since = (await this.deps.meta.get<string>(META_CURSOR)) ?? null;
     const response = await this.deps.api.pull(since);
+    this.clockOffsetMs = Date.parse(response.serverTime) - Date.now();
     // A response that arrives after stop()/resetLocalData() may belong to the previous user.
     if (generation !== this.generation) return;
     await this.deps.replica.apply(response.changes);
@@ -195,11 +197,13 @@ export class SyncEngine {
     }, delay);
   }
 
-  /** Strictly increasing ISO timestamps, so two writes in one millisecond still order correctly. */
+  /**
+   * Server-corrected time, strictly after the record's previous version,
+   * so two writes in one millisecond still order correctly.
+   */
   private nextTimestamp(previous: string | undefined): string {
-    const floor = Math.max(this.lastIssuedMs, previous ? Date.parse(previous) : 0);
-    this.lastIssuedMs = Math.max(Date.now(), floor + 1);
-    return new Date(this.lastIssuedMs).toISOString();
+    const floor = previous ? Date.parse(previous) : 0;
+    return new Date(Math.max(Date.now() + this.clockOffsetMs, floor + 1)).toISOString();
   }
 
   private setStatus(status: SyncStatus): void {

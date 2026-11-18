@@ -205,7 +205,7 @@ export const BookCard = memo(function BookCard({
                                 ? 'bg-green-500/90 text-white'
                                 : 'bg-black/50 text-white/80 hover:bg-black/70'
                                 }`}
-                            aria-label={isOffline ? 'Offline ready' : t('aria.addFavorite')}
+                            aria-label={isOffline ? t('aria.offlineReady') : t('aria.downloadOffline')}
                         >
                             {isOffline ? (
                                 <Check size={16} />

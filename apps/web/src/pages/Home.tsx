@@ -164,6 +164,7 @@ export function Home() {
                                             book={book}
                                             size="large"
                                             priority={index < 3}
+                                            showActions
                                         />
                                     ))}
                                 </div>
@@ -175,7 +176,7 @@ export function Home() {
                             <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                 {recentBooks.map((book, index) => (
-                                    <BookCard key={book.id} book={book} size="small" priority={index < 4} />
+                                    <BookCard key={book.id} book={book} size="small" priority={index < 4} showActions />
                                 ))}
                             </div>
                         </section>

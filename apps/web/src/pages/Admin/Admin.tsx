@@ -34,7 +34,10 @@ export function Admin() {
 
     // ...
 
+    const isAdmin = user?.role === 'admin';
+
     useEffect(() => {
+        if (!isAdmin) return;
         async function fetchAdminData() {
             try {
                 const stats = await services().admin.stats();
@@ -57,7 +60,7 @@ export function Admin() {
         // Poll every 30s
         const interval = setInterval(fetchAdminData, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [isAdmin]);
 
     // Update charts on period change
     useEffect(() => {
@@ -75,7 +78,7 @@ export function Admin() {
         return () => clearInterval(interval);
     }, []);
 
-    if (!user || user.role !== 'admin') {
+    if (!isAdmin) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center flex-col gap-3">
                 <p className="text-gray-400 text-lg">403 — Доступ запрещён</p>

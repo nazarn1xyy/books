@@ -2,6 +2,7 @@ import type { Book } from '../types';
 import { getCachedBook, cacheBook } from '../utils/cache';
 import { parseBookData } from '../utils/fb2Parser';
 import { CATALOG_ORIGIN, catalogImageUrl } from '../shared/api/CatalogApi';
+import { ApiError } from '../shared/api/ApiError';
 import { services } from '../shared/services';
 
 // Re-export parseBookData for backward compatibility
@@ -157,11 +158,26 @@ export async function fetchBookContent(bookId: string): Promise<{ text: string; 
     } catch (error) {
         console.error('Failed to fetch book:', error);
 
-        // Provide user-friendly error message
-        const errorMessage = error instanceof Error
-            ? error.message
-            : 'Неизвестная ошибка при загрузке книги';
-
-        throw new Error(errorMessage);
+        throw new Error(bookDownloadErrorMessage(error));
     }
+}
+
+/** User-facing text for a failed book download; API/network errors never leak raw technical messages. */
+function bookDownloadErrorMessage(error: unknown): string {
+    if (error instanceof ApiError) {
+        switch (error.code) {
+            case 'NETWORK':
+                return 'Нет соединения с сервером. Проверьте интернет и попробуйте снова.';
+            case 'TIMEOUT':
+                return 'Флибуста отвечает слишком долго. Попробуйте позже.';
+            case 'NOT_FOUND':
+                return 'Книга не найдена на Флибусте. Попробуйте другую книгу.';
+            case 'RATE_LIMITED':
+                return 'Слишком много запросов. Подождите минуту и попробуйте снова.';
+            default:
+                return 'Сервер Флибусты временно недоступен. Попробуйте позже.';
+        }
+    }
+    // Our own messages thrown above are already user-facing.
+    return error instanceof Error ? error.message : 'Неизвестная ошибка при загрузке книги';
 }
