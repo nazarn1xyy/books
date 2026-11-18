@@ -1,15 +1,14 @@
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Share2, Download, Check } from 'lucide-react';
 import type { Book } from '../model/types';
 import { getReadingProgress } from '@/shared/storage/storage';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { ImageWithLoader } from './ImageWithLoader';
+import { useBookCardActions } from '../lib/useBookCardActions';
 import { useBookCover } from '../lib/useBookCover';
-import { addFavorite, removeFavorite, isBookFavorite } from '@/shared/storage/collections';
-import { getCachedBookIds, markBookCached, cacheBook } from '@/shared/catalog/bookCache';
-import { fetchBookContent } from '@/shared/catalog/flibustaApi';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
+import { Toast } from '@/shared/ui/Toast';
 
 interface BookCardProps {
     book: Book;
@@ -33,38 +32,8 @@ export const BookCard = memo(function BookCard({
     // Memoize progress calculation to avoid sync JSON parsing on every render
     const progress = useMemo(() => getReadingProgress(book.id), [book.id]);
     const coverSrc = useBookCover(book.id, book.cover);
-    const [isFavorite, setIsFavorite] = useState(initialFavorite ?? false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isOffline, setIsOffline] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [cardToast, setCardToast] = useState<string | null>(null);
-
-    const showCardToast = (msg: string) => {
-        setCardToast(msg);
-        setTimeout(() => setCardToast(null), 2000);
-    };
-
-    // Cards render only on signed-in pages; with actions shown, check the favorite status on mount
-    useEffect(() => {
-        if (showActions && initialFavorite === undefined) {
-            isBookFavorite(book.id).then(setIsFavorite).catch(() => {});
-        }
-    }, [book.id, showActions, initialFavorite]);
-
-    // Check if book is cached (offline) using shared Set
-    useEffect(() => {
-        let isMounted = true;
-        getCachedBookIds()
-            .then(ids => {
-                if (isMounted) setIsOffline(ids.has(book.id));
-            })
-            .catch(() => {
-                if (isMounted) setIsOffline(false);
-            });
-        return () => {
-            isMounted = false;
-        };
-    }, [book.id]);
+    const { isFavorite, isLoading, isOffline, isDownloading, toast: cardToast, handleFavoriteClick, handleShareClick, handleDownloadClick } =
+        useBookCardActions({ book, coverSrc, showActions, initialFavorite });
 
     const percentage = useMemo(() => {
         if (!progress || progress.totalPages <= 0) return 0;
@@ -84,100 +53,16 @@ export const BookCard = memo(function BookCard({
         large: 'h-64 sm:h-68 w-full',
     };
 
-    const handleFavoriteClick = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isLoading) return;
-
-        setIsLoading(true);
-        try {
-            if (isFavorite) {
-                await removeFavorite(book.id);
-                setIsFavorite(false);
-            } else {
-                await addFavorite({
-                    id: book.id,
-                    title: book.title,
-                    author: book.author,
-                    cover: coverSrc || ''
-                });
-                setIsFavorite(true);
-            }
-        } catch {
-            showCardToast(t('common.error'));
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleShareClick = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const shareData = {
-            title: book.title,
-            text: `${book.title} - ${book.author}`,
-            url: `https://libify.store/reader/${book.id}`
-        };
-
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(shareData.url);
-                showCardToast(t('reader.quoteSaved'));
-            }
-        } catch (err) {
-            if ((err as Error).name !== 'AbortError') {
-                showCardToast(t('common.error'));
-            }
-        }
-    };
-
-    const handleDownloadClick = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isDownloading || isOffline) return;
-
-        setIsDownloading(true);
-        try {
-            const bookData = await fetchBookContent(book.id);
-            if (bookData) {
-                await cacheBook(
-                    book.id,
-                    bookData.text || '',
-                    coverSrc || '',
-                    bookData.pdfData,
-                    {
-                        title: bookData.title,
-                        author: bookData.author,
-                        series: bookData.series,
-                        seriesNumber: bookData.seriesNumber,
-                        chapters: bookData.chapters
-                    }
-                );
-                markBookCached(book.id);
-                setIsOffline(true);
-                showCardToast(t('common.save'));
-            }
-        } catch {
-            showCardToast(t('errors.networkError'));
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-
     return (
         <Link
             to={`/reader/${book.id}`}
             aria-label={`${book.title}, ${book.author}`}
             className={`${sizeClasses[size]} ${size === 'small' ? 'w-full' : 'flex-shrink-0'} text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative snap-start`}
         >
-            {cardToast && (
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg">
-                    {cardToast}
-                </div>
-            )}
+            <Toast
+                message={cardToast}
+                className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg"
+            />
             <div className="relative overflow-hidden rounded-2xl bg-[#1C1C1E] shadow-md">
                 <ImageWithLoader
                     src={coverSrc}
