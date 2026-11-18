@@ -114,11 +114,11 @@ export function Sidebar() {
                 <div className="p-4 border-t border-white/10">
                     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                            {user.email?.[0]?.toUpperCase() || 'U'}
+                            {user.nickname[0]?.toUpperCase() ?? 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-white text-sm font-medium truncate">
-                                {user.email?.split('@')[0] || 'User'}
+                                {user.nickname}
                             </p>
                         </div>
                         <button

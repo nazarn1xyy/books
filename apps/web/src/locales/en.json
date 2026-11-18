@@ -99,20 +99,13 @@
         "loginAction": "Log in",
         "registerAction": "Create account",
         "nickname": "Username",
-        "nicknamePlaceholder": "Choose a username",
-        "email": "Email",
-        "emailPlaceholder": "example@mail.com",
+        "nicknamePlaceholder": "your_nickname",
         "password": "Password",
         "passwordPlaceholder": "••••••••",
-        "forgotPassword": "Forgot password?",
-        "resetPassword": "Reset password",
-        "resetPasswordDesc": "Enter your email to receive a reset link",
-        "sendResetLink": "Send reset link",
-        "backToLogin": "Back to log in",
         "noAccount": "Don't have an account?",
         "hasAccount": "Already have an account?",
-        "resetLinkSent": "Password reset link sent to {email}",
-        "accountCreated": "Account created! Check {email} to confirm your registration."
+        "nicknameHint": "3–24 characters: letters, digits, _",
+        "passwordHint": "At least 8 characters"
     },
     "errors": {
         "bookNotFound": "Book not found on Flibusta",
@@ -120,10 +113,12 @@
         "networkError": "Network error",
         "translationFailed": "Translation failed",
         "connectionError": "Connection error. Please check your internet.",
-        "invalidCredentials": "Invalid email or password.",
-        "userAlreadyExists": "User with this email is already registered.",
-        "passwordTooShort": "Password must be at least 6 characters.",
-        "unknownAuthError": "An error occurred during authentication."
+        "invalidCredentials": "Wrong username or password.",
+        "userAlreadyExists": "This username is already taken.",
+        "passwordTooShort": "Password must be at least 8 characters.",
+        "unknownAuthError": "An error occurred during authentication.",
+        "invalidNickname": "Username: 3–24 characters, letters, digits and _ only.",
+        "tooManyAttempts": "Too many attempts. Try again in a minute."
     },
     "language": {
         "title": "Language",
@@ -154,7 +149,9 @@
         "addBook": "Add book",
         "switchLanguage": "Select language",
         "aiSummary": "AI summary",
-        "translateBook": "Translate book"
+        "translateBook": "Translate book",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
     },
     "sort": {
         "byDate": "By date",

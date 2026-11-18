@@ -1,106 +1,97 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
-import { syncData } from '../utils/sync';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Credentials, LoginInput, PublicUser } from '@libify/shared';
+import { services } from '../shared/services';
+import { importLegacyState } from '../shared/sync/legacyImport';
 
 interface AuthContextType {
-    user: User | null;
-    session: Session | null;
-    loading: boolean;
-    signIn: (email: string) => Promise<void>;
-    signOut: () => Promise<void>;
+  user: PublicUser | null;
+  loading: boolean;
+  login(input: LoginInput): Promise<void>;
+  register(input: Credentials): Promise<void>;
+  signOut(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const USER_CACHE_KEY = 'libify.user';
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [session, setSession] = useState<Session | null>(null);
-    const [loading, setLoading] = useState(true);
-
-
-    useEffect(() => {
-        // Check active sessions and sets the user
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-            if (session?.user) {
-                syncData(session.user.id);
-            }
-        });
-
-        // Listen for changes on auth state (logged in, signed out, etc.)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-            if (session?.user) {
-                syncData(session.user.id);
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
-
-    // Realtime Sync Subscription
-    useEffect(() => {
-        if (!user) return;
-
-        let syncTimeout: NodeJS.Timeout;
-        const debouncedSync = () => {
-            clearTimeout(syncTimeout);
-            syncTimeout = setTimeout(() => {
-                syncData(user.id);
-            }, 1000); // Wait 1s for batch updates
-        };
-
-        const channel = supabase
-            .channel('db-changes')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'user_books',
-                    filter: `user_id=eq.${user.id}`,
-                },
-                () => {
-                    debouncedSync();
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [user]);
-
-    const signIn = async () => {
-        // Placeholder as actual sign in is handled in Auth page
-        return Promise.resolve();
-    };
-
-    const signOut = async () => {
-        await supabase.auth.signOut();
-    };
-
-    const value = {
-        user,
-        session,
-        loading,
-        signIn,
-        signOut,
-    };
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+function readCachedUser(): PublicUser | null {
+  try {
+    return JSON.parse(localStorage.getItem(USER_CACHE_KEY) ?? 'null') as PublicUser | null;
+  } catch {
+    return null;
+  }
 }
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
+function writeCachedUser(user: PublicUser | null): void {
+  if (user) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+  else localStorage.removeItem(USER_CACHE_KEY);
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const svc = useMemo(() => services(), []);
+  // Cached user lets the app open offline; /auth/me confirms or clears it.
+  const [user, setUser] = useState<PublicUser | null>(readCachedUser);
+  const [loading, setLoading] = useState(true);
+
+  const applyUser = useCallback((next: PublicUser | null) => {
+    writeCachedUser(next);
+    setUser(next);
+  }, []);
+
+  useEffect(() => {
+    svc.api.onUnauthorized(() => applyUser(null));
+    return () => svc.api.onUnauthorized(null);
+  }, [svc, applyUser]);
+
+  useEffect(() => {
+    let cancelled = false;
+    svc.auth
+      .me()
+      .then((me) => {
+        if (!cancelled) applyUser(me);
+      })
+      .catch((err) => console.warn('[auth] offline, using cached user', err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [svc, applyUser]);
+
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+    svc.sync
+      .start(userId)
+      .then(() => importLegacyState(svc.sync, svc.meta))
+      .catch((err) => console.error('[sync] start failed', err));
+    return () => svc.sync.stop();
+  }, [svc, userId]);
+
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      loading,
+      login: async (input) => applyUser(await svc.auth.login(input)),
+      register: async (input) => applyUser(await svc.auth.register(input)),
+      signOut: async () => {
+        await svc.sync.syncNow().catch(() => {}); // best effort: send pending changes first
+        await svc.auth.logout().catch(() => {});
+        svc.sync.stop();
+        await svc.sync.resetLocalData();
+        applyUser(null);
+      },
+    }),
+    [user, loading, svc, applyUser],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  return context;
+}

@@ -99,20 +99,13 @@
         "loginAction": "Увійти",
         "registerAction": "Створити акаунт",
         "nickname": "Нікнейм",
-        "nicknamePlaceholder": "Придумайте нікнейм",
-        "email": "Email",
-        "emailPlaceholder": "example@mail.com",
+        "nicknamePlaceholder": "your_nickname",
         "password": "Пароль",
         "passwordPlaceholder": "••••••••",
-        "forgotPassword": "Забули пароль?",
-        "resetPassword": "Скидання пароля",
-        "resetPasswordDesc": "Введіть email — надішлемо посилання для скидання",
-        "sendResetLink": "Надіслати посилання",
-        "backToLogin": "Назад до входу",
         "noAccount": "Немає акаунту?",
         "hasAccount": "Вже є акаунт?",
-        "resetLinkSent": "Посилання для скидання пароля надіслано на {email}",
-        "accountCreated": "Акаунт створено! Перевірте пошту {email} та підтвердіть реєстрацію."
+        "nicknameHint": "3–24 символи: літери, цифри, _",
+        "passwordHint": "Щонайменше 8 символів"
     },
     "errors": {
         "bookNotFound": "Книгу не знайдено на Флібусті",
@@ -120,10 +113,12 @@
         "networkError": "Помилка мережі",
         "translationFailed": "Не вдалося перекласти",
         "connectionError": "Помилка з'єднання. Перевірте інтернет.",
-        "invalidCredentials": "Невірний email або пароль.",
-        "userAlreadyExists": "Користувач з таким email вже зареєстрований.",
-        "passwordTooShort": "Пароль повинен містити не менше 6 символів.",
-        "unknownAuthError": "Сталася помилка при авторизації."
+        "invalidCredentials": "Неправильне ім'я користувача або пароль.",
+        "userAlreadyExists": "Це ім'я вже зайняте.",
+        "passwordTooShort": "Пароль має містити щонайменше 8 символів.",
+        "unknownAuthError": "Сталася помилка при авторизації.",
+        "invalidNickname": "Ім'я: 3–24 символи, лише літери, цифри та _.",
+        "tooManyAttempts": "Забагато спроб. Спробуйте за хвилину."
     },
     "language": {
         "title": "Мова",
@@ -154,7 +149,9 @@
         "addBook": "Додати книгу",
         "switchLanguage": "Обрати мову",
         "aiSummary": "AI переказ",
-        "translateBook": "Перекласти книгу"
+        "translateBook": "Перекласти книгу",
+        "showPassword": "Показати пароль",
+        "hidePassword": "Сховати пароль"
     },
     "sort": {
         "byDate": "За датою",
