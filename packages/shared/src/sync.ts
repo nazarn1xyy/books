@@ -40,6 +40,7 @@ export const quoteDataSchema = z.object({
 export const bookmarkDataSchema = z.object({
   id: z.uuid(),
   bookId,
+  bookTitle: nullableText(500),
   paragraphIndex: z.number().int().min(0),
   previewText: nullableText(500),
 });

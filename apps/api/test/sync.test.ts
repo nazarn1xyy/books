@@ -96,12 +96,14 @@ describe('sync', () => {
       { entity: 'book', key: '42', clientUpdatedAt: at(1), data: book('B') },
       { entity: 'progress', key: '42', clientUpdatedAt: at(1), data: { bookId: '42', paragraphIndex: 10, scrollRatio: 0.5, currentPage: 3, totalPages: 9 } },
       { entity: 'quote', key: qid, clientUpdatedAt: at(1), data: { id: qid, bookId: '42', bookTitle: 'B', bookAuthor: null, text: 'q', note: null, color: 'blue' } },
-      { entity: 'bookmark', key: bid, clientUpdatedAt: at(1), data: { id: bid, bookId: '42', paragraphIndex: 7, previewText: 'p' } },
+      { entity: 'bookmark', key: bid, clientUpdatedAt: at(1), data: { id: bid, bookId: '42', bookTitle: 'B', paragraphIndex: 7, previewText: 'p' } },
       { entity: 'favorite', key: '42', clientUpdatedAt: at(1), data: { bookId: '42', title: 'B', author: null, coverUrl: null } },
     ]);
     expect(r.applied).toBe(5);
     const entities = (await pull(alice)).changes.map((c) => c.entity).sort();
     expect(entities).toEqual(['book', 'bookmark', 'favorite', 'progress', 'quote']);
+    const bookmark = (await pull(alice)).changes.find((c) => c.entity === 'bookmark');
+    expect(bookmark?.data).toMatchObject({ bookTitle: 'B' });
   });
 
   it('accepts a full batch of long quotes and rejects bodies above SYNC_PUSH_MAX_BYTES', async () => {

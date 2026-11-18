@@ -95,7 +95,7 @@ export class BookmarkSyncRepository extends BaseSyncRepository<BookmarkData, Boo
     return { ...d };
   }
   protected fromRow(r: BookmarkRow): BookmarkData {
-    return { id: r.id, bookId: r.bookId, paragraphIndex: r.paragraphIndex, previewText: r.previewText };
+    return { id: r.id, bookId: r.bookId, bookTitle: r.bookTitle, paragraphIndex: r.paragraphIndex, previewText: r.previewText };
   }
   protected keyOf(r: BookmarkRow) {
     return r.id;

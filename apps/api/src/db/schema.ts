@@ -97,6 +97,7 @@ export const bookmarks = pgTable(
     ...syncColumns(),
     id: uuid('id').primaryKey(),
     bookId: text('book_id').notNull(),
+    bookTitle: text('book_title'),
     paragraphIndex: integer('paragraph_index').notNull(),
     previewText: text('preview_text'),
   },

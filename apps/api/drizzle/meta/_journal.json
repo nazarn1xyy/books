@@ -8,6 +8,13 @@
       "when": 1795028250953,
       "tag": "0000_silly_black_tom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795029791976,
+      "tag": "0001_natural_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }
