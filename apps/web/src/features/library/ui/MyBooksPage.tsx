@@ -8,6 +8,7 @@ import { ImageWithLoader } from '@/entities/book/ui/ImageWithLoader';
 import { parseBookData } from '@/shared/catalog/flibustaApi';
 import { cacheBook } from '@/shared/catalog/bookCache';
 import { useAuth } from '@/features/auth';
+import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
 import { useReplicaVersion } from '@/shared/sync/useReplicaVersion';
 import { useBookCover } from '@/entities/book/lib/useBookCover';
 import { useSwipeToRemove } from '../model/useSwipeToRemove';
@@ -273,6 +274,7 @@ export function MyBooksPage() {
                             <h1 className="text-2xl font-bold text-white lg:text-3xl truncate">
                                 {activeTab === 'books' ? t('myBooks.title') : activeTab === 'favorites' ? t('myBooks.favorites') : activeTab === 'quotes' ? t('myBooks.quotes') : t('myBooks.bookmarks')}
                             </h1>
+                            <SyncStatusBadge className="lg:hidden mt-0.5" />
                             {activeTab === 'books' && myBookIds.length > 0 && (
                                 <p className="text-gray-500 text-xs mt-0.5">{t('myBooks.booksCount', { count: myBookIds.length })}</p>
                             )}

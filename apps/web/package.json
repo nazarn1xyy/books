@@ -14,6 +14,9 @@
   },
   "dependencies": {
     "@libify/shared": "^2.0.0",
+    "@tanstack/query-sync-storage-persister": "^5.108.0",
+    "@tanstack/react-query": "^5.108.0",
+    "@tanstack/react-query-persist-client": "^5.108.0",
     "idb": "^8.0.4",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
@@ -23,7 +26,8 @@
     "react-router-dom": "^7.12.0",
     "react-virtuoso": "^4.18.1",
     "recharts": "^3.6.0",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@babel/core": "^8.1.2",

@@ -33,7 +33,13 @@ function writeCachedUser(user: PublicUser | null): void {
   else localStorage.removeItem(USER_CACHE_KEY);
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+interface AuthProviderProps {
+  children: ReactNode;
+  /** Called after a sign-out wiped local data (e.g. to drop cached server queries). */
+  onSignOut?: () => void;
+}
+
+export function AuthProvider({ children, onSignOut }: AuthProviderProps) {
   const svc = useMemo(() => services(), []);
   // Cached user lets the app open offline; /auth/me confirms or clears it.
   const [user, setUser] = useState<PublicUser | null>(readCachedUser);
@@ -98,10 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         svc.sync.stop();
         await svc.sync.resetLocalData();
         applyUser(null);
+        onSignOut?.();
         return 'done';
       },
     }),
-    [user, loading, svc, applyUser],
+    [user, loading, svc, applyUser, onSignOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

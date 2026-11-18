@@ -161,5 +161,14 @@
         "byDate": "By date",
         "byTitle": "By title",
         "byAuthor": "By author"
+    },
+    "pwa": {
+        "updateAvailable": "New version available",
+        "later": "Later",
+        "reload": "Update"
+    },
+    "sync": {
+        "offline": "Offline — changes will sync later",
+        "syncing": "Syncing…"
     }
 }

@@ -3,6 +3,7 @@ import { Home, Search, BookOpen, LogOut, Globe } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { LANGUAGES } from '@/shared/i18n/languages';
+import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
 import { useState, useEffect, useRef } from 'react';
 
 export function Sidebar() {
@@ -54,6 +55,7 @@ export function Sidebar() {
                     <img src="/AppIcon-512@2x.png" alt="Libify Logo" className="w-8 h-8 rounded-lg" />
                     <span className="text-2xl font-bold text-white tracking-tight">Libify</span>
                 </div>
+                <SyncStatusBadge className="mt-2" />
             </div>
 
             {/* Navigation */}

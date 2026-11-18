@@ -12,7 +12,7 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'sitemap.xml', 'robots.txt'],
       manifest: {
         name: 'Libify - Читалка книг',
@@ -36,8 +36,6 @@ export default defineConfig({
         ]
       },
       workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         globIgnores: ['**/charts-*.js'],
         navigateFallback: '/index.html',
