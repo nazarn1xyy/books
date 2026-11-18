@@ -55,6 +55,23 @@ describe('ApiClient', () => {
     expect(postCalls).toBe(1);
   });
 
+  it('lets a GET opt out of retries and use its own timeout', async () => {
+    let calls = 0;
+    const client = new ApiClient({
+      retryDelayMs: 0,
+      timeoutMs: 1,
+      fetchFn: async (_input, init) => {
+        calls += 1;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        if (init?.signal?.aborted) throw new DOMException('timed out', 'TimeoutError');
+        return new Response('<feed/>');
+      },
+    });
+    expect(await client.getText('/catalog/search?q=x', { timeoutMs: 1_000, retries: 0 })).toBe('<feed/>');
+    await expect(client.getText('/catalog/search?q=x', { retries: 0 })).rejects.toMatchObject({ code: 'TIMEOUT' });
+    expect(calls).toBe(2);
+  });
+
   it('notifies the unauthorized listener on UNAUTHORIZED', async () => {
     const client = new ApiClient({ fetchFn: async () => json({ error: { code: 'UNAUTHORIZED', message: 'x' } }, 401) });
     const listener = vi.fn();

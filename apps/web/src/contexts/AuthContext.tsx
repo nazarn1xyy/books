@@ -9,7 +9,11 @@ interface AuthContextType {
   loading: boolean;
   login(input: LoginInput): Promise<void>;
   register(input: Credentials): Promise<void>;
-  signOut(): Promise<void>;
+  /**
+   * Returns 'unsynced' (and stays logged in) when local changes could not reach the server,
+   * unless discardUnsynced is set.
+   */
+  signOut(options?: { discardUnsynced?: boolean }): Promise<'done' | 'unsynced'>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,12 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login: async (input) => applyUser(await svc.auth.login(input)),
       register: async (input) => applyUser(await svc.auth.register(input)),
-      signOut: async () => {
-        await svc.sync.syncNow().catch(() => {}); // best effort: send pending changes first
+      signOut: async (options) => {
+        await svc.sync.syncNow().catch(() => {}); // send pending changes first
+        if (!options?.discardUnsynced && (await svc.sync.pendingCount()) > 0) return 'unsynced';
         await svc.auth.logout().catch(() => {});
         svc.sync.stop();
         await svc.sync.resetLocalData();
         applyUser(null);
+        return 'done';
       },
     }),
     [user, loading, svc, applyUser],

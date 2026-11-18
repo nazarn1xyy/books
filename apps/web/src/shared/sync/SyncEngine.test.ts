@@ -122,6 +122,35 @@ describe('SyncEngine', () => {
     engine.stop();
   });
 
+  it('discards a pull that resolves after stop and reset', async () => {
+    const { api, replica, meta, engine } = await setup();
+    await engine.start('u1');
+    let release: () => void = () => {};
+    api.pullImpl = () =>
+      new Promise((resolve) => {
+        release = () =>
+          resolve({
+            serverTime: '2026-01-01T00:00:20.000Z',
+            changes: [{ entity: 'favorite', key: '9', updatedAt: '2026-01-01T00:00:05.000Z', data: fav('9') }],
+          });
+      });
+    const inFlight = engine.syncNow();
+    await vi.waitFor(() => expect(api.pullSince.length).toBe(2));
+    engine.stop();
+    await engine.resetLocalData();
+    release();
+    await inFlight;
+    expect(replica.get('favorite', '9')).toBeNull();
+    expect(await meta.get('sync.cursor')).toBeUndefined();
+  });
+
+  it('reports pending changes', async () => {
+    const { engine } = await setup();
+    expect(await engine.pendingCount()).toBe(0);
+    await engine.record('favorite', '1', fav('1'));
+    expect(await engine.pendingCount()).toBe(1);
+  });
+
   it('coalesces concurrent syncNow calls', async () => {
     const { api, engine } = await setup();
     await engine.start('u1');

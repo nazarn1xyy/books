@@ -105,7 +105,8 @@
         "noAccount": "Don't have an account?",
         "hasAccount": "Already have an account?",
         "nicknameHint": "3–24 characters: letters, digits, _",
-        "passwordHint": "At least 8 characters"
+        "passwordHint": "At least 8 characters",
+        "unsyncedSignOut": "Some changes have not been synced yet (no connection). Sign out anyway and lose them?"
     },
     "errors": {
         "bookNotFound": "Book not found on Flibusta",

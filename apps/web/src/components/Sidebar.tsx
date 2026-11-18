@@ -122,7 +122,11 @@ export function Sidebar() {
                             </p>
                         </div>
                         <button
-                            onClick={() => signOut()}
+                            onClick={async () => {
+                                if ((await signOut()) === 'unsynced' && window.confirm(t('auth.unsyncedSignOut'))) {
+                                    await signOut({ discardUnsynced: true });
+                                }
+                            }}
                             className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                             title={t('common.logout')}
                             aria-label={t('common.logout')}

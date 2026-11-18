@@ -30,6 +30,8 @@ export class SyncEngine {
 
   private readonly deps: SyncEngineDeps;
   private userId: string | null = null;
+  /** Bumped by stop(): results of a run started under an older generation are discarded. */
+  private generation = 0;
   private running: Promise<void> | null = null;
   private rerunRequested = false;
   private failures = 0;
@@ -69,11 +71,17 @@ export class SyncEngine {
 
   stop(): void {
     this.userId = null;
+    this.generation += 1;
     this.unsubscribeSignals?.();
     this.unsubscribeSignals = null;
     for (const timer of [this.pushTimer, this.retryTimer]) if (timer) clearTimeout(timer);
     if (this.pullInterval) clearInterval(this.pullInterval);
     this.pushTimer = this.retryTimer = this.pullInterval = null;
+  }
+
+  /** Number of local changes not yet confirmed by the server. */
+  pendingCount(): Promise<number> {
+    return this.deps.outbox.size();
   }
 
   async resetLocalData(): Promise<void> {
@@ -117,13 +125,16 @@ export class SyncEngine {
   }
 
   private async syncOnce(): Promise<void> {
+    const generation = this.generation;
     this.setStatus('syncing');
     try {
-      await this.pushAll();
-      await this.pull();
+      await this.pushAll(generation);
+      await this.pull(generation);
+      if (generation !== this.generation) return;
       this.failures = 0;
       this.setStatus('idle');
     } catch (err) {
+      if (generation !== this.generation) return; // stopped meanwhile: the error belongs to an old session
       if (err instanceof ApiError && err.code === 'UNAUTHORIZED') {
         this.stop();
         this.setStatus('error');
@@ -135,8 +146,8 @@ export class SyncEngine {
     }
   }
 
-  private async pushAll(): Promise<void> {
-    for (;;) {
+  private async pushAll(generation: number): Promise<void> {
+    while (generation === this.generation) {
       const batch = await this.deps.outbox.peek(SYNC_PUSH_MAX_OPS);
       if (batch.length === 0) return;
       try {
@@ -151,13 +162,17 @@ export class SyncEngine {
         throw err;
       }
       // STALE rejections need no action: the following pull brings the newer server version.
+      if (generation !== this.generation) return; // outbox may already belong to another user
       await this.deps.outbox.acknowledge(batch);
     }
   }
 
-  private async pull(): Promise<void> {
+  private async pull(generation: number): Promise<void> {
+    if (generation !== this.generation) return;
     const since = (await this.deps.meta.get<string>(META_CURSOR)) ?? null;
     const response = await this.deps.api.pull(since);
+    // A response that arrives after stop()/resetLocalData() may belong to the previous user.
+    if (generation !== this.generation) return;
     await this.deps.replica.apply(response.changes);
     await this.deps.meta.set(META_CURSOR, response.serverTime);
   }

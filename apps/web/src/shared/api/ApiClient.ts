@@ -9,9 +9,14 @@ export interface ApiClientOptions {
   retryDelayMs?: number;
 }
 
-interface RequestOptions {
-  body?: unknown;
+export interface GetOptions {
   timeoutMs?: number;
+  /** Overrides the client's GET retry count (e.g. 0 for slow upstreams that retry server-side). */
+  retries?: number;
+}
+
+interface RequestOptions extends GetOptions {
+  body?: unknown;
 }
 
 /** Same-origin JSON client for /api with timeouts, GET retries and typed errors. */
@@ -43,8 +48,8 @@ export class ApiClient {
     return ApiClient.parseJson<T>(await this.request('POST', path, { body }));
   }
 
-  async getText(path: string): Promise<string> {
-    return (await this.request('GET', path, {})).text();
+  async getText(path: string, options: GetOptions = {}): Promise<string> {
+    return (await this.request('GET', path, options)).text();
   }
 
   async getArrayBuffer(path: string, timeoutMs?: number): Promise<ArrayBuffer> {
@@ -52,7 +57,7 @@ export class ApiClient {
   }
 
   private async request(method: 'GET' | 'POST', path: string, options: RequestOptions): Promise<Response> {
-    const attempts = method === 'GET' ? this.getRetries + 1 : 1;
+    const attempts = method === 'GET' ? (options.retries ?? this.getRetries) + 1 : 1;
     let lastError: ApiError | null = null;
 
     for (let attempt = 0; attempt < attempts; attempt++) {
