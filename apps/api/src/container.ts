@@ -5,6 +5,8 @@ import type { Database } from './core/db';
 import type { AppEnv, Controller } from './core/http';
 import type { Logger } from './core/logger';
 import { FixedWindowRateLimiter } from './core/rate-limiter';
+import { AiController } from './modules/ai/ai.controller';
+import { AiService } from './modules/ai/ai.service';
 import { AuthController } from './modules/auth/auth.controller';
 import { AuthService } from './modules/auth/auth.service';
 import { PasswordHasher } from './modules/auth/password-hasher';
@@ -79,6 +81,7 @@ export function createContainer(config: Config, deps: ContainerDeps): Container 
     }),
     new SyncController(sync),
     new CatalogController(catalog),
+    new AiController(new AiService(config.ai, fetchFn), new FixedWindowRateLimiter(20, 60_000, clock)),
   ];
 
   return {
