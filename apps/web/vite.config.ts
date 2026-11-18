@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa';
-import { compression } from 'vite-plugin-compression2';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -80,27 +81,9 @@ export default defineConfig({
         ]
       }
     }),
-    compression({
-      algorithms: ['gzip', 'brotliCompress'],
-      exclude: [/\.(br)$/, /\.(gz)$/],
-    }),
   ],
   build: {
     sourcemap: false, // Disable sourcemaps in production for smaller bundle
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['lucide-react'],
-          charts: ['recharts'],
-          animation: ['framer-motion'],
-          pdf: ['pdfjs-dist'],
-          virtuoso: ['react-virtuoso'],
-        },
-      },
-    },
-    // Increase chunk size warning limit since we have lazy loading
-    chunkSizeWarningLimit: 1000,
   },
   server: {
     proxy: {

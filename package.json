@@ -2,8 +2,13 @@
   "name": "libify",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "apps/*"],
-  "engines": { "node": ">=22.12" },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev:web": "npm run dev -w @libify/web",
     "dev:api": "npm run dev -w @libify/api",
@@ -13,5 +18,11 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
+  },
+  "overrides": {
+    "vite": "$vite"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
   }
 }
