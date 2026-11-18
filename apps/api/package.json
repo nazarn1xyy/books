@@ -1,0 +1,41 @@
+{
+  "name": "@libify/api",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/server.ts",
+    "build": "node build.mjs",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file=.env src/cli/migrate.ts",
+    "make-admin": "tsx --env-file=.env src/cli/make-admin.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.9",
+    "@libify/shared": "*",
+    "@node-rs/argon2": "^2.2.2",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.19",
+    "lru-cache": "^11.5.3",
+    "pino": "^10.4.0",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "pino-pretty": "^13.2.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^5.1.1"
+  }
+}
