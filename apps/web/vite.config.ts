@@ -1,16 +1,6 @@
-// Deployment trigger: 2026-01-20
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { SocksProxyAgent } from 'socks-proxy-agent';
-
-// Tor proxy agent (default port 9050)
-// Tor proxy agent (default port 9050)
-const torAgent = new SocksProxyAgent('socks5h://127.0.0.1:9050', {
-  keepAlive: true,
-  timeout: 60000
-});
-
 import { VitePWA } from 'vite-plugin-pwa';
 import { compression } from 'vite-plugin-compression2';
 
@@ -52,20 +42,14 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
-            // API routes - NetworkFirst with fallback
-            urlPattern: /^.*\/api\/.*/,
-            handler: 'NetworkFirst',
+            // Catalog covers proxied by our API: immutable enough to serve from cache.
+            urlPattern: ({ url }) => url.pathname === '/api/catalog/image',
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+              cacheName: 'catalog-images',
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [200] },
+            },
           },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -112,7 +96,6 @@ export default defineConfig({
           animation: ['framer-motion'],
           pdf: ['pdfjs-dist'],
           virtuoso: ['react-virtuoso'],
-          supabase: ['@supabase/supabase-js'],
         },
       },
     },
@@ -121,43 +104,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/static_flibusta': {
-        target: 'http://static.flibusta.is',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/static_flibusta/, ''),
-        agent: torAgent,
-      },
-      '/flibusta': {
-        // Use the onion address directly for maximum reliability via Tor
-        target: 'http://flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd.onion',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/flibusta/, ''),
-        agent: torAgent,
-        configure: (proxy) => {
-          proxy.on('proxyRes', (proxyRes) => {
-            let location = proxyRes.headers['location'] || proxyRes.headers['Location'];
-            if (location) {
-              if (Array.isArray(location)) location = location[0];
-
-              console.log('Detected redirect to:', location);
-
-              const staticMatch = location.match(/^https?:\/\/static\.flibusta\.is(:\d+)?/);
-              // Match both cleartext domain and onion domain
-              const mainMatch = location.match(/^https?:\/\/flibusta\.is(:\d+)?/) || location.match(/^http:\/\/flibustaongezhld6dibs2dps6vm4nvqg2kp7vgowbu76tzopgnhazqd\.onion(:\d+)?/);
-
-              if (staticMatch) {
-                const newLoc = location.replace(staticMatch[0], '/static_flibusta');
-                console.log('Rewriting redirect to static proxy:', newLoc);
-                proxyRes.headers['location'] = newLoc;
-              } else if (mainMatch) {
-                const newLoc = location.replace(mainMatch[0], '/flibusta');
-                console.log('Rewriting redirect to main proxy:', newLoc);
-                proxyRes.headers['location'] = newLoc;
-              }
-            }
-          });
-        },
-      },
+      // Same origin in dev, so the session cookie and the Origin check work like in production.
+      '/api': { target: 'http://localhost:3000' },
     },
   },
 })
