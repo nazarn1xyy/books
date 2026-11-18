@@ -39,13 +39,10 @@ export interface AppState {
   bookMetadata: Record<string, Book>;
   readingProgress: Record<string, ReadingProgress>;
   settings: UserSettings;
-  pendingDeletions?: string[];
-  pendingUploads?: string[];
 }
 
 export interface Quote {
   id: string;
-  user_id: string;
   book_id: string;
   book_title?: string;
   book_author?: string;
@@ -57,7 +54,6 @@ export interface Quote {
 
 export interface Favorite {
   id: string;
-  user_id: string;
   book_id: string;
   book_title?: string;
   book_author?: string;
@@ -67,7 +63,6 @@ export interface Favorite {
 
 export interface Bookmark {
   id: string;
-  user_id: string;
   book_id: string;
   book_title?: string;
   paragraph_index: number;

@@ -1,147 +1,162 @@
-import type { AppState, ReadingProgress, UserSettings, Book } from '../types';
+import type { BookData, ProgressData } from '@libify/shared';
+import { services } from '../shared/services';
+import type { AppState, Book, ReadingProgress, UserSettings } from '../types';
 
-const STORAGE_KEY = 'book-library-state';
+/**
+ * Library membership and progress live in the synced replica.
+ * Rich per-device metadata (description, series, chapters cover) and settings stay in localStorage.
+ */
+const LOCAL_KEY = 'book-library-state';
 
-let _cachedState: AppState | null = null;
+interface LocalState {
+  bookMetadata: Record<string, Book>;
+  settings: UserSettings;
+}
+
+const defaultSettings: UserSettings = { fontSize: 18, brightness: 100, theme: 'dark' };
+let cachedLocal: LocalState | null = null;
 
 if (typeof window !== 'undefined') {
-    window.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY) _cachedState = null;
-    });
+  window.addEventListener('storage', (e) => {
+    if (e.key === LOCAL_KEY) cachedLocal = null;
+  });
 }
 
-const defaultState: AppState = {
-    myBooks: [],
-    bookMetadata: {},
-    readingProgress: {},
-    settings: {
-        fontSize: 18,
-        brightness: 100,
-        theme: 'dark',
-    },
-    pendingDeletions: [],
-};
-
-export function getAppState(): AppState {
-    if (_cachedState) return _cachedState;
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const parsed: AppState = { ...defaultState, ...JSON.parse(stored) };
-            _cachedState = parsed;
-            return parsed;
-        }
-    } catch (e) {
-        console.error('Failed to load app state:', e);
-    }
-    const fresh: AppState = { ...defaultState };
-    _cachedState = fresh;
-    return fresh;
+function loadLocal(): LocalState {
+  if (cachedLocal) return cachedLocal;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? '{}') as Partial<LocalState>;
+    cachedLocal = { bookMetadata: parsed.bookMetadata ?? {}, settings: { ...defaultSettings, ...parsed.settings } };
+  } catch {
+    cachedLocal = { bookMetadata: {}, settings: { ...defaultSettings } };
+  }
+  return cachedLocal;
 }
 
-export function saveAppState(state: AppState): void {
-    _cachedState = state;
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-        console.error('Failed to save app state:', e);
-    }
+function saveLocal(state: LocalState): void {
+  cachedLocal = state;
+  try {
+    // Keep unknown legacy fields (myBooks, readingProgress) out: they were imported into the replica.
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.error('Failed to save local state', err);
+  }
 }
 
-export function getReadingProgress(bookId: string): ReadingProgress | null {
-    const state = getAppState();
-    return state.readingProgress[bookId] || null;
+const notify = () => window.dispatchEvent(new Event('storage-update'));
+const logSyncError = (err: unknown) => console.error('[storage] sync record failed', err);
+
+/** Only remote URLs are synced; data:/blob: covers stay in the local book cache. */
+export function syncableCoverUrl(cover: string | undefined): string | null {
+  if (!cover || cover.startsWith('data:') || cover.startsWith('blob:') || cover.length > 2048) return null;
+  return cover;
 }
 
-export function saveReadingProgress(progress: ReadingProgress): void {
-    const state = getAppState();
-    state.readingProgress[progress.bookId] = progress;
-    saveAppState(state);
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage-update'));
-    }
+function toBookData(book: Book, addedAt: string): BookData {
+  return {
+    bookId: book.id,
+    title: (book.title || 'Untitled').slice(0, 500),
+    author: book.author ? book.author.slice(0, 300) : null,
+    coverUrl: syncableCoverUrl(book.cover),
+    status: 'reading',
+    format: book.format === 'pdf' ? 'pdf' : 'fb2',
+    addedAt,
+  };
 }
 
-export function addToMyBooks(book: Book): void {
-    const state = getAppState();
-    if (!state.myBooks.includes(book.id)) {
-        state.myBooks.push(book.id);
-    }
-    // Create a copy of the book to avoid mutating the original object that might be used in UI
-    const bookToSave = { ...book };
-
-    // If cover is a large Data URI, strip it from localStorage metadata
-    // It is already saved in IndexedDB via cacheBook()
-    if (bookToSave.cover && bookToSave.cover.startsWith('data:image')) {
-        bookToSave.cover = ''; // BookCard will verify cache via useBookCover
-    }
-
-    state.bookMetadata[book.id] = bookToSave;
-    saveAppState(state);
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage-update'));
-    }
+function bookFromData(data: BookData): Book {
+  return {
+    id: data.bookId,
+    title: data.title,
+    author: data.author ?? '',
+    cover: data.coverUrl ?? '',
+    description: '',
+    genre: '',
+    format: data.format === 'pdf' ? 'pdf' : 'fb2',
+  };
 }
 
-export function removeFromMyBooks(bookId: string): void {
-    const state = getAppState();
-    state.myBooks = state.myBooks.filter(id => id !== bookId);
-    // Optional: Keep metadata/progress or clean it up? 
-    // Usually better to keep small metadata in case of re-add, but maybe clean progress?
-    // Let's keep it simple for now and just remove from the list.
-    saveAppState(state);
-}
-
-export function getBookMetadata(bookId: string): Book | undefined {
-    return getAppState().bookMetadata[bookId];
-}
-
-export function isInMyBooks(bookId: string): boolean {
-    const state = getAppState();
-    return state.myBooks.includes(bookId);
+function toReadingProgress(data: ProgressData, updatedAt: string): ReadingProgress {
+  return {
+    bookId: data.bookId,
+    currentPage: data.currentPage,
+    totalPages: data.totalPages,
+    lastRead: Date.parse(updatedAt),
+    scrollPercentage: Math.round(data.scrollRatio * 100),
+  };
 }
 
 export function getMyBookIds(): string[] {
-    return getAppState().myBooks;
+  return services()
+    .replica.list('book')
+    .sort((a, b) => a.data.addedAt.localeCompare(b.data.addedAt))
+    .map((entry) => entry.key);
+}
+
+export function isInMyBooks(bookId: string): boolean {
+  return services().replica.get('book', bookId) !== null;
+}
+
+export function getBookMetadata(bookId: string): Book | undefined {
+  const local = loadLocal().bookMetadata[bookId];
+  if (local) return local;
+  const data = services().replica.get('book', bookId);
+  return data ? bookFromData(data) : undefined;
+}
+
+export function addToMyBooks(book: Book): void {
+  const local = loadLocal();
+  const toStore = { ...book };
+  if (toStore.cover?.startsWith('data:image')) toStore.cover = ''; // the cover lives in the IndexedDB book cache
+  saveLocal({ ...local, bookMetadata: { ...local.bookMetadata, [book.id]: toStore } });
+
+  const existing = services().replica.get('book', book.id);
+  const next = toBookData(book, existing?.addedAt ?? new Date().toISOString());
+  if (!existing || JSON.stringify(existing) !== JSON.stringify(next)) {
+    services().sync.record('book', book.id, next).catch(logSyncError);
+  }
+  notify();
+}
+
+export function removeFromMyBooks(bookId: string): void {
+  services().sync.record('book', bookId, null).catch(logSyncError);
+}
+
+export function getReadingProgress(bookId: string): ReadingProgress | null {
+  const record = services().replica.getRecord('progress', bookId);
+  return record?.data ? toReadingProgress(record.data as ProgressData, record.updatedAt) : null;
+}
+
+export function saveReadingProgress(progress: ReadingProgress): void {
+  const page = Math.max(0, Math.floor(progress.currentPage));
+  const data: ProgressData = {
+    bookId: progress.bookId,
+    paragraphIndex: page,
+    scrollRatio: Math.min(1, Math.max(0, (progress.scrollPercentage ?? 0) / 100)),
+    currentPage: page,
+    totalPages: Math.max(0, Math.floor(progress.totalPages)),
+  };
+  services().sync.record('progress', progress.bookId, data).catch(logSyncError);
+}
+
+export function getAppState(): AppState {
+  const myBooks = getMyBookIds();
+  const bookMetadata: Record<string, Book> = {};
+  for (const id of myBooks) {
+    const book = getBookMetadata(id);
+    if (book) bookMetadata[id] = book;
+  }
+  const readingProgress: Record<string, ReadingProgress> = {};
+  for (const entry of services().replica.list('progress')) {
+    readingProgress[entry.key] = toReadingProgress(entry.data, entry.updatedAt);
+  }
+  return { myBooks, bookMetadata, readingProgress, settings: loadLocal().settings };
 }
 
 export function getSettings(): UserSettings {
-    return getAppState().settings;
+  return loadLocal().settings;
 }
 
 export function saveSettings(settings: UserSettings): void {
-    const state = getAppState();
-    state.settings = settings;
-    saveAppState(state);
-}
-
-export function getPendingDeletions(): string[] {
-    return getAppState().pendingDeletions || [];
-}
-
-export function addToPendingDeletions(bookId: string): void {
-    const state = getAppState();
-    if (!state.pendingDeletions) state.pendingDeletions = [];
-    if (!state.pendingDeletions.includes(bookId)) {
-        state.pendingDeletions.push(bookId);
-    }
-    saveAppState(state);
-}
-
-export function removeFromPendingDeletions(bookId: string): void {
-    const state = getAppState();
-    if (!state.pendingDeletions) return;
-    state.pendingDeletions = state.pendingDeletions.filter(id => id !== bookId);
-    saveAppState(state);
-}
-
-export function getPendingUploads(): string[] {
-    return getAppState().pendingUploads || [];
-}
-
-export function removeFromPendingUploads(bookId: string): void {
-    const state = getAppState();
-    if (!state.pendingUploads) return;
-    state.pendingUploads = state.pendingUploads.filter(id => id !== bookId);
-    saveAppState(state);
+  saveLocal({ ...loadLocal(), settings });
 }

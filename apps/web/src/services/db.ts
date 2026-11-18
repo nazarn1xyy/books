@@ -1,145 +1,129 @@
+import type { BookmarkData, FavoriteData, QuoteData } from '@libify/shared';
+import { services } from '../shared/services';
+import type { Bookmark, Favorite, Quote } from '../types';
+import { syncableCoverUrl } from '../utils/storage';
 
-import { supabase } from '../lib/supabase';
-import type { Quote, Favorite, Bookmark } from '../types';
+const byNewest = <T extends { created_at: string }>(a: T, b: T) => b.created_at.localeCompare(a.created_at);
+const clip = (value: string | undefined, max: number) => (value ? value.slice(0, max) : null);
 
-// --- Quotes Service ---
+// --- Quotes ---
 
-export async function addQuote(quote: Omit<Quote, 'id' | 'created_at' | 'user_id'>, userId: string) {
-    const { data, error } = await supabase
-        .from('quotes')
-        .insert({
-            user_id: userId,
-            book_id: quote.book_id,
-            book_title: quote.book_title,
-            book_author: quote.book_author,
-            text: quote.text,
-            note: quote.note,
-            color: quote.color
-        })
-        .select()
-        .single();
-
-    if (error) throw error;
-    return data as Quote;
+function toQuote(d: QuoteData, updatedAt: string): Quote {
+  return {
+    id: d.id,
+    book_id: d.bookId,
+    book_title: d.bookTitle ?? undefined,
+    book_author: d.bookAuthor ?? undefined,
+    text: d.text,
+    note: d.note ?? undefined,
+    color: d.color,
+    created_at: updatedAt,
+  };
 }
 
-export async function deleteQuote(id: string) {
-    const { error } = await supabase
-        .from('quotes')
-        .delete()
-        .eq('id', id);
-
-    if (error) throw error;
+export async function addQuote(quote: { book_id: string; book_title?: string; book_author?: string; text: string; note?: string; color?: string }): Promise<Quote> {
+  const data: QuoteData = {
+    id: crypto.randomUUID(),
+    bookId: quote.book_id,
+    bookTitle: clip(quote.book_title, 500),
+    bookAuthor: clip(quote.book_author, 300),
+    text: quote.text.slice(0, 10_000),
+    note: clip(quote.note, 5_000),
+    color: quote.color ?? 'yellow',
+  };
+  await services().sync.record('quote', data.id, data);
+  return toQuote(data, new Date().toISOString());
 }
 
-export async function getQuotes(bookId?: string) {
-    let query = supabase
-        .from('quotes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (bookId) {
-        query = query.eq('book_id', bookId);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data as Quote[];
+export async function deleteQuote(id: string): Promise<void> {
+  await services().sync.record('quote', id, null);
 }
 
-// --- Favorites Service ---
-
-export async function addFavorite(book: { id: string, title: string, author: string, cover: string }, userId: string) {
-    const { data, error } = await supabase
-        .from('favorites')
-        .insert({
-            user_id: userId,
-            book_id: book.id,
-            book_title: book.title,
-            book_author: book.author,
-            book_cover: book.cover
-        })
-        .select()
-        .single();
-
-    if (error) {
-        // Prepare failure if duplicate - although UI should handle this
-        if (error.code === '23505') return null; // Unique constraint violation
-        throw error;
-    }
-    return data as Favorite;
+export async function getQuotes(bookId?: string): Promise<Quote[]> {
+  return services()
+    .replica.list('quote')
+    .filter((e) => !bookId || e.data.bookId === bookId)
+    .map((e) => toQuote(e.data, e.updatedAt))
+    .sort(byNewest);
 }
 
-export async function removeFavorite(bookId: string) {
-    const { error } = await supabase
-        .from('favorites')
-        .delete()
-        .eq('book_id', bookId);
+// --- Favorites ---
 
-    if (error) throw error;
+function toFavorite(d: FavoriteData, updatedAt: string): Favorite {
+  return {
+    id: d.bookId,
+    book_id: d.bookId,
+    book_title: d.title,
+    book_author: d.author ?? undefined,
+    book_cover: d.coverUrl ?? undefined,
+    created_at: updatedAt,
+  };
 }
 
-export async function getFavorites() {
-    const { data, error } = await supabase
-        .from('favorites')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data as Favorite[];
+export async function addFavorite(book: { id: string; title: string; author: string; cover: string }): Promise<Favorite> {
+  const data: FavoriteData = {
+    bookId: book.id,
+    title: (book.title || 'Untitled').slice(0, 500),
+    author: clip(book.author, 300),
+    coverUrl: syncableCoverUrl(book.cover),
+  };
+  await services().sync.record('favorite', book.id, data);
+  return toFavorite(data, new Date().toISOString());
 }
 
-export async function isBookFavorite(bookId: string) {
-    const { data, error } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('book_id', bookId)
-        .maybeSingle();
-
-    if (error) throw error;
-    return !!data;
+export async function removeFavorite(bookId: string): Promise<void> {
+  await services().sync.record('favorite', bookId, null);
 }
 
-// --- Bookmarks Service ---
-
-export async function addBookmark(bookmark: { book_id: string, book_title?: string, paragraph_index: number, preview_text?: string }, userId: string) {
-    const { data, error } = await supabase
-        .from('bookmarks')
-        .upsert({
-            user_id: userId,
-            book_id: bookmark.book_id,
-            book_title: bookmark.book_title,
-            paragraph_index: bookmark.paragraph_index,
-            preview_text: bookmark.preview_text
-        }, { onConflict: 'user_id,book_id,paragraph_index' })
-        .select()
-        .single();
-
-    if (error) throw error;
-    return data as Bookmark;
+export async function getFavorites(): Promise<Favorite[]> {
+  return services()
+    .replica.list('favorite')
+    .map((e) => toFavorite(e.data, e.updatedAt))
+    .sort(byNewest);
 }
 
-export async function deleteBookmark(id: string) {
-    const { error } = await supabase
-        .from('bookmarks')
-        .delete()
-        .eq('id', id);
-
-    if (error) throw error;
+export async function isBookFavorite(bookId: string): Promise<boolean> {
+  return services().replica.get('favorite', bookId) !== null;
 }
 
-export async function getBookmarks(bookId?: string) {
-    let query = supabase
-        .from('bookmarks')
-        .select('*')
-        .order('created_at', { ascending: false });
+// --- Bookmarks ---
 
-    if (bookId) {
-        query = query.eq('book_id', bookId);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data as Bookmark[];
+function toBookmark(d: BookmarkData, updatedAt: string): Bookmark {
+  return {
+    id: d.id,
+    book_id: d.bookId,
+    book_title: d.bookTitle ?? undefined,
+    paragraph_index: d.paragraphIndex,
+    preview_text: d.previewText ?? undefined,
+    created_at: updatedAt,
+  };
 }
 
+export async function addBookmark(bookmark: { book_id: string; book_title?: string; paragraph_index: number; preview_text?: string }): Promise<Bookmark> {
+  const existing = services()
+    .replica.list('bookmark')
+    .find((e) => e.data.bookId === bookmark.book_id && e.data.paragraphIndex === bookmark.paragraph_index);
+  if (existing) return toBookmark(existing.data, existing.updatedAt);
+
+  const data: BookmarkData = {
+    id: crypto.randomUUID(),
+    bookId: bookmark.book_id,
+    bookTitle: clip(bookmark.book_title, 500),
+    paragraphIndex: bookmark.paragraph_index,
+    previewText: clip(bookmark.preview_text, 500),
+  };
+  await services().sync.record('bookmark', data.id, data);
+  return toBookmark(data, new Date().toISOString());
+}
+
+export async function deleteBookmark(id: string): Promise<void> {
+  await services().sync.record('bookmark', id, null);
+}
+
+export async function getBookmarks(bookId?: string): Promise<Bookmark[]> {
+  return services()
+    .replica.list('bookmark')
+    .filter((e) => !bookId || e.data.bookId === bookId)
+    .map((e) => toBookmark(e.data, e.updatedAt))
+    .sort(byNewest);
+}
