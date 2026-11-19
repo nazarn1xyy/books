@@ -36,7 +36,7 @@ export function ReaderHeader({
     const { t } = useLanguage();
 
     return (
-        <header className="flex items-center justify-between px-4 min-h-[3.5rem] bg-[var(--reader-bg)]/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 shadow-sm flex-shrink-0">
+        <header className="flex items-center justify-between px-4 min-h-[3.5rem] bg-[var(--reader-bg)] border-b border-white/5 pt-[env(safe-area-inset-top)] pb-2 z-10 flex-shrink-0">
             <button
                 onClick={onBack}
                 aria-label={t('common.back')}
