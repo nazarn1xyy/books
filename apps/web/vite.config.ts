@@ -12,7 +12,7 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'sitemap.xml', 'robots.txt'],
       manifest: {
         name: 'Libify - Читалка книг',
@@ -36,6 +36,10 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // Take over immediately so clients stuck on an old build (e.g. the pre-v2 Supabase app) update.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         globIgnores: ['**/charts-*.js'],
         navigateFallback: '/index.html',
