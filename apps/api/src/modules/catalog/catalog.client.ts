@@ -8,8 +8,8 @@ export class CatalogClient {
   constructor(
     private readonly allowedHosts: readonly string[],
     private readonly fetchFn: typeof fetch,
-    private readonly timeoutMs = 15_000,
-    private readonly retries = 2,
+    private readonly timeoutMs = 30_000,
+    private readonly retries = 1,
     private readonly backoffMs = 500,
   ) {}
 
