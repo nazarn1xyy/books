@@ -76,7 +76,8 @@ export default defineConfig({
   server: {
     proxy: {
       // Same origin in dev, so the session cookie and the Origin check work like in production.
-      '/api': { target: 'http://localhost:3000' },
+      // LIBIFY_API_URL lets e2e run against its own API instance.
+      '/api': { target: process.env.LIBIFY_API_URL ?? 'http://localhost:3000' },
     },
   },
 })

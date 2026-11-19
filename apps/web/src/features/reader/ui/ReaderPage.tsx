@@ -62,7 +62,8 @@ export function ReaderPage() {
   const pagination = usePagination({
     bookId: id,
     paragraphs,
-    keyboardEnabled: readerMode === 'page' && !showSettings,
+    // Sheets handle their own keys (Escape closes them); page keys must not also fire behind them.
+    keyboardEnabled: readerMode === 'page' && !showSettings && !showToc && !showTranslate,
     onEscape: goBack,
   });
   const tts = useReaderTts({ paragraphs, startIndex: position.visibleRange.startIndex, virtuosoRef });

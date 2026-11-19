@@ -32,7 +32,6 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
             onClose={onClose}
             title={t('reader.settings')}
             placement="bottom"
-            portal={false}
             swipeToClose
             surfaceClassName="bg-[var(--reader-ui-bg)] rounded-t-3xl"
             className="w-full max-w-lg p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] touch-pan-y"

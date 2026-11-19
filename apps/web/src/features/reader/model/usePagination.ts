@@ -43,6 +43,7 @@ export function usePagination({ bookId, paragraphs, keyboardEnabled, onEscape }:
   useEffect(() => {
     if (!keyboardEnabled) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return; // already handled (e.g. Escape closed a sheet)
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       switch (e.key) {
         case 'ArrowRight':

@@ -8,7 +8,11 @@ export function useDialogFocus(open: boolean, panelRef: RefObject<HTMLElement | 
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     panelRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key !== 'Escape') return;
+      // Mark as handled: closing re-renders synchronously, and listeners re-attached further up the
+      // bubbling path (e.g. page keys on window) would otherwise still see this same event.
+      e.preventDefault();
+      close();
     };
     document.addEventListener('keydown', onKey);
     return () => {

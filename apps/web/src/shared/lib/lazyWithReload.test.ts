@@ -29,16 +29,21 @@ describe('loadWithReload', () => {
     await expect(loadWithReload(failing, s, reload)).rejects.toThrow();
     expect(reload).toHaveBeenCalledOnce();
   });
-  it('does not reload when the import failed because the page is being left', async () => {
-    const s = storage();
-    const reload = vi.fn();
-    const failing = async () => {
-      throw new TypeError('Importing a module script failed.');
-    };
-    const pending = loadWithReload(failing, s, reload, () => true);
-    const settled = await Promise.race([pending.then(() => 'settled'), new Promise((r) => setTimeout(() => r('pending'), 20))]);
-    expect(settled).toBe('pending');
-    expect(reload).not.toHaveBeenCalled();
-    expect(s.getItem('libify.chunk-reload')).toBeNull();
+  it('waits while the page is being left, then reloads if the page is still there', async () => {
+    vi.useFakeTimers();
+    try {
+      const s = storage();
+      const reload = vi.fn();
+      const failing = async () => {
+        throw new TypeError('Importing a module script failed.');
+      };
+      void loadWithReload(failing, s, reload, () => true, 1000);
+      await vi.advanceTimersByTimeAsync(900);
+      expect(reload).not.toHaveBeenCalled(); // a real navigation would have replaced the page by now
+      await vi.advanceTimersByTimeAsync(200);
+      expect(reload).toHaveBeenCalledOnce(); // it did not happen (cancelled, download...), so recover
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
