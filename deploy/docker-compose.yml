@@ -1,0 +1,71 @@
+# Production stack on the server, lives in /opt/libify. Secrets come from /opt/libify/.env.
+name: libify
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web:/srv/web:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    mem_limit: 64m
+
+  api:
+    image: libify-api:${API_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://libify:${POSTGRES_PASSWORD}@db:5432/libify
+      DB_POOL_MAX: 8
+      APP_ORIGIN: https://libify.store
+      LOG_LEVEL: info
+    # Optional AI_BASE_URL / AI_API_KEY / AI_MODEL: add them to api.env to enable AI.
+    env_file:
+      - path: ./api.env
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 160m
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: libify
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: libify
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - max_connections=20
+      - -c
+      - work_mem=2MB
+      - -c
+      - effective_cache_size=128MB
+      - -c
+      - maintenance_work_mem=16MB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U libify -d libify"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 192m
+
+volumes:
+  pgdata:
+  caddy-data:
+  caddy-config:
