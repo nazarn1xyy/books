@@ -71,6 +71,10 @@ export const ImageWithLoader = memo(function ImageWithLoader({
                 key={src}
                 src={src}
                 alt={alt}
+                // Intrinsic 2:3 ratio (CSS sets the real size): lets the browser reserve space early.
+                width={200}
+                height={300}
+                loading="lazy"
                 decoding="async"
                 {...props}
                 className={`w-full h-full object-cover transition-opacity duration-200 ${

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "initial JS",
+    "path": [
+      "dist/assets/index-*.js",
+      "dist/assets/rolldown-runtime-*.js",
+      "dist/assets/jsx-runtime-*.js",
+      "dist/assets/uk-*.js"
+    ],
+    "limit": "120 KB",
+    "gzip": true
+  },
+  { "name": "CSS", "path": "dist/assets/index-*.css", "limit": "20 KB", "gzip": true }
+]

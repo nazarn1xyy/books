@@ -16,6 +16,9 @@ export function HomePage() {
   const withCovers = books.filter((book) => book.cover && !book.cover.includes('placehold.co'));
   const recommendedBooks = withCovers.length >= 4 ? withCovers.slice(0, 4) : books.slice(0, 4);
   const recentBooks = books.slice(4, 10);
+  // Only the first row on screen competes for bandwidth with high priority.
+  const PRIORITY_CARDS = 4;
+  const continueIsFirstRow = inProgress.length > 0;
 
   return (
     <div className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)]">
@@ -33,7 +36,7 @@ export function HomePage() {
             <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.continueReading')}</h2>
             <div className={ROW}>
               {inProgress.map((item, index) => (
-                <BookCard key={item.book.id} book={item.book} size="medium" showProgress priority={index < 3} />
+                <BookCard key={item.book.id} book={item.book} size="medium" showProgress priority={index < PRIORITY_CARDS} />
               ))}
             </div>
           </section>
@@ -61,7 +64,7 @@ export function HomePage() {
               <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
               <div className={ROW}>
                 {recommendedBooks.map((book, index) => (
-                  <BookCard key={book.id} book={book} size="large" priority={index < 3} showActions />
+                  <BookCard key={book.id} book={book} size="large" priority={!continueIsFirstRow && index < PRIORITY_CARDS} showActions />
                 ))}
               </div>
             </section>
@@ -69,8 +72,8 @@ export function HomePage() {
             <section className="mb-8">
               <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {recentBooks.map((book, index) => (
-                  <BookCard key={book.id} book={book} size="small" priority={index < 4} showActions />
+                {recentBooks.map((book) => (
+                  <BookCard key={book.id} book={book} size="small" showActions />
                 ))}
               </div>
             </section>

@@ -52,7 +52,7 @@ export function Sidebar() {
             {/* Logo */}
             <div className="p-6 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                    <img src="/AppIcon-512@2x.png" alt="Libify Logo" className="w-8 h-8 rounded-lg" />
+                    <img src="/logo-192.png" alt="Libify Logo" width={32} height={32} className="w-8 h-8 rounded-lg" />
                     <span className="text-2xl font-bold text-white tracking-tight">Libify</span>
                 </div>
                 <SyncStatusBadge className="mt-2" />

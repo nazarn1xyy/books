@@ -124,8 +124,11 @@ export function AuthPage() {
         <div className="text-center mb-6">
           <div className="mx-auto w-16 h-16 rounded-2xl shadow-xl shadow-black/50 border border-white/10 flex items-center justify-center mb-3 bg-[#18181b] overflow-hidden">
             <img
-              src="/AppIcon-512@2x.png"
+              src="/logo-192.png"
               alt="Libify"
+              width={64}
+              height={64}
+              fetchPriority="high"
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
