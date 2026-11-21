@@ -137,3 +137,6 @@ node_modules/
 coverage/
 test-results/
 playwright-report/
+
+# graphify knowledge graph (local, not committed)
+graphify-out/
