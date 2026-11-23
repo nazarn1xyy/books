@@ -25,7 +25,12 @@
         "greeting": "Привіт",
         "installTitle": "Встановити додаток",
         "installDesc": "Додайте Libify на головний екран для швидкого доступу",
-        "install": "Встановити"
+        "install": "Встановити",
+        "continue": "Продовжити",
+        "percentRead": "Прочитано {percent}%",
+        "alsoReading": "Також читаєте",
+        "nothingStarted": "Розпочаті книги чекатимуть на вас тут",
+        "findBook": "Знайти книгу"
     },
     "search": {
         "title": "Пошук",
@@ -49,7 +54,13 @@
         "exportAll": "Експортувати всі книги",
         "exportTitle": "Експорт бібліотеки",
         "exportPacking": "Пакування книг...",
-        "addBook": "Додати книгу"
+        "addBook": "Додати книгу",
+        "view": "Вигляд",
+        "viewGrid": "Сітка",
+        "viewList": "Список",
+        "bookActions": "Дії з «{title}»",
+        "read": "Читати",
+        "openSeries": "Серія {name}, книг: {count}"
     },
     "reader": {
         "page": "Сторінка",

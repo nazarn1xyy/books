@@ -25,3 +25,20 @@ test('search the (mocked) catalog and open a book', async ({ page }) => {
   await result.click();
   await expect(page.getByText('First paragraph of the sample book.')).toBeVisible();
 });
+
+test('my books: grid actions remove a book, the list view is remembered', async ({ page }) => {
+  await register(page, uniqueNickname());
+  await page.goto('/my-books');
+  await page.locator('input[type=file]').setInputFiles(fixture('sample.fb2'));
+  await expect(bookCard(page)).toBeVisible();
+
+  await page.getByRole('button', { name: 'List' }).click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Grid' }).click();
+
+  await page.getByRole('button', { name: /Actions for E2E Sample Book/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('alertdialog').or(page.getByRole('dialog')).getByRole('button', { name: 'Delete' }).last().click();
+  await expect(bookCard(page)).toHaveCount(0);
+});

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Bookmark, Download, Heart, Library, MessageSquareQuote, Palette, type LucideIcon } from 'lucide-react';
+import { Bookmark, Download, Heart, LayoutGrid, Library, List, MessageSquareQuote, Palette, type LucideIcon } from 'lucide-react';
 import { ThemeSwitcher } from '@/shared/theme/ThemeSwitcher';
 import { Sheet } from '@/shared/ui/Sheet';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { LANGUAGES } from '@/shared/i18n/languages';
 import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
 import type { LibrarySort } from '../model/useLibraryGrouping';
+import type { LibraryView } from '../model/useLibraryView';
 
 export type MyBooksTab = 'books' | 'favorites' | 'quotes' | 'bookmarks';
 
@@ -17,6 +18,8 @@ interface MyBooksHeaderProps {
   entryCount: number;
   sortBy: LibrarySort;
   onSortChange(sort: LibrarySort): void;
+  view: LibraryView;
+  onViewChange(view: LibraryView): void;
   isExporting: boolean;
   onExport(): void;
 }
@@ -36,7 +39,7 @@ const TITLES: Record<MyBooksTab, string> = {
 };
 
 /** Pinned header: title and counts, language switch, export, sort bar and section tabs. */
-export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sortBy, onSortChange, isExporting, onExport }: MyBooksHeaderProps) {
+export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sortBy, onSortChange, view, onViewChange, isExporting, onExport }: MyBooksHeaderProps) {
   const { t, language, setLanguage } = useLanguage();
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
@@ -103,27 +106,53 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
           </div>
         </header>
 
-        {activeTab === 'books' && entryCount > 1 && (
-          <div
-            className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide py-0.5 -mx-5 px-5 after:content-[''] after:w-1 after:flex-shrink-0"
-            role="group"
-            aria-label={t('sort.byDate')}
-          >
-            {(
-              [
-                { key: 'date', label: t('sort.byDate') },
-                { key: 'title', label: t('sort.byTitle') },
-                { key: 'author', label: t('sort.byAuthor') },
-              ] as const
-            ).map((s) => (
-              <button
-                key={s.key}
-                onClick={() => onSortChange(s.key)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-accent text-on-accent font-semibold' : 'bg-fg/10 text-muted hover:bg-fg/20'}`}
+        {activeTab === 'books' && counts.books > 0 && (
+          <div className="mb-3 flex items-center gap-3">
+            {entryCount > 1 ? (
+              <div
+                className="flex min-w-0 flex-1 gap-2 overflow-x-auto scrollbar-hide py-0.5"
+                role="group"
+                aria-label={t('sort.byDate')}
               >
-                {s.label}
-              </button>
-            ))}
+                {(
+                  [
+                    { key: 'date', label: t('sort.byDate') },
+                    { key: 'title', label: t('sort.byTitle') },
+                    { key: 'author', label: t('sort.byAuthor') },
+                  ] as const
+                ).map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => onSortChange(s.key)}
+                    className={`whitespace-nowrap px-3 py-1 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-accent text-on-accent font-semibold' : 'bg-fg/10 text-muted hover:bg-fg/20'}`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+            <div className="flex flex-shrink-0 rounded-lg bg-fg/10 p-0.5" role="group" aria-label={t('myBooks.view')}>
+              {(
+                [
+                  { key: 'grid', icon: LayoutGrid, label: t('myBooks.viewGrid') },
+                  { key: 'list', icon: List, label: t('myBooks.viewList') },
+                ] as const
+              ).map(({ key, icon: Icon, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onViewChange(key)}
+                  aria-pressed={view === key}
+                  aria-label={label}
+                  title={label}
+                  className={`grid h-7 w-8 place-items-center rounded-md transition-all ${view === key ? 'bg-accent text-on-accent shadow-sm' : 'text-muted hover:text-fg'}`}
+                >
+                  <Icon size={15} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

@@ -25,7 +25,12 @@
         "greeting": "Hello",
         "installTitle": "Install App",
         "installDesc": "Add Libify to your home screen for quick access",
-        "install": "Install"
+        "install": "Install",
+        "continue": "Continue",
+        "percentRead": "{percent}% read",
+        "alsoReading": "Also reading",
+        "nothingStarted": "Books you start will wait for you here",
+        "findBook": "Find a book"
     },
     "search": {
         "title": "Search",
@@ -49,7 +54,13 @@
         "exportAll": "Export all books",
         "exportTitle": "Library Export",
         "exportPacking": "Packing books...",
-        "addBook": "Add book"
+        "addBook": "Add book",
+        "view": "View",
+        "viewGrid": "Grid",
+        "viewList": "List",
+        "bookActions": "Actions for {title}",
+        "read": "Read",
+        "openSeries": "Series {name}, {count} books"
     },
     "reader": {
         "page": "Page",

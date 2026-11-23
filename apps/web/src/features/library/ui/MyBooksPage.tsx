@@ -9,6 +9,7 @@ import { useCollections } from '../model/useCollections';
 import { useLibrary } from '../model/useLibrary';
 import { useLibraryExport } from '../model/useLibraryExport';
 import { useLibraryGrouping, type LibrarySort } from '../model/useLibraryGrouping';
+import { useLibraryView } from '../model/useLibraryView';
 import { BookmarksTab } from './BookmarksTab';
 import { ExportProgress } from './ExportProgress';
 import { FavoritesTab } from './FavoritesTab';
@@ -21,6 +22,7 @@ export function MyBooksPage() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<MyBooksTab>('books');
   const [sortBy, setSortBy] = useState<LibrarySort>('date');
+  const [view, setView] = useLibraryView();
   const [notice, setNotice] = useState<string | null>(null);
 
   const library = useLibrary();
@@ -60,6 +62,8 @@ export function MyBooksPage() {
         entryCount={entries.length}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        view={view}
+        onViewChange={setView}
         isExporting={exporter.isExporting}
         onExport={handleExport}
       />
@@ -69,7 +73,7 @@ export function MyBooksPage() {
 
         <div id={`panel-${activeTab}`} role="tabpanel">
           {activeTab === 'books' && (
-            <LibraryTab entries={entries} onRemove={(id) => void confirmThen(t('common.delete') + '?', () => removeFromMyBooks(id))} />
+            <LibraryTab entries={entries} view={view} onRemove={(id) => void confirmThen(t('common.delete') + '?', () => removeFromMyBooks(id))} />
           )}
           {activeTab === 'favorites' && (
             <FavoritesTab

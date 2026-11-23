@@ -5,13 +5,9 @@ import type { Book, ReadingProgress } from '@/entities/book/model/types';
 import { BookCover } from '@/entities/book/ui/BookCover';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { progressPercentage } from '../model/progressPercentage';
 import { useSwipeToRemove } from '../model/useSwipeToRemove';
 
-function progressPercentage(progress: ReadingProgress | null): number {
-  if (!progress) return 0;
-  if (progress.scrollPercentage !== undefined) return progress.scrollPercentage;
-  return progress.totalPages > 0 ? Math.round(((progress.currentPage + 1) / progress.totalPages) * 100) : 0;
-}
 
 /** A library book card: tap to read, swipe left (or the focus-visible button) to remove. */
 export function BookListItem({ book, progress, onRemove }: { book: Book; progress: ReadingProgress | null; onRemove: () => void }) {
