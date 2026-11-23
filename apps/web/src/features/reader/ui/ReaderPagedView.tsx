@@ -7,14 +7,12 @@ interface ReaderPagedViewProps {
   pageParagraphs: string[];
   pageIndex: number;
   totalPages: number;
-  textOf(index: number, original: string): string;
-  activeParagraph: number | null;
   onPrev(): void;
   onNext(): void;
 }
 
 /** Page-flip reading mode with prev/next controls. */
-export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, textOf, activeParagraph, onPrev, onNext }: ReaderPagedViewProps) {
+export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, onPrev, onNext }: ReaderPagedViewProps) {
   const { t } = useLanguage();
   const fontSize = useReaderSettings((s) => s.fontSize);
   return (
@@ -24,16 +22,13 @@ export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, textOf,
         <div className="max-w-[68ch] mx-auto" style={{ fontSize: `${fontSize}px` }}>
           {pageParagraphs.map((para, idx) => {
             const actualIndex = pageIndex * PARAGRAPHS_PER_PAGE + idx;
-            const isActive = actualIndex === activeParagraph;
             return (
               <p
                 key={actualIndex}
-                className={`py-2 leading-relaxed transition-colors duration-200 ${
-                  isActive ? 'bg-yellow-500/15 -mx-2 px-2 rounded-lg text-lg' : ''
-                }`}
+                className="py-2 leading-relaxed"
                 style={{ fontSize: `${fontSize}px`, color: 'var(--reader-text)' }}
               >
-                {textOf(actualIndex, para)}
+                {para}
               </p>
             );
           })}

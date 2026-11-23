@@ -10,8 +10,6 @@ import { useBookContent } from '../model/useBookContent';
 import { usePagination } from '../model/usePagination';
 import { useQuoteSelection } from '../model/useQuoteSelection';
 import { useReaderSettings } from '../model/useReaderSettings';
-import { useReaderTranslation } from '../model/useReaderTranslation';
-import { useReaderTts } from '../model/useReaderTts';
 import { useReadingPosition } from '../model/useReadingPosition';
 import { QuoteMenu } from './QuoteMenu';
 import { ReaderFooter } from './ReaderFooter';
@@ -22,8 +20,6 @@ import { ReaderStatus } from './ReaderStatus';
 import { getBookMetadata } from '@/shared/storage/storage';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { ReaderTocDrawer } from './ReaderTocDrawer';
-import { ReaderTranslateSheet } from './ReaderTranslateSheet';
-import { ReaderTtsControls } from './ReaderTtsControls';
 import { useHotkey } from '@/shared/lib/hooks/useHotkey';
 
 // Lazy-load PDF Viewer to prevent 500KB+ pdfjs bundle from loading for FB2 books
@@ -49,7 +45,6 @@ export function ReaderPage() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showToc, setShowToc] = useState(false);
-  const [showTranslate, setShowTranslate] = useState(false);
   const [numPages, setNumPages] = useState(0);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -67,18 +62,16 @@ export function ReaderPage() {
     paragraphs,
     initialParagraph: position.initialIndex,
     // Sheets handle their own keys (Escape closes them); page keys must not also fire behind them.
-    keyboardEnabled: readerMode === 'page' && !showSettings && !showToc && !showTranslate,
+    keyboardEnabled: readerMode === 'page' && !showSettings && !showToc,
     onEscape: goBack,
   });
-  const tts = useReaderTts({ paragraphs, startIndex: position.visibleRange.startIndex, virtuosoRef });
-  const translation = useReaderTranslation(paragraphs);
   const quotes = useQuoteSelection(book, toast.show);
   // Scroll mode: Escape closes the quote menu first, otherwise leaves the reader
   // (page mode handles it in usePagination).
   useHotkey(
     'Escape',
     () => (quotes.menuVisible ? quotes.closeMenu() : goBack()),
-    readerMode !== 'page' && !showSettings && !showToc && !showTranslate,
+    readerMode !== 'page' && !showSettings && !showToc,
   );
 
   if (loading || error || !book) {
@@ -106,15 +99,11 @@ export function ReaderPage() {
         displayPageNumber={position.displayPageNumber}
         user={user}
         chaptersLength={chapters.length}
-        showTtsControls={tts.showControls}
-        translationLang={translation.translationLang}
         onBack={goBack}
-        onTtsPlay={tts.togglePlay}
         onAddBookmark={() => {
           const index = position.visibleRange.startIndex;
           void quotes.bookmarkParagraph(index, paragraphs[index]);
         }}
-        onOpenTranslate={() => setShowTranslate(true)}
         onOpenToc={() => setShowToc(true)}
         onOpenSettings={() => setShowSettings(true)}
       />
@@ -142,16 +131,12 @@ export function ReaderPage() {
               pageParagraphs={pagination.currentPageParagraphs}
               pageIndex={pagination.currentPageIndex}
               totalPages={pagination.totalFlipPages}
-              textOf={translation.textOf}
-              activeParagraph={tts.activeParagraph}
               onPrev={pagination.goToPrevPage}
               onNext={pagination.goToNextPage}
             />
           ) : (
             <ReaderScrollView
               paragraphs={paragraphs}
-              textOf={translation.textOf}
-              activeParagraph={tts.activeParagraph}
               virtuosoRef={virtuosoRef}
               initialIndex={position.initialIndex}
               onRangeChanged={position.handleRangeChanged}
@@ -163,23 +148,6 @@ export function ReaderPage() {
       </main>
 
       <ReaderFooter scrollProgress={position.scrollProgress} />
-
-      <ReaderTranslateSheet
-        isOpen={showTranslate}
-        onClose={() => setShowTranslate(false)}
-        isTranslating={translation.isTranslating}
-        translationLang={translation.translationLang}
-        translationProgress={translation.translationProgress}
-        onSelectLanguage={async (code) => {
-          const ok = await translation.translate(code, position.visibleRange);
-          if (!ok) toast.show(t('errors.translationFailed'));
-          setShowTranslate(false);
-        }}
-        onDisableTranslation={() => {
-          translation.disable();
-          setShowTranslate(false);
-        }}
-      />
 
       <ReaderSettingsSheet
         isOpen={showSettings}
@@ -196,18 +164,6 @@ export function ReaderPage() {
         chapters={chapters}
         currentParagraphIndex={position.visibleRange.startIndex}
         onSelectChapter={(paragraphIndex) => virtuosoRef.current?.scrollToIndex({ index: paragraphIndex, align: 'start' })}
-      />
-
-      <ReaderTtsControls
-        isVisible={tts.showControls}
-        onClose={tts.hideControls}
-        isSpeaking={tts.isSpeaking}
-        isPaused={tts.isPaused}
-        ttsRate={tts.rate}
-        onChangeRate={tts.cycleRate}
-        onTogglePlay={tts.togglePlay}
-        onPrev={tts.prev}
-        onNext={tts.next}
       />
 
       {user && (

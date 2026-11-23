@@ -1,4 +1,4 @@
-import { ChevronLeft, BookmarkPlus, Play, Languages, List, Settings } from 'lucide-react';
+import { ChevronLeft, BookmarkPlus, List, Settings } from 'lucide-react';
 import type { Book } from '@/entities/book/model/types';
 import { displayTitle } from '@/shared/lib/displayTitle';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
@@ -9,12 +9,8 @@ interface ReaderHeaderProps {
     displayPageNumber: number;
     user: { id?: string; email?: string } | null;
     chaptersLength: number;
-    showTtsControls: boolean;
-    translationLang: string | null;
     onBack: () => void;
-    onTtsPlay: () => void;
     onAddBookmark: () => void;
-    onOpenTranslate: () => void;
     onOpenToc: () => void;
     onOpenSettings: () => void;
 }
@@ -25,12 +21,8 @@ export function ReaderHeader({
     displayPageNumber,
     user,
     chaptersLength,
-    showTtsControls,
-    translationLang,
     onBack,
-    onTtsPlay,
     onAddBookmark,
-    onOpenTranslate,
     onOpenToc,
     onOpenSettings
 }: ReaderHeaderProps) {
@@ -59,28 +51,10 @@ export function ReaderHeader({
             </div>
             <div className="flex items-center flex-shrink-0">
                 {user && book.format !== 'pdf' && (
-                    <>
-                        <button
-                            onClick={onTtsPlay}
-                            aria-label={t('aria.readAloud')}
-                            aria-pressed={showTtsControls}
-                            className={iconButton(showTtsControls)}
-                        >
-                            <Play size={20} fill={showTtsControls ? 'currentColor' : 'none'} aria-hidden="true" />
-                        </button>
-                        <button onClick={onAddBookmark} aria-label={t('aria.addBookmark')} className={iconButton()}>
-                            <BookmarkPlus size={20} aria-hidden="true" />
-                        </button>
-                    </>
+                    <button onClick={onAddBookmark} aria-label={t('aria.addBookmark')} className={iconButton()}>
+                        <BookmarkPlus size={20} aria-hidden="true" />
+                    </button>
                 )}
-                <button
-                    onClick={onOpenTranslate}
-                    aria-label={t('aria.translateBook')}
-                    aria-pressed={!!translationLang}
-                    className={iconButton(!!translationLang)}
-                >
-                    <Languages size={20} aria-hidden="true" />
-                </button>
                 {book.format !== 'pdf' && chaptersLength > 0 && (
                     <button onClick={onOpenToc} aria-label={t('aria.openToc')} className={iconButton()}>
                         <List size={20} aria-hidden="true" />

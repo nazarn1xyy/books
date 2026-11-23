@@ -5,8 +5,6 @@ import { useReaderSettings } from '../model/useReaderSettings';
 
 interface ReaderScrollViewProps {
   paragraphs: string[];
-  textOf(index: number, original: string): string;
-  activeParagraph: number | null;
   virtuosoRef: RefObject<VirtuosoHandle | null>;
   /** Paragraph to open at (restored reading position). */
   initialIndex: number;
@@ -16,7 +14,7 @@ interface ReaderScrollViewProps {
 const ScrollFooter = () => <div className="h-48" />;
 
 /** Continuous (virtualized) reading mode. */
-export function ReaderScrollView({ paragraphs, textOf, activeParagraph, virtuosoRef, initialIndex, onRangeChanged }: ReaderScrollViewProps) {
+export function ReaderScrollView({ paragraphs, virtuosoRef, initialIndex, onRangeChanged }: ReaderScrollViewProps) {
   const fontSize = useReaderSettings((s) => s.fontSize);
   return (
     <Virtuoso
@@ -25,14 +23,12 @@ export function ReaderScrollView({ paragraphs, textOf, activeParagraph, virtuoso
       data={paragraphs}
       initialTopMostItemIndex={initialIndex}
       rangeChanged={onRangeChanged}
-      itemContent={(index, para) => (
+      itemContent={(_index, para) => (
         <div
-          className={`px-5 sm:px-8 py-2 leading-relaxed max-w-[68ch] mx-auto transition-colors duration-200 ${
-            index === activeParagraph ? 'bg-yellow-500/15 -mx-2 px-7 sm:px-10 rounded-lg' : ''
-          }`}
+          className="px-5 sm:px-8 py-2 leading-relaxed max-w-[68ch] mx-auto"
           style={{ fontSize: `${fontSize}px`, color: 'var(--reader-text)' }}
         >
-          <p>{textOf(index, para)}</p>
+          <p>{para}</p>
         </div>
       )}
       components={{ Footer: ScrollFooter }}
