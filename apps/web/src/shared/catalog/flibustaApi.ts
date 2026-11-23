@@ -1,6 +1,7 @@
 import type { Book } from '@/entities/book/model/types';
 import { getCachedBook, cacheBook } from './bookCache';
 import { parseBookData } from './fb2Parser';
+import { decodeEntities } from './decodeEntities';
 import { CATALOG_ORIGIN, catalogImageUrl } from '@/shared/api/CatalogApi';
 import { ApiError } from '@/shared/api/ApiError';
 import { services } from '@/shared/services';
@@ -24,10 +25,10 @@ export async function fetchBooks(query: string = ''): Promise<Book[]> {
     const entries = doc.querySelectorAll('entry');
 
     entries.forEach((entry) => {
-        const title = entry.querySelector('title')?.textContent || 'Unknown Title';
+        const title = decodeEntities(entry.querySelector('title')?.textContent || 'Unknown Title');
 
         // Author: <author><name>...</name></author>
-        const authorName = entry.querySelector('author name')?.textContent || 'Unknown Author';
+        const authorName = decodeEntities(entry.querySelector('author name')?.textContent || 'Unknown Author');
 
         // ID: <id>tag:book:123</id> or extract from link
         // OPDS often uses URNs. Flibusta uses tag:book:{id}

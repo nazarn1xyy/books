@@ -2,6 +2,7 @@ import type { BookData, ProgressData } from '@libify/shared';
 import { services } from '@/shared/services';
 import { LEGACY_SYNCED_FIELDS } from '@/shared/sync/legacyImport';
 import type { AppState, Book, ReadingProgress, UserSettings } from '@/entities/book/model/types';
+import { decodeEntities } from '@/shared/catalog/decodeEntities';
 
 /**
  * Library membership and progress live in the synced replica.
@@ -112,11 +113,20 @@ export function isInMyBooks(bookId: string): boolean {
   return services().replica.get('book', bookId) !== null;
 }
 
+/** Repairs titles saved before entity decoding existed (e.g. `&laquo;…&raquo;`). */
+function decodeBookText(book: Book): Book {
+  const title = decodeEntities(book.title);
+  const author = decodeEntities(book.author);
+  const series = book.series && decodeEntities(book.series);
+  if (title === book.title && author === book.author && series === book.series) return book;
+  return { ...book, title, author, series };
+}
+
 export function getBookMetadata(bookId: string): Book | undefined {
   const local = loadLocal().bookMetadata[bookId];
-  if (local) return local;
-  const data = services().replica.get('book', bookId);
-  return data ? bookFromData(data) : undefined;
+  const data = local ? undefined : services().replica.get('book', bookId);
+  const book = local ?? (data ? bookFromData(data) : undefined);
+  return book && decodeBookText(book);
 }
 
 export function addToMyBooks(book: Book): void {

@@ -6,6 +6,8 @@
  * Supports both Web Worker and synchronous (main-thread) parsing as fallback.
  */
 
+import { decodeEntities } from './decodeEntities';
+
 export interface ParsedBookData {
     text: string;
     cover?: string;
@@ -261,7 +263,8 @@ function extractFb2Content(doc: Document): ParsedBookData {
         // Often there might be publish-info sequence too, so we try to find one with a name
         const validSeq = Array.from(sequences).find(s => s.getAttribute('name'));
         if (validSeq) {
-            series = validSeq.getAttribute('name') || undefined;
+            const name = validSeq.getAttribute('name');
+            series = name ? decodeEntities(name) : undefined;
             const num = validSeq.getAttribute('number');
             if (num) seriesNumber = parseInt(num, 10);
         }
@@ -270,8 +273,8 @@ function extractFb2Content(doc: Document): ParsedBookData {
     return {
         text: extractedText,
         cover,
-        title,
-        author,
+        title: decodeEntities(title),
+        author: decodeEntities(author),
         description,
         series,
         seriesNumber,
