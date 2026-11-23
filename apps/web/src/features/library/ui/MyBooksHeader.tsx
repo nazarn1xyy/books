@@ -1,4 +1,7 @@
-import { Bookmark, Download, Heart, Library, MessageSquareQuote, type LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Bookmark, Download, Heart, Library, MessageSquareQuote, Palette, type LucideIcon } from 'lucide-react';
+import { ThemeSwitcher } from '@/shared/theme/ThemeSwitcher';
+import { Sheet } from '@/shared/ui/Sheet';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { LANGUAGES } from '@/shared/i18n/languages';
 import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
@@ -35,6 +38,7 @@ const TITLES: Record<MyBooksTab, string> = {
 /** Pinned header: title and counts, language switch, export, sort bar and section tabs. */
 export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sortBy, onSortChange, isExporting, onExport }: MyBooksHeaderProps) {
   const { t, language, setLanguage } = useLanguage();
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   return (
     <div className="flex-shrink-0 bg-app/95 backdrop-blur-xl border-b border-line pt-2 pb-3 z-30">
@@ -72,6 +76,17 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
                 </button>
               ))}
             </div>
+
+            {/* Desktop has the switcher in the sidebar */}
+            <button
+              type="button"
+              onClick={() => setAppearanceOpen(true)}
+              className="lg:hidden min-w-[44px] min-h-[44px] bg-fg/10 hover:bg-fg/20 rounded-xl active:scale-95 transition-all flex items-center justify-center border border-fg/5"
+              aria-label={t('theme.label')}
+              title={t('theme.label')}
+            >
+              <Palette size={18} className="text-fg" aria-hidden="true" />
+            </button>
 
             {activeTab === 'books' && counts.books > 0 && (
               <button
@@ -132,6 +147,11 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
           })}
         </div>
       </div>
+
+      <Sheet open={appearanceOpen} onClose={() => setAppearanceOpen(false)} title={t('theme.label')} className="p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+        <h2 className="text-lg font-semibold text-fg mb-4" aria-hidden="true">{t('theme.label')}</h2>
+        <ThemeSwitcher />
+      </Sheet>
     </div>
   );
 }

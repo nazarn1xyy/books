@@ -170,5 +170,11 @@
     "sync": {
         "offline": "Offline — changes will sync later",
         "syncing": "Syncing…"
+    },
+    "theme": {
+        "label": "Appearance",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
     }
 }
