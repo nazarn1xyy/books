@@ -33,8 +33,8 @@ const hairline = 'color-mix(in srgb, var(--reader-text) 12%, transparent)';
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <fieldset className="space-y-2">
-      <legend className="mb-2 px-1 text-[13px] reader-muted">{label}</legend>
+    <fieldset>
+      <legend className="mb-1.5 px-1 text-[13px] reader-muted">{label}</legend>
       {children}
     </fieldset>
   );
@@ -59,9 +59,9 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
       placement="bottom"
       swipeToClose
       surfaceClassName="bg-[var(--reader-ui-bg)] text-[var(--reader-text)] rounded-[32px]"
-      className="max-w-lg max-h-[85dvh] overflow-y-auto overscroll-contain px-5 pt-5 pb-6 touch-pan-y"
+      className="max-w-lg max-h-[92dvh] overflow-y-auto overscroll-contain px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] touch-pan-y"
     >
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold">{t('reader.settings')}</h2>
         <button
           type="button"
@@ -75,7 +75,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
         </button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Group label={t('reader.theme')}>
           <div className="grid grid-cols-4 gap-3" role="radiogroup" aria-label={t('reader.theme')}>
             {THEMES.map((theme) => {
@@ -87,10 +87,10 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                   role="radio"
                   aria-checked={selected}
                   onClick={() => settings.setTheme(theme.id)}
-                  className="flex flex-col items-center gap-2"
+                  className="flex flex-col items-center gap-1.5"
                 >
                   <span
-                    className={`grid aspect-[4/3] w-full place-items-center rounded-2xl text-[22px] transition-shadow duration-200 ${
+                    className={`grid h-14 w-full place-items-center rounded-2xl text-[20px] transition-shadow duration-200 ${
                       selected ? 'ring-2 ring-[var(--reader-text)] ring-offset-2 ring-offset-[var(--reader-ui-bg)]' : ''
                     }`}
                     style={{ backgroundColor: theme.bg, color: theme.ink, border: `1px solid ${hairline}`, fontFamily: FONT_FAMILIES[settings.fontFamily] }}
@@ -107,7 +107,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
 
         {!isPdf && (
           <Group label={t('reader.fontSize')}>
-            <div className="flex h-12 items-stretch overflow-hidden rounded-2xl reader-fill">
+            <div className="flex h-11 items-stretch overflow-hidden rounded-2xl reader-fill">
               <button
                 type="button"
                 onClick={() => settings.changeFontSize(-2)}
@@ -135,8 +135,8 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
 
         {!isPdf && (
           <Group label={t('reader.fontFamily')}>
-            <div className="overflow-hidden rounded-2xl reader-fill" role="radiogroup" aria-label={t('reader.fontFamily')}>
-              {FONTS.map((font, i) => {
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('reader.fontFamily')}>
+              {FONTS.map((font) => {
                 const selected = settings.fontFamily === font.key;
                 return (
                   <button
@@ -145,11 +145,13 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                     role="radio"
                     aria-checked={selected}
                     onClick={() => settings.setFontFamily(font.key)}
-                    className="flex h-12 w-full items-center justify-between px-4 text-left text-[17px]"
-                    style={{ fontFamily: FONT_FAMILIES[font.key], borderTop: i > 0 ? `1px solid ${hairline}` : undefined }}
+                    className={`flex h-11 items-center justify-between gap-2 rounded-xl reader-fill px-3 text-left text-[15px] ${
+                      selected ? 'ring-2 ring-[var(--reader-text)]' : ''
+                    }`}
+                    style={{ fontFamily: FONT_FAMILIES[font.key] }}
                   >
-                    {t(font.labelKey)}
-                    {selected && <Check size={18} strokeWidth={2.5} aria-hidden="true" />}
+                    <span className="truncate">{t(font.labelKey)}</span>
+                    {selected && <Check size={16} className="shrink-0" strokeWidth={2.5} aria-hidden="true" />}
                   </button>
                 );
               })}
@@ -189,7 +191,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
         )}
 
         <Group label={t('reader.brightness')}>
-          <div className="flex h-12 items-center gap-3 rounded-2xl reader-fill px-4">
+          <div className="flex h-11 items-center gap-3 rounded-2xl reader-fill px-4">
             <Sun size={15} className="reader-muted shrink-0" aria-hidden="true" />
             <input
               type="range"
