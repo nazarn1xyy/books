@@ -1,5 +1,58 @@
 @import "tailwindcss";
 
+/* Semantic app colour tokens (Plan 4). Values switch via data-theme on <html>;
+   the reader body keeps its own --reader-* themes. */
+@theme {
+  --color-app: var(--c-app);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-subtle: var(--c-subtle);
+  --color-line: var(--c-line);
+  --color-accent: var(--c-accent);
+  --color-on-accent: var(--c-on-accent);
+  --color-danger: var(--c-danger);
+  --color-success: var(--c-success);
+}
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --c-app: #000000;
+  --c-surface: #1c1c1e;
+  --c-surface-2: #2c2c2e;
+  --c-fg: #ffffff;
+  --c-muted: #a1a1aa;
+  --c-subtle: #8e8e93;
+  --c-line: rgb(255 255 255 / 0.1);
+  --c-accent: #ffffff;
+  --c-on-accent: #000000;
+  --c-danger: #ff453a;
+  --c-success: #30d158;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --c-app: #f2f2f7;
+  --c-surface: #ffffff;
+  --c-surface-2: #e5e5ea;
+  --c-fg: #000000;
+  --c-muted: #3c3c43;
+  --c-subtle: #6c6c70;
+  --c-line: rgb(0 0 0 / 0.1);
+  --c-accent: #000000;
+  --c-on-accent: #ffffff;
+  --c-danger: #d70015;
+  --c-success: #248a3d;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-fg);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
   font-synthesis: none;
@@ -17,8 +70,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--c-app);
+  color: var(--c-fg);
 }
 
 html {
