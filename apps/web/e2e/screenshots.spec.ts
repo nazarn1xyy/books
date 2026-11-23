@@ -14,6 +14,25 @@ const TITLES = [
   'Крейцерова соната', 'Казаки', 'Смерть Ивана Ильича', 'Севастопольские рассказы', 'Отец Сергий',
 ];
 
+function coverSvg(i: number): string {
+  const c = PALETTE[i % PALETTE.length];
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="#111"/></linearGradient></defs>
+      <rect width="200" height="300" fill="url(#g)"/><circle cx="100" cy="120" r="${40 + i * 3}" fill="#fff" fill-opacity="0.15"/>
+      <rect x="20" y="220" width="160" height="4" fill="#fff" fill-opacity="0.6"/></svg>`;
+}
+
+/** A long FB2 with an embedded cover, so started books have covers and measurable progress. */
+function richFb2(i: number): string {
+  const title = (TITLES[i] ?? 'Book').replace(/&amp;(laquo|raquo);/g, '&amp;$1;');
+  const paragraphs = Array.from({ length: 80 }, (_, n) => `<p>${n === 0 ? 'First paragraph of the sample book.' : `Paragraph ${n} of a long chapter.`}</p>`).join('');
+  return `<?xml version="1.0" encoding="utf-8"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+    <description><title-info><author><first-name>Лев</first-name><last-name>Толстой</last-name></author>
+    <book-title>${title}</book-title><coverpage><image l:href="#cover"/></coverpage><lang>ru</lang></title-info></description>
+    <body><section>${paragraphs}</section></body>
+    <binary id="cover" content-type="image/svg+xml">${Buffer.from(coverSvg(i)).toString('base64')}</binary></FictionBook>`;
+}
+
 /** A catalog of ten books with generated covers, so screenshots show real layouts. */
 async function mockRichCatalog(page: Page): Promise<void> {
   const entries = TITLES.map(
@@ -26,23 +45,21 @@ async function mockRichCatalog(page: Page): Promise<void> {
   await page.route('**/api/catalog/search**', (route) =>
     route.fulfill({ status: 200, contentType: 'application/atom+xml', body: opds }),
   );
-  await page.route('**/api/catalog/book/**', (route) =>
-    route.fulfill({ status: 200, contentType: 'application/octet-stream', body: fb2 }),
-  );
+  await page.route('**/api/catalog/book/**', (route) => {
+    const i = Number(/\/book\/9(\d\d)/.exec(route.request().url())?.[1] ?? -1);
+    if (i < 0) return route.fulfill({ status: 200, contentType: 'application/octet-stream', body: fb2 });
+    return route.fulfill({ status: 200, contentType: 'application/octet-stream', body: richFb2(i) });
+  });
   await page.route('**/api/catalog/image**', (route) => {
     const src = new URL(route.request().url()).searchParams.get('src') ?? '';
     const i = Number(/\/i\/(\d+)\//.exec(src)?.[1] ?? 0);
-    const c = PALETTE[i % PALETTE.length];
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
-      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="#111"/></linearGradient></defs>
-      <rect width="200" height="300" fill="url(#g)"/><circle cx="100" cy="120" r="${40 + i * 3}" fill="#fff" fill-opacity="0.15"/>
-      <rect x="20" y="220" width="160" height="4" fill="#fff" fill-opacity="0.6"/></svg>`;
-    return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: svg });
+    return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: coverSvg(i) });
   });
 }
 
 for (const theme of ['dark', 'light'] as const) {
   test(`pages in ${theme} theme`, async ({ page }, info) => {
+    test.setTimeout(60_000);
     await page.addInitScript((t) => localStorage.setItem('libify.theme', t), theme);
     await mockRichCatalog(page);
     const shot = (name: string) =>
@@ -54,6 +71,13 @@ for (const theme of ['dark', 'light'] as const) {
     for (const id of [900, 903, 905]) {
       await page.goto(`/reader/${id}`);
       await page.getByText('First paragraph of the sample book.').waitFor();
+      await page.evaluate((dy) => {
+        window.scrollBy(0, dy);
+        for (const el of document.querySelectorAll<HTMLElement>('*')) {
+          if (el.scrollHeight > el.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(el).overflowY)) el.scrollTop += dy;
+        }
+      }, 1500 + (id - 900) * 400);
+      await page.waitForTimeout(1800);
     }
     await page.goto('/my-books');
     await page.locator('input[type=file]').setInputFiles(fixture('sample.fb2'));
@@ -70,7 +94,7 @@ for (const theme of ['dark', 'light'] as const) {
     await page.waitForTimeout(300);
     await shot('my-books');
     await page.goto('/reader/900');
-    await page.getByText('First paragraph of the sample book.').waitFor();
+    await page.getByText(/Paragraph \d+ of a long chapter/).first().waitFor();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await page.waitForTimeout(400);
     await shot('reader-settings');

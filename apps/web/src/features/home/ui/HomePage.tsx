@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import { BookCard } from '@/entities/book/ui/BookCard';
 import { useContinueReading } from '@/features/library';
 import { useRecommendations } from '@/features/search';
@@ -6,9 +7,14 @@ import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { useHotkey } from '@/shared/lib/hooks/useHotkey';
 import { BookGrid } from '@/shared/ui/BookGrid';
 import { BookListSkeleton } from '@/shared/ui/Skeleton';
+import { ContinueHero } from './ContinueHero';
 import { InstallBanner } from './InstallBanner';
 
-const ROW = "flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 after:content-[''] after:w-4 after:flex-shrink-0 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:overflow-visible";
+const ROW = "flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 pt-1 pb-3 after:content-[''] after:w-4 after:flex-shrink-0";
+const SECTION_TITLE = 'text-xl font-semibold tracking-tight text-fg mb-4';
+const RECOMMENDED = 12;
+/** Only the first covers on screen compete for bandwidth with high priority. */
+const PRIORITY_CARDS = 6;
 
 export function HomePage() {
   const { t } = useLanguage();
@@ -18,76 +24,73 @@ export function HomePage() {
     e.preventDefault();
     void navigate('/search');
   });
-  const inProgress = useContinueReading(5);
+  const inProgress = useContinueReading(8);
   const recommendations = useRecommendations();
   const books = recommendations.data ?? [];
+  const [current, ...alsoReading] = inProgress;
 
   const withCovers = books.filter((book) => book.cover && !book.cover.includes('placehold.co'));
-  const recommendedBooks = withCovers.length >= 4 ? withCovers.slice(0, 4) : books.slice(0, 4);
-  const recentBooks = books.slice(4, 10);
-  // Only the first row on screen competes for bandwidth with high priority.
-  const PRIORITY_CARDS = 4;
-  const continueIsFirstRow = inProgress.length > 0;
+  const recommended = (withCovers.length >= 4 ? withCovers : books).slice(0, RECOMMENDED);
 
   return (
-    <div className="min-h-screen bg-app pb-28 lg:pb-8 pt-[env(safe-area-inset-top)]">
-      <div className="sticky top-0 z-30 bg-app border-b border-fg/5 pt-2 pb-3 px-5 mb-4">
+    <div className="min-h-screen bg-app pb-28 lg:pb-10 pt-[env(safe-area-inset-top)]">
+      <div className="sticky top-0 z-30 bg-app/85 backdrop-blur-xl pt-3 pb-3 px-5">
         <div className="desktop-container">
-          <h1 className="text-2xl font-bold text-fg lg:text-3xl">{t('home.title')}</h1>
+          <h1 className="page-title">{t('home.title')}</h1>
         </div>
       </div>
 
-      <div className="px-5 desktop-container">
+      <div className="px-5 desktop-container space-y-10">
         <InstallBanner />
 
-        {inProgress.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.continueReading')}</h2>
+        {current ? (
+          <ContinueHero book={current.book} progress={current.progress} />
+        ) : (
+          <div className="flex items-center gap-4 rounded-[28px] border border-dashed border-line px-5 py-6">
+            <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-fg/10 text-fg">
+              <BookOpen size={22} aria-hidden="true" />
+            </div>
+            <p className="flex-1 text-sm text-muted">{t('home.nothingStarted')}</p>
+            <Link to="/search" className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent">
+              {t('home.findBook')}
+            </Link>
+          </div>
+        )}
+
+        {alsoReading.length > 0 && (
+          <section aria-labelledby="also-reading">
+            <h2 id="also-reading" className={SECTION_TITLE}>{t('home.alsoReading')}</h2>
             <div className={ROW}>
-              {inProgress.map((item, index) => (
-                <BookCard key={item.book.id} book={item.book} size="medium" showProgress priority={index < PRIORITY_CARDS} />
+              {alsoReading.map((item) => (
+                <BookCard key={item.book.id} book={item.book} size="medium" showProgress />
               ))}
             </div>
           </section>
         )}
 
-        {recommendations.isPending ? (
-          <section className="mb-8" aria-busy="true">
-            <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recommended')}</h2>
-            <BookListSkeleton count={4} />
-          </section>
-        ) : recommendations.isError || books.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-muted mb-4">{t('errors.networkError')}</p>
-            <button
-              onClick={() => void recommendations.refetch()}
-              disabled={recommendations.isFetching}
-              className="px-4 py-2 bg-fg/10 rounded-full text-fg text-sm hover:bg-fg/20 transition-colors disabled:opacity-50"
-            >
-              {t('common.retry')}
-            </button>
-          </div>
-        ) : (
-          <>
-            <section className="mb-8">
-              <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recommended')}</h2>
-              <div className={ROW}>
-                {recommendedBooks.map((book, index) => (
-                  <BookCard key={book.id} book={book} size="large" priority={!continueIsFirstRow && index < PRIORITY_CARDS} showActions />
-                ))}
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
-              <BookGrid>
-                {recentBooks.map((book) => (
-                  <BookCard key={book.id} book={book} size="small" showActions />
-                ))}
-              </BookGrid>
-            </section>
-          </>
-        )}
+        <section aria-labelledby="recommended" aria-busy={recommendations.isPending}>
+          <h2 id="recommended" className={SECTION_TITLE}>{t('home.recommended')}</h2>
+          {recommendations.isPending ? (
+            <BookListSkeleton count={6} />
+          ) : recommendations.isError || books.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-muted mb-4">{t('errors.networkError')}</p>
+              <button
+                onClick={() => void recommendations.refetch()}
+                disabled={recommendations.isFetching}
+                className="px-4 py-2 bg-fg/10 rounded-full text-fg text-sm hover:bg-fg/20 transition-colors disabled:opacity-50"
+              >
+                {t('common.retry')}
+              </button>
+            </div>
+          ) : (
+            <BookGrid>
+              {recommended.map((book, index) => (
+                <BookCard key={book.id} book={book} size="small" priority={!current && index < PRIORITY_CARDS} showActions />
+              ))}
+            </BookGrid>
+          )}
+        </section>
       </div>
     </div>
   );
