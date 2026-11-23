@@ -18,6 +18,8 @@ import { ReaderFooter } from './ReaderFooter';
 import { ReaderHeader } from './ReaderHeader';
 import { ReaderPagedView } from './ReaderPagedView';
 import { ReaderScrollView } from './ReaderScrollView';
+import { ReaderStatus } from './ReaderStatus';
+import { getBookMetadata } from '@/shared/storage/storage';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { ReaderTocDrawer } from './ReaderTocDrawer';
 import { ReaderTranslateSheet } from './ReaderTranslateSheet';
@@ -51,7 +53,7 @@ export function ReaderPage() {
   const [numPages, setNumPages] = useState(0);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
-  const { book, fullText, paragraphs, pdfData, chapters, loading, error } = useBookContent(id);
+  const { book, fullText, paragraphs, pdfData, chapters, loading, error, retry } = useBookContent(id);
   const isPdf = book?.format === 'pdf';
   const position = useReadingPosition({
     bookId: id,
@@ -63,6 +65,7 @@ export function ReaderPage() {
   const pagination = usePagination({
     bookId: id,
     paragraphs,
+    initialParagraph: position.initialIndex,
     // Sheets handle their own keys (Escape closes them); page keys must not also fire behind them.
     keyboardEnabled: readerMode === 'page' && !showSettings && !showToc && !showTranslate,
     onEscape: goBack,
@@ -78,23 +81,9 @@ export function ReaderPage() {
     readerMode !== 'page' && !showSettings && !showToc && !showTranslate,
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--reader-bg)] flex items-center justify-center">
-        <ReaderSpinner />
-      </div>
-    );
-  }
-
-  if (error || !book) {
-    return (
-      <div className="min-h-screen bg-[var(--reader-bg)] flex items-center justify-center flex-col gap-4 p-6 text-center">
-        <p className="text-gray-500">{error ? `${t('errors.bookNotFound')} (${error})` : t('errors.bookNotFound')}</p>
-        <button onClick={goBack} className="text-[var(--reader-text)] underline font-medium">
-          {t('common.back')}
-        </button>
-      </div>
-    );
+  if (loading || error || !book) {
+    const known = book ?? (id ? getBookMetadata(id) : undefined);
+    return <ReaderStatus book={known} onBack={goBack} error={loading ? null : (error ?? 'not found')} onRetry={retry} />;
   }
 
   return (
@@ -164,6 +153,7 @@ export function ReaderPage() {
               textOf={translation.textOf}
               activeParagraph={tts.activeParagraph}
               virtuosoRef={virtuosoRef}
+              initialIndex={position.initialIndex}
               onRangeChanged={position.handleRangeChanged}
             />
           )

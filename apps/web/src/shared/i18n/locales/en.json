@@ -99,7 +99,10 @@
         "bookmarkAdded": "🔖 Bookmark added!",
         "bookmarkFailed": "Failed to add bookmark",
         "pdfNotSupportedAi": "AI summary is not yet supported for PDF.",
-        "speed": "Speed"
+        "speed": "Speed",
+        "opening": "Opening the book…",
+        "openingSlow": "Large book or a slow catalogue — almost there…",
+        "loadFailed": "Couldn’t open the book. Check your connection and try again."
     },
     "auth": {
         "title": "Libify",

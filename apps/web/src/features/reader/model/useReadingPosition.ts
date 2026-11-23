@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { ReadingProgress } from '@/entities/book/model/types';
 import { getReadingProgress, saveReadingProgress } from '@/shared/storage/storage';
@@ -37,27 +37,37 @@ export function useReadingPosition({ bookId, total, isPdf, bookmarkParagraph, vi
     [],
   );
 
-  // Restore the scroll position once the content is known.
-  useEffect(() => {
-    if (!bookId || !virtuosoRef.current || total === 0) return;
-
-    let startIndex = 0;
+  /** Paragraph (or PDF page) to open at: bookmark `?p=` first, then saved progress. */
+  const initialIndex = useMemo(() => {
+    if (!bookId || total === 0) return 0;
+    let index = 0;
     if (bookmarkParagraph !== null) {
-      startIndex = parseInt(bookmarkParagraph, 10);
+      index = parseInt(bookmarkParagraph, 10);
     } else {
       const progress = getReadingProgress(bookId);
       if (progress) {
-        if (progress.currentPage !== undefined && progress.currentPage < total) {
-          startIndex = progress.currentPage;
-        } else if (progress.scrollPercentage) {
-          startIndex = Math.floor((progress.scrollPercentage / 100) * total);
-        }
+        if (progress.currentPage < total) index = progress.currentPage;
+        else if (progress.scrollPercentage) index = Math.floor((progress.scrollPercentage / 100) * total);
       }
     }
-    const safeIndex = Math.max(0, Math.min(Number.isNaN(startIndex) ? 0 : startIndex, total - 1));
-    const timer = setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: safeIndex, align: 'start' }), 100);
+    return Math.max(0, Math.min(Number.isNaN(index) ? 0 : index, total - 1));
+  }, [bookId, total, bookmarkParagraph]);
+
+  /**
+   * Progress is saved only after the view has reached the restored position. Before that the list
+   * reports index 0 while it mounts, and saving it would overwrite the reader's real place.
+   */
+  const restored = useRef(false);
+  useEffect(() => {
+    restored.current = initialIndex === 0;
+  }, [initialIndex, bookId]);
+
+  // PDFs have no initialTopMostItemIndex: scroll once the viewer's list exists.
+  useEffect(() => {
+    if (!isPdf || initialIndex === 0) return;
+    const timer = setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: initialIndex, align: 'start' }), 300);
     return () => clearTimeout(timer);
-  }, [bookId, total, bookmarkParagraph, virtuosoRef]);
+  }, [isPdf, initialIndex, virtuosoRef]);
 
   const handleRangeChanged = useCallback(
     (range: VisibleRange) => {
@@ -67,6 +77,10 @@ export function useReadingPosition({ bookId, total, isPdf, bookmarkParagraph, vi
 
       const currentIndex = range.startIndex;
       if (isPdf) setDisplayPageNumber(currentIndex + 1);
+      if (!restored.current) {
+        if (Math.abs(currentIndex - initialIndex) > 2) return;
+        restored.current = true;
+      }
 
       const percentage = Math.round((currentIndex / total) * 100);
       setScrollProgress(percentage);
@@ -85,8 +99,8 @@ export function useReadingPosition({ bookId, total, isPdf, bookmarkParagraph, vi
         pending.current = null;
       }, SAVE_DEBOUNCE_MS);
     },
-    [bookId, total, isPdf],
+    [bookId, total, isPdf, initialIndex],
   );
 
-  return { visibleRange, scrollProgress, displayPageNumber, handleRangeChanged };
+  return { initialIndex, visibleRange, scrollProgress, displayPageNumber, handleRangeChanged };
 }

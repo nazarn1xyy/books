@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Book, Chapter } from '@/entities/book/model/types';
 import { fetchBookContent } from '@/shared/catalog/flibustaApi';
 import { addToMyBooks, getBookMetadata } from '@/shared/storage/storage';
@@ -15,9 +15,21 @@ interface BookContent {
 
 const INITIAL: BookContent = { book: null, fullText: '', pdfData: null, chapters: [], loading: true, error: null };
 
+/** One in-flight download per book, so remounts (StrictMode, quick re-open) don't fetch twice. */
+const inflight = new Map<string, ReturnType<typeof fetchBookContent>>();
+function loadOnce(id: string) {
+  let pending = inflight.get(id);
+  if (!pending) {
+    pending = fetchBookContent(id).finally(() => inflight.delete(id));
+    inflight.set(id, pending);
+  }
+  return pending;
+}
+
 /** Loads a book (cache first, then the catalog), merges its metadata and adds it to My Books. */
 export function useBookContent(id: string | undefined) {
   const [content, setContent] = useState<BookContent>(INITIAL);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -25,7 +37,7 @@ export function useBookContent(id: string | undefined) {
 
     const load = async () => {
       try {
-        const { text, cover, pdfData, title, author, series, seriesNumber, chapters } = await fetchBookContent(id);
+        const { text, cover, pdfData, title, author, series, seriesNumber, chapters } = await loadOnce(id);
         if (!text && !pdfData) throw new Error('No text content available');
 
         const existing = getBookMetadata(id);
@@ -61,8 +73,13 @@ export function useBookContent(id: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, attempt]);
+
+  const retry = useCallback(() => {
+    setContent(INITIAL);
+    setAttempt((n) => n + 1);
+  }, []);
 
   const paragraphs = useMemo(() => content.fullText.split('\n\n'), [content.fullText]);
-  return { ...content, paragraphs };
+  return { ...content, paragraphs, retry };
 }

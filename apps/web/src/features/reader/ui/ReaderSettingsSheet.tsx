@@ -34,10 +34,10 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
             placement="bottom"
             swipeToClose
             surfaceClassName="bg-[var(--reader-ui-bg)] rounded-t-3xl"
-            className="w-full max-w-lg p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] touch-pan-y"
+            className="w-full max-w-lg max-h-[85dvh] overflow-y-auto overscroll-contain p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] touch-pan-y"
         >
                         {/* Drag Handle */}
-                        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+                        <div className="w-10 h-1 reader-fill rounded-full mx-auto mb-4" />
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
@@ -45,7 +45,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                             <button
                                 onClick={onClose}
                                 aria-label={t('aria.closeSettings')}
-                                className="p-2 -mr-2 text-gray-400 hover:text-[var(--reader-text)] transition-colors rounded-full active:scale-95"
+                                className="p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center reader-muted hover:text-[var(--reader-text)] transition-colors rounded-full active:scale-95"
                             >
                                 <X size={22} />
                             </button>
@@ -53,7 +53,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
 
                         {/* Theme Selection */}
                         <div className="mb-6">
-                            <label className="text-xs font-medium text-gray-400 mb-2.5 block uppercase tracking-wider">{t('reader.theme')}</label>
+                            <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.theme')}</label>
                             <div className="flex gap-2.5 justify-between">
                                 {[
                                     { id: 'light', name: t('reader.themeLight'), bg: '#F2F2F2', border: '#ddd', text: '#000' },
@@ -78,12 +78,12 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                         {/* Font Size - Only for local text books */}
                         {!isPdf && (
                             <div className="mb-6">
-                                <label className="text-xs font-medium text-gray-400 mb-2.5 block uppercase tracking-wider">{t('reader.fontSize')}</label>
-                                <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 rounded-xl p-3.5">
+                                <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.fontSize')}</label>
+                                <div className="flex items-center justify-between reader-fill rounded-xl p-3.5">
                                     <button
                                         onClick={() => onUpdateFontSize(-2)}
                                         aria-label={t('aria.decreaseFontSize')}
-                                        className="p-2 text-[var(--reader-text)] bg-black/10 dark:bg-white/10 rounded-lg active:scale-90 transition-transform"
+                                        className="p-2 text-[var(--reader-text)] reader-fill rounded-lg active:scale-90 transition-transform"
                                     >
                                         <Minus size={20} />
                                     </button>
@@ -91,7 +91,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                                     <button
                                         onClick={() => onUpdateFontSize(2)}
                                         aria-label={t('aria.increaseFontSize')}
-                                        className="p-2 text-[var(--reader-text)] bg-black/10 dark:bg-white/10 rounded-lg active:scale-90 transition-transform"
+                                        className="p-2 text-[var(--reader-text)] reader-fill rounded-lg active:scale-90 transition-transform"
                                     >
                                         <Plus size={20} />
                                     </button>
@@ -102,7 +102,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                         {/* Font Family */}
                         {!isPdf && (
                             <div className="mb-6">
-                                <label className="text-xs font-medium text-gray-400 mb-2.5 block uppercase tracking-wider">{t('reader.fontFamily')}</label>
+                                <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.fontFamily')}</label>
                                 <div className="grid grid-cols-4 gap-2">
                                     {([
                                         { key: 'sans', label: t('reader.fontSans'), sample: 'Aa' },
@@ -114,7 +114,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                                             key={f.key}
                                             onClick={() => onUpdateFontFamily(f.key)}
                                             className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all active:scale-95 ${
-                                                settings.fontFamily === f.key ? 'bg-white/20 ring-1 ring-white/40 font-semibold' : 'bg-black/10 dark:bg-white/5 text-gray-400'
+                                                settings.fontFamily === f.key ? 'reader-selected' : 'reader-fill reader-muted'
                                             }`}
                                         >
                                             <span className="text-[var(--reader-text)] text-lg leading-none" style={{ fontFamily: FONT_FAMILIES[f.key] }}>{f.sample}</span>
@@ -128,14 +128,14 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                         {/* Reader Mode Toggle */}
                         {!isPdf && (
                             <div className="mb-6">
-                                <label className="text-xs font-medium text-gray-400 mb-2.5 block uppercase tracking-wider">{t('reader.readingMode')}</label>
+                                <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.readingMode')}</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         onClick={() => onUpdateReaderMode('scroll')}
                                         className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all active:scale-95 ${
                                             settings.readerMode !== 'page'
-                                                ? 'bg-white/20 text-[var(--reader-text)] font-semibold'
-                                                : 'bg-black/10 dark:bg-white/5 text-gray-400'
+                                                ? 'reader-selected'
+                                                : 'reader-fill reader-muted'
                                         }`}
                                     >
                                         <AlignLeft size={18} />
@@ -145,8 +145,8 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
                                         onClick={() => onUpdateReaderMode('page')}
                                         className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all active:scale-95 ${
                                             settings.readerMode === 'page'
-                                                ? 'bg-white/20 text-[var(--reader-text)] font-semibold'
-                                                : 'bg-black/10 dark:bg-white/5 text-gray-400'
+                                                ? 'reader-selected'
+                                                : 'reader-fill reader-muted'
                                         }`}
                                     >
                                         <Layers size={18} />
@@ -158,16 +158,16 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
 
                         {/* Brightness */}
                         <div>
-                            <label className="text-xs font-medium text-gray-400 mb-2.5 block uppercase tracking-wider">{t('reader.brightness')}</label>
-                            <div className="flex items-center gap-4 bg-black/10 dark:bg-white/5 rounded-xl p-3.5">
-                                <Sun size={20} className="text-gray-500" aria-hidden="true" />
+                            <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.brightness')}</label>
+                            <div className="flex items-center gap-4 reader-fill rounded-xl p-3.5">
+                                <Sun size={20} className="reader-muted" aria-hidden="true" />
                                 <input
                                     type="range"
                                     min="30"
                                     max="100"
                                     value={settings.brightness}
                                     onChange={(e) => onUpdateBrightness(Number(e.target.value))}
-                                    className="flex-1 h-1 bg-gray-600 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-[var(--reader-text)]"
+                                    className="flex-1 h-1 reader-fill rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-[var(--reader-text)]"
                                     aria-label={t('reader.brightness')}
                                 />
                                 <span className="text-[var(--reader-text)] font-semibold text-sm w-10 text-right">{settings.brightness}%</span>

@@ -6,14 +6,18 @@ export const PARAGRAPHS_PER_PAGE = 10;
 interface Options {
   bookId: string | undefined;
   paragraphs: string[];
+  /** Restored reading position; the first page shown is the one containing it. */
+  initialParagraph: number;
   /** Keyboard navigation is active (page mode and no sheet open). */
   keyboardEnabled: boolean;
   onEscape(): void;
 }
 
 /** Page-flip mode: current page, navigation (buttons and ←/→/space), progress saved on forward flips. */
-export function usePagination({ bookId, paragraphs, keyboardEnabled, onEscape }: Options) {
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+export function usePagination({ bookId, paragraphs, initialParagraph, keyboardEnabled, onEscape }: Options) {
+  // null until the reader turns a page: until then the restored position decides the page.
+  const [chosenPage, setCurrentPageIndex] = useState<number | null>(null);
+  const currentPageIndex = chosenPage ?? Math.floor(initialParagraph / PARAGRAPHS_PER_PAGE);
   const totalFlipPages = Math.ceil(paragraphs.length / PARAGRAPHS_PER_PAGE);
 
   const goToNextPage = useCallback(() => {

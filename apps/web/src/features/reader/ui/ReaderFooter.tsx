@@ -12,7 +12,7 @@ export function ReaderFooter({ scrollProgress }: ReaderFooterProps) {
                     <div className="flex-1">
                         <ProgressBar percentage={scrollProgress} height={4} />
                     </div>
-                    <span className="text-xs text-gray-500 w-10 text-right font-medium">{scrollProgress}%</span>
+                    <span className="text-xs reader-muted tabular-nums w-10 text-right font-medium">{scrollProgress}%</span>
                 </div>
             </div>
         </footer>
