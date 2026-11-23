@@ -120,7 +120,7 @@ export function Sidebar() {
             {user && (
                 <div className="p-4 border-t border-line">
                     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-fg/5">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-8 h-8 rounded-full bg-accent text-on-accent flex items-center justify-center text-sm font-bold">
                             {user.nickname[0]?.toUpperCase() ?? 'U'}
                         </div>
                         <div className="flex-1 min-w-0">

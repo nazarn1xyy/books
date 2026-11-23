@@ -10,7 +10,8 @@
         "search": "Search",
         "settings": "Settings",
         "logout": "Log out",
-        "close": "Close"
+        "close": "Close",
+        "more": "More"
     },
     "nav": {
         "home": "Home",
@@ -173,7 +174,8 @@
     "sort": {
         "byDate": "By date",
         "byTitle": "By title",
-        "byAuthor": "By author"
+        "byAuthor": "By author",
+        "label": "Sort"
     },
     "pwa": {
         "updateAvailable": "New version available",

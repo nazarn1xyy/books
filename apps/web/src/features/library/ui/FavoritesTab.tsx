@@ -33,7 +33,7 @@ export function FavoritesTab({ favorites, loading, onRemove }: { favorites: Favo
               className="w-12 flex-shrink-0"
             />
             <div className="min-w-0">
-              <h3 className="text-fg font-semibold text-sm truncate">{fav.book_title}</h3>
+              <h2 className="text-fg font-semibold text-sm truncate">{fav.book_title}</h2>
               <p className="text-muted text-xs truncate mt-0.5">{fav.book_author}</p>
             </div>
           </div>

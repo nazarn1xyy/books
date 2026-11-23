@@ -21,7 +21,7 @@ export function BookmarksTab({ bookmarks, loading, onDelete }: { bookmarks: Book
       {bookmarks.map((bm) => (
         <div key={bm.id} className="bg-surface border border-fg/5 rounded-2xl p-4">
           <div className="cursor-pointer" onClick={() => navigate(`/reader/${bm.book_id}?p=${bm.paragraph_index}`)}>
-            <h3 className="text-fg font-medium text-sm mb-1">{bm.book_title || t('myBooks.books')}</h3>
+            <h2 className="text-fg font-medium text-sm mb-1">{bm.book_title || t('myBooks.books')}</h2>
             <p className="text-muted text-xs line-clamp-2 italic">"{bm.preview_text || '...'}"</p>
           </div>
           <div className="flex items-center justify-between mt-3">

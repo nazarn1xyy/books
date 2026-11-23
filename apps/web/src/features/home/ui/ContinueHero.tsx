@@ -5,6 +5,7 @@ import type { Book, ReadingProgress } from '@/entities/book/model/types';
 import { useBookCover } from '@/entities/book/lib/useBookCover';
 import { useCoverAccent } from '@/entities/book/lib/useCoverAccent';
 import { BookCover } from '@/entities/book/ui/BookCover';
+import { displayTitle } from '@/shared/lib/displayTitle';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 
 function percentOf(progress: ReadingProgress): number {
@@ -21,7 +22,7 @@ export function ContinueHero({ book, progress }: { book: Book; progress: Reading
   const cover = useBookCover(book.id, book.cover);
   const accent = useCoverAccent(cover || undefined);
   const percent = Math.max(0, Math.min(100, percentOf(progress)));
-  const title = book.title || 'Без назви';
+  const title = displayTitle(book.title || 'Без назви');
 
   return (
     <section
@@ -45,10 +46,10 @@ export function ContinueHero({ book, progress }: { book: Book; progress: Reading
         </Link>
 
         <div className="min-w-0 flex-1">
-          <h2 id="continue-title" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+          <h2 id="continue-title" className="sr-only">
             {t('home.continueReading')}
           </h2>
-          <p className="mt-2 text-xl font-bold leading-tight tracking-tight text-fg line-clamp-3 sm:text-3xl lg:text-[34px]">
+          <p className="text-xl font-bold leading-tight tracking-tight text-fg line-clamp-3 text-balance sm:text-3xl lg:text-[34px]">
             {title}
           </p>
           <p className="mt-1.5 text-sm text-muted line-clamp-1 sm:text-base">{book.author}</p>

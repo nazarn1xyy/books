@@ -3,6 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 import { BookCover } from '@/entities/book/ui/BookCover';
 import type { Book } from '@/entities/book/model/types';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
+import { displayTitle } from '@/shared/lib/displayTitle';
 
 const SLOW_AFTER_MS = 8_000;
 
@@ -46,7 +47,7 @@ export function ReaderStatus({ book, onBack, error, onRetry }: ReaderStatusProps
           </div>
         )}
         <div className="max-w-xs space-y-1.5" role="status" aria-live="polite">
-          {book?.title && <p className="text-lg font-semibold leading-snug text-balance">{book.title}</p>}
+          {book?.title && <p className="text-lg font-semibold leading-snug text-balance">{displayTitle(book.title)}</p>}
           {book?.author && <p className="text-sm opacity-70">{book.author}</p>}
           <p className="pt-2 text-sm opacity-70">
             {error ? t('reader.loadFailed') : slow ? t('reader.openingSlow') : t('reader.opening')}

@@ -23,7 +23,7 @@ export function SeriesStack({ name, books, onOpen }: { name: string; books: Book
           {books.length}
         </span>
       </div>
-      <h3 className="mt-2.5 text-[13px] font-semibold leading-snug text-fg line-clamp-2">{name}</h3>
+      <h2 className="mt-2.5 text-[13px] font-semibold leading-snug text-fg line-clamp-2">{name}</h2>
       <p className="mt-0.5 text-xs text-subtle line-clamp-1">{front.author}</p>
     </button>
   );

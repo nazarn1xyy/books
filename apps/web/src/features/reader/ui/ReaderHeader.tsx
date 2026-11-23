@@ -1,5 +1,6 @@
 import { ChevronLeft, BookmarkPlus, Play, Languages, List, Settings } from 'lucide-react';
 import type { Book } from '@/entities/book/model/types';
+import { displayTitle } from '@/shared/lib/displayTitle';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 
 interface ReaderHeaderProps {
@@ -47,7 +48,7 @@ export function ReaderHeader({
             <div className="flex-1 text-center overflow-hidden flex items-center justify-center gap-2">
                 <div className="truncate px-1">
                     <h1 className="text-sm font-semibold text-[var(--reader-text)] truncate">
-                        {book.title}
+                        {displayTitle(book.title)}
                     </h1>
                     {book.format === 'pdf' && numPages > 0 && (
                         <p className="text-xs text-gray-400">

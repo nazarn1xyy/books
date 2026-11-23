@@ -11,7 +11,7 @@ export function ExportProgress({ progress }: { progress: ExportProgressState }) 
     <div className="fixed inset-0 bg-app/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div role="status" className="bg-surface rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-line">
         <div className="flex items-center gap-3 mb-4">
-          <Download className="text-blue-400 animate-bounce" size={24} />
+          <Download className="text-fg" size={24} aria-hidden="true" />
           <h2 className="text-lg font-semibold text-fg">{t('myBooks.exportTitle')}</h2>
         </div>
         <div className="space-y-4">

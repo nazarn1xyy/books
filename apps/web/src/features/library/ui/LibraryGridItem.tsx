@@ -4,6 +4,7 @@ import type { Book, ReadingProgress } from '@/entities/book/model/types';
 import { BookCover } from '@/entities/book/ui/BookCover';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { progressPercentage } from '../model/progressPercentage';
+import { displayTitle } from '@/shared/lib/displayTitle';
 import { useLongPress } from '../model/useLongPress';
 
 interface LibraryGridItemProps {
@@ -17,7 +18,7 @@ interface LibraryGridItemProps {
 export function LibraryGridItem({ book, progress, priority, onOpenActions }: LibraryGridItemProps) {
   const { t } = useLanguage();
   const press = useLongPress(() => onOpenActions(book));
-  const title = book.title || 'Без назви';
+  const title = displayTitle(book.title || 'Без назви');
   const percentage = progressPercentage(progress);
 
   return (
@@ -36,7 +37,7 @@ export function LibraryGridItem({ book, progress, priority, onOpenActions }: Lib
         className="group flex flex-col rounded-lg select-none [-webkit-touch-callout:none] active:scale-[0.97] transition-transform duration-200"
       >
         <BookCover book={book} size="md" priority={priority} progress={percentage} />
-        <h3 className="mt-2.5 text-[13px] font-semibold leading-snug text-fg line-clamp-2">{title}</h3>
+        <h2 className="mt-2.5 text-[13px] font-semibold leading-snug text-fg line-clamp-2">{title}</h2>
         <p className="mt-0.5 text-xs text-subtle line-clamp-1">{book.author || 'Невідомий автор'}</p>
       </Link>
       <button

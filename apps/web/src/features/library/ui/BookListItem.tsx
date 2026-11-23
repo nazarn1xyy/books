@@ -6,6 +6,7 @@ import { BookCover } from '@/entities/book/ui/BookCover';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { progressPercentage } from '../model/progressPercentage';
+import { displayTitle } from '@/shared/lib/displayTitle';
 import { useSwipeToRemove } from '../model/useSwipeToRemove';
 
 
@@ -45,7 +46,7 @@ export function BookListItem({ book, progress, onRemove }: { book: Book; progres
           <BookCover book={{ ...book, cover: coverSrc }} size="sm" lift={false} className="w-16 flex-shrink-0" />
           <div className="flex-1 flex flex-col justify-between text-left py-1">
             <div>
-              <h3 className="font-semibold text-fg line-clamp-2">{book.title || 'Без назви'}</h3>
+              <h2 className="font-semibold text-fg line-clamp-2">{displayTitle(book.title || 'Без назви')}</h2>
               <p className="text-sm text-subtle mt-0.5">{book.author || 'Невідомий автор'}</p>
             </div>
             <div className="flex items-center gap-3">
