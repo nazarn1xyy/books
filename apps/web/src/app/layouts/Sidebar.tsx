@@ -1,148 +1,111 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Search, BookOpen, LogOut, Globe } from 'lucide-react';
+import { BookOpen, ChevronDown, Home, LogOut, Search } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { LANGUAGES } from '@/shared/i18n/languages';
 import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
 import { ThemeSwitcher } from '@/shared/theme/ThemeSwitcher';
-import { useState, useEffect, useRef } from 'react';
 
+/**
+ * Desktop sidebar in the manner of a macOS source list: a plain wordmark, rows with a quiet
+ * selection fill, and preferences set in small type at the foot. No tiles, gradients or cards.
+ */
 export function Sidebar() {
-    const { user, signOut } = useAuth();
-    const { language, setLanguage, t } = useLanguage();
-    const [showLangMenu, setShowLangMenu] = useState(false);
-    const langMenuRef = useRef<HTMLDivElement>(null);
+  const { user, signOut } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
-    const navItems = [
-        { to: '/', icon: Home, label: t('nav.home') },
-        { to: '/search', icon: Search, label: t('nav.search') },
-        { to: '/my-books', icon: BookOpen, label: t('nav.myBooks') },
-    ];
+  const navItems = [
+    { to: '/', icon: Home, label: t('nav.home') },
+    { to: '/search', icon: Search, label: t('nav.search') },
+    { to: '/my-books', icon: BookOpen, label: t('nav.myBooks') },
+  ];
 
-    const currentLang = LANGUAGES.find(l => l.code === language);
+  const handleSignOut = async () => {
+    if ((await signOut()) === 'unsynced' && window.confirm(t('auth.unsyncedSignOut'))) {
+      await signOut({ discardUnsynced: true });
+    }
+  };
 
-    // Dismiss language menu on outside click or Escape key
-    useEffect(() => {
-        if (!showLangMenu) return;
+  return (
+    <aside
+      aria-label="Sidebar Navigation"
+      className="desktop-only fixed left-0 top-0 bottom-0 z-50 flex w-[var(--sidebar-width)] flex-col border-r border-line bg-app"
+    >
+      <div className="px-5 pt-7 pb-5">
+        <p className="text-[22px] font-semibold tracking-[-0.02em] text-fg">Libify</p>
+        <SyncStatusBadge className="mt-1" />
+      </div>
 
-        const handleClickOutside = (e: MouseEvent) => {
-            if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
-                setShowLangMenu(false);
+      <nav className="flex-1 space-y-0.5 px-3" aria-label="Main Navigation">
+        {navItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            className={({ isActive }) =>
+              `group flex h-9 items-center gap-3 rounded-lg px-2.5 text-[15px] transition-colors duration-150 ${
+                isActive ? 'bg-fg/[0.09] font-medium text-fg' : 'text-fg/80 hover:bg-fg/[0.05] hover:text-fg'
+              }`
             }
-        };
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setShowLangMenu(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [showLangMenu]);
-
-    return (
-        <aside
-            aria-label="Sidebar Navigation"
-            className="desktop-only fixed left-0 top-0 bottom-0 w-[var(--sidebar-width)] bg-app/95 backdrop-blur-xl border-r border-line flex flex-col z-50"
-        >
-            {/* Logo */}
-            <div className="p-6 border-b border-line">
-                <div className="flex items-center gap-2">
-                    <img src="/logo-192.png" alt="Libify Logo" width={32} height={32} className="w-8 h-8 rounded-lg" />
-                    <span className="text-2xl font-bold text-fg tracking-tight">Libify</span>
-                </div>
-                <SyncStatusBadge className="mt-2" />
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2" aria-label="Main Navigation">
-                {navItems.map(({ to, icon: Icon, label }) => (
-                    <NavLink
-                        key={to}
-                        to={to}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                                ? 'bg-accent text-on-accent font-semibold shadow-sm'
-                                : 'text-muted hover:text-fg hover:bg-fg/10'
-                            }`
-                        }
-                    >
-                        <Icon size={20} strokeWidth={2} aria-hidden="true" />
-                        <span className="text-sm">{label}</span>
-                    </NavLink>
-                ))}
-            </nav>
-
-            <div className="px-4 pb-2">
-                <ThemeSwitcher />
-            </div>
-
-            {/* Language Switcher */}
-            <div className="px-4 pb-2 relative" ref={langMenuRef}>
-                <button
-                    onClick={() => setShowLangMenu(!showLangMenu)}
-                    aria-expanded={showLangMenu}
-                    aria-label={t('aria.switchLanguage')}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-fg hover:bg-fg/10 transition-all"
-                >
-                    <Globe size={20} aria-hidden="true" />
-                    <span className="text-sm flex-1 text-left">{currentLang?.flag} {currentLang?.name}</span>
-                </button>
-
-                {showLangMenu && (
-                    <div className="absolute bottom-full left-4 right-4 mb-2 bg-surface rounded-xl border border-line overflow-hidden shadow-xl z-50">
-                        {LANGUAGES.map((lang) => (
-                            <button
-                                key={lang.code}
-                                onClick={() => {
-                                    setLanguage(lang.code);
-                                    setShowLangMenu(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${language === lang.code
-                                    ? 'bg-fg/10 text-fg font-medium'
-                                    : 'text-muted hover:bg-fg/5 hover:text-fg'
-                                    }`}
-                            >
-                                <span>{lang.flag}</span>
-                                <span className="text-sm">{lang.name}</span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* User section */}
-            {user && (
-                <div className="p-4 border-t border-line">
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-fg/5">
-                        <div className="w-8 h-8 rounded-full bg-accent text-on-accent flex items-center justify-center text-sm font-bold">
-                            {user.nickname[0]?.toUpperCase() ?? 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-fg text-sm font-medium truncate">
-                                {user.nickname}
-                            </p>
-                        </div>
-                        <button
-                            onClick={async () => {
-                                if ((await signOut()) === 'unsynced' && window.confirm(t('auth.unsyncedSignOut'))) {
-                                    await signOut({ discardUnsynced: true });
-                                }
-                            }}
-                            className="p-2 text-muted hover:text-fg transition-colors rounded-lg hover:bg-fg/10"
-                            title={t('common.logout')}
-                            aria-label={t('common.logout')}
-                        >
-                            <LogOut size={18} aria-hidden="true" />
-                        </button>
-                    </div>
-                </div>
+          >
+            {({ isActive }) => (
+              <>
+                <Icon size={18} strokeWidth={isActive ? 2 : 1.75} className={isActive ? 'text-fg' : 'text-muted group-hover:text-fg'} aria-hidden="true" />
+                <span>{label}</span>
+              </>
             )}
-        </aside>
-    );
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="space-y-4 px-5 pb-5">
+        <section aria-labelledby="sidebar-appearance">
+          <h2 id="sidebar-appearance" className="mb-2 text-[11px] font-medium text-subtle">
+            {t('theme.label')}
+          </h2>
+          <ThemeSwitcher size="small" />
+        </section>
+
+        <label className="flex h-8 items-center justify-between gap-3 text-[13px]">
+          <span className="text-subtle">{t('language.title')}</span>
+          <span className="relative flex items-center">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as (typeof LANGUAGES)[number]['code'])}
+              aria-label={t('aria.switchLanguage')}
+              className="cursor-pointer appearance-none bg-transparent pr-5 text-right font-medium text-fg outline-none"
+            >
+              {LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-0 text-subtle" aria-hidden="true" />
+          </span>
+        </label>
+      </div>
+
+      {user && (
+        <div className="flex items-center gap-3 border-t border-line px-5 py-4">
+          <span
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-fg/[0.12] text-[13px] font-semibold text-fg"
+            aria-hidden="true"
+          >
+            {user.nickname[0]?.toUpperCase() ?? 'U'}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-fg">{user.nickname}</span>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            title={t('common.logout')}
+            aria-label={t('common.logout')}
+            className="-mr-1.5 grid h-8 w-8 place-items-center rounded-md text-muted transition-colors hover:bg-fg/[0.06] hover:text-fg"
+          >
+            <LogOut size={16} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    </aside>
+  );
 }

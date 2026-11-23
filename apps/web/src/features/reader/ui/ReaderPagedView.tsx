@@ -29,7 +29,7 @@ export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, textOf,
               <p
                 key={actualIndex}
                 className={`py-2 leading-relaxed transition-colors duration-200 ${
-                  isActive ? 'bg-yellow-500/20 dark:bg-yellow-500/10 -mx-2 px-2 rounded-lg text-lg' : ''
+                  isActive ? 'bg-yellow-500/15 -mx-2 px-2 rounded-lg text-lg' : ''
                 }`}
                 style={{ fontSize: `${fontSize}px`, color: 'var(--reader-text)' }}
               >

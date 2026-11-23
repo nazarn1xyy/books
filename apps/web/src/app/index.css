@@ -6,6 +6,7 @@
   --color-app: var(--c-app);
   --color-surface: var(--c-surface);
   --color-surface-2: var(--c-surface-2);
+  --color-segment: var(--c-segment);
   --color-fg: var(--c-fg);
   --color-muted: var(--c-muted);
   --color-subtle: var(--c-subtle);
@@ -22,6 +23,7 @@
   --c-app: #000000;
   --c-surface: #1c1c1e;
   --c-surface-2: #2c2c2e;
+  --c-segment: #636366;
   --c-fg: #ffffff;
   --c-muted: #a1a1aa;
   --c-subtle: #8e8e93;
@@ -39,6 +41,7 @@
   --c-app: #f2f2f7;
   --c-surface: #ffffff;
   --c-surface-2: #e5e5ea;
+  --c-segment: #ffffff;
   --c-fg: #000000;
   --c-muted: #3c3c43;
   --c-subtle: #6c6c70;
