@@ -22,14 +22,14 @@ export function ConfirmDialog({ label, onAnswer, confirmText }: ConfirmDialogPro
       onClose={() => onAnswer(false)}
       title={shownLabel ?? undefined}
       placement="bottom"
-      surfaceClassName="bg-[#1C1C1E] rounded-3xl border border-white/10"
+      surfaceClassName="bg-surface rounded-3xl border border-line"
       className="max-w-md p-6 mb-[calc(1rem+env(safe-area-inset-bottom))] w-[calc(100%-2rem)]"
     >
-      <p className="text-white font-semibold text-center mb-5">{shownLabel}</p>
+      <p className="text-fg font-semibold text-center mb-5">{shownLabel}</p>
       <div className="flex gap-3">
         <button
           onClick={() => onAnswer(false)}
-          className="flex-1 h-12 bg-white/10 text-white rounded-xl font-medium active:scale-95 transition-all"
+          className="flex-1 h-12 bg-fg/10 text-fg rounded-xl font-medium active:scale-95 transition-all"
         >
           {t('common.cancel')}
         </button>

@@ -13,7 +13,7 @@ export function SyncStatusBadge({ className = '' }: { className?: string }) {
   if (status === 'idle') return null;
   const offline = status === 'offline' || status === 'error';
   return (
-    <span role="status" className={`inline-flex items-center gap-1.5 text-xs text-neutral-400 ${className}`}>
+    <span role="status" className={`inline-flex items-center gap-1.5 text-xs text-muted ${className}`}>
       {offline ? (
         <CloudOff size={14} aria-hidden="true" />
       ) : (

@@ -47,13 +47,13 @@ export function Sidebar() {
     return (
         <aside
             aria-label="Sidebar Navigation"
-            className="desktop-only fixed left-0 top-0 bottom-0 w-[var(--sidebar-width)] bg-black/95 backdrop-blur-xl border-r border-white/10 flex flex-col z-50"
+            className="desktop-only fixed left-0 top-0 bottom-0 w-[var(--sidebar-width)] bg-app/95 backdrop-blur-xl border-r border-line flex flex-col z-50"
         >
             {/* Logo */}
-            <div className="p-6 border-b border-white/10">
+            <div className="p-6 border-b border-line">
                 <div className="flex items-center gap-2">
                     <img src="/logo-192.png" alt="Libify Logo" width={32} height={32} className="w-8 h-8 rounded-lg" />
-                    <span className="text-2xl font-bold text-white tracking-tight">Libify</span>
+                    <span className="text-2xl font-bold text-fg tracking-tight">Libify</span>
                 </div>
                 <SyncStatusBadge className="mt-2" />
             </div>
@@ -66,8 +66,8 @@ export function Sidebar() {
                         to={to}
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                                ? 'bg-white text-black font-semibold shadow-sm'
-                                : 'text-gray-400 hover:text-white hover:bg-white/10'
+                                ? 'bg-accent text-on-accent font-semibold shadow-sm'
+                                : 'text-muted hover:text-fg hover:bg-fg/10'
                             }`
                         }
                     >
@@ -83,14 +83,14 @@ export function Sidebar() {
                     onClick={() => setShowLangMenu(!showLangMenu)}
                     aria-expanded={showLangMenu}
                     aria-label={t('aria.switchLanguage')}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-fg hover:bg-fg/10 transition-all"
                 >
                     <Globe size={20} aria-hidden="true" />
                     <span className="text-sm flex-1 text-left">{currentLang?.flag} {currentLang?.name}</span>
                 </button>
 
                 {showLangMenu && (
-                    <div className="absolute bottom-full left-4 right-4 mb-2 bg-[#1C1C1E] rounded-xl border border-white/10 overflow-hidden shadow-xl z-50">
+                    <div className="absolute bottom-full left-4 right-4 mb-2 bg-surface rounded-xl border border-line overflow-hidden shadow-xl z-50">
                         {LANGUAGES.map((lang) => (
                             <button
                                 key={lang.code}
@@ -99,8 +99,8 @@ export function Sidebar() {
                                     setShowLangMenu(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${language === lang.code
-                                    ? 'bg-white/10 text-white font-medium'
-                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                    ? 'bg-fg/10 text-fg font-medium'
+                                    : 'text-muted hover:bg-fg/5 hover:text-fg'
                                     }`}
                             >
                                 <span>{lang.flag}</span>
@@ -113,13 +113,13 @@ export function Sidebar() {
 
             {/* User section */}
             {user && (
-                <div className="p-4 border-t border-white/10">
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                <div className="p-4 border-t border-line">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-fg/5">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-fg text-sm font-bold">
                             {user.nickname[0]?.toUpperCase() ?? 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium truncate">
+                            <p className="text-fg text-sm font-medium truncate">
                                 {user.nickname}
                             </p>
                         </div>
@@ -129,7 +129,7 @@ export function Sidebar() {
                                     await signOut({ discardUnsynced: true });
                                 }
                             }}
-                            className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                            className="p-2 text-muted hover:text-fg transition-colors rounded-lg hover:bg-fg/10"
                             title={t('common.logout')}
                             aria-label={t('common.logout')}
                         >

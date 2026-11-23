@@ -21,10 +21,10 @@ export function HomePage() {
   const continueIsFirstRow = inProgress.length > 0;
 
   return (
-    <div className="min-h-screen bg-black pb-28 lg:pb-8 pt-[env(safe-area-inset-top)]">
-      <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-xl border-b border-white/5 pt-2 pb-3 px-5 mb-4">
+    <div className="min-h-screen bg-app pb-28 lg:pb-8 pt-[env(safe-area-inset-top)]">
+      <div className="sticky top-0 z-30 bg-app/95 backdrop-blur-xl border-b border-fg/5 pt-2 pb-3 px-5 mb-4">
         <div className="desktop-container">
-          <h1 className="text-2xl font-bold text-white lg:text-3xl">{t('home.title')}</h1>
+          <h1 className="text-2xl font-bold text-fg lg:text-3xl">{t('home.title')}</h1>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export function HomePage() {
 
         {inProgress.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.continueReading')}</h2>
+            <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.continueReading')}</h2>
             <div className={ROW}>
               {inProgress.map((item, index) => (
                 <BookCard key={item.book.id} book={item.book} size="medium" showProgress priority={index < PRIORITY_CARDS} />
@@ -44,16 +44,16 @@ export function HomePage() {
 
         {recommendations.isPending ? (
           <section className="mb-8" aria-busy="true">
-            <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
+            <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recommended')}</h2>
             <BookListSkeleton count={4} />
           </section>
         ) : recommendations.isError || books.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-gray-400 mb-4">{t('errors.networkError')}</p>
+            <p className="text-muted mb-4">{t('errors.networkError')}</p>
             <button
               onClick={() => void recommendations.refetch()}
               disabled={recommendations.isFetching}
-              className="px-4 py-2 bg-white/10 rounded-full text-white text-sm hover:bg-white/20 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-fg/10 rounded-full text-fg text-sm hover:bg-fg/20 transition-colors disabled:opacity-50"
             >
               {t('common.retry')}
             </button>
@@ -61,7 +61,7 @@ export function HomePage() {
         ) : (
           <>
             <section className="mb-8">
-              <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recommended')}</h2>
+              <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recommended')}</h2>
               <div className={ROW}>
                 {recommendedBooks.map((book, index) => (
                   <BookCard key={book.id} book={book} size="large" priority={!continueIsFirstRow && index < PRIORITY_CARDS} showActions />
@@ -70,7 +70,7 @@ export function HomePage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-lg font-semibold text-white mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
+              <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {recentBooks.map((book) => (
                   <BookCard key={book.id} book={book} size="small" showActions />

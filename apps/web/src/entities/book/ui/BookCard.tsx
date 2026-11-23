@@ -61,9 +61,9 @@ export const BookCard = memo(function BookCard({
         >
             <Toast
                 message={cardToast}
-                className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg"
+                className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-app/80 text-fg text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg"
             />
-            <div className="relative overflow-hidden rounded-2xl bg-[#1C1C1E] shadow-md">
+            <div className="relative overflow-hidden rounded-2xl bg-surface shadow-md">
                 <ImageWithLoader
                     src={coverSrc}
                     alt={book.title}
@@ -75,7 +75,7 @@ export const BookCard = memo(function BookCard({
                     decoding={priority ? "sync" : "async"}
                     fetchPriority={priority ? "high" : "low"}
                     className={`w-full ${imageHeights[size]} object-cover transition-opacity duration-300 group-hover:opacity-90 rounded-2xl`}
-                    wrapperClassName="w-full bg-[#1C1C1E] rounded-2xl"
+                    wrapperClassName="w-full bg-surface rounded-2xl"
                 />
 
                 {/* Action Buttons */}
@@ -131,15 +131,15 @@ export const BookCard = memo(function BookCard({
                 {showProgress && percentage > 0 && (
                     <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
                         <ProgressBar percentage={percentage} height={4} />
-                        <p className="text-[10px] text-gray-400 mt-1">{percentage}%</p>
+                        <p className="text-[10px] text-muted mt-1">{percentage}%</p>
                     </div>
                 )}
             </div>
             <div className="flex-1 flex flex-col pt-2.5 px-0.5">
-                <h3 className="text-sm font-semibold text-white line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-gray-200 transition-colors">
+                <h3 className="text-sm font-semibold text-fg line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-muted transition-colors">
                     {book.title}
                 </h3>
-                <p className="text-xs text-gray-400 mt-1 line-clamp-1">{book.author}</p>
+                <p className="text-xs text-muted mt-1 line-clamp-1">{book.author}</p>
             </div>
         </Link>
     );

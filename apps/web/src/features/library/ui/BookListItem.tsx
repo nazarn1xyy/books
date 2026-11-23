@@ -25,7 +25,7 @@ export function BookListItem({ book, progress, onRemove }: { book: Book; progres
     <div className="relative group">
       {/* Delete Background Layer */}
       <div className="absolute inset-y-0 right-0 w-full bg-red-600 rounded-2xl flex items-center justify-end px-6 z-0" aria-hidden="true">
-        <Trash2 className="text-white" size={24} />
+        <Trash2 className="text-fg" size={24} />
       </div>
 
       {/* Swipeable card: drag left past the threshold to remove */}
@@ -43,7 +43,7 @@ export function BookListItem({ book, progress, onRemove }: { book: Book; progres
           if (e.key === 'Enter') navigate(`/reader/${book.id}`);
         }}
         style={{ transform: `translateX(${swipe.offset}px)` }}
-        className={`relative bg-[#1C1C1E] rounded-2xl z-10 touch-pan-y select-none cursor-pointer w-full ${swipe.dragging ? 'cursor-grabbing' : 'transition-transform duration-200 ease-out'}`}
+        className={`relative bg-surface rounded-2xl z-10 touch-pan-y select-none cursor-pointer w-full ${swipe.dragging ? 'cursor-grabbing' : 'transition-transform duration-200 ease-out'}`}
       >
         <div className="flex gap-4 p-4 pointer-events-none select-none">
           <ImageWithLoader
@@ -55,18 +55,18 @@ export function BookListItem({ book, progress, onRemove }: { book: Book; progres
             size="sm"
             loading="lazy"
             className="w-16 h-24 rounded-lg object-cover flex-shrink-0"
-            wrapperClassName="w-16 h-24 rounded-lg flex-shrink-0 bg-[#2C2C2E]"
+            wrapperClassName="w-16 h-24 rounded-lg flex-shrink-0 bg-surface-2"
           />
           <div className="flex-1 flex flex-col justify-between text-left py-1">
             <div>
-              <h3 className="font-semibold text-white line-clamp-2">{book.title || 'Без назви'}</h3>
-              <p className="text-sm text-gray-500 mt-0.5">{book.author || 'Невідомий автор'}</p>
+              <h3 className="font-semibold text-fg line-clamp-2">{book.title || 'Без назви'}</h3>
+              <p className="text-sm text-subtle mt-0.5">{book.author || 'Невідомий автор'}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <ProgressBar percentage={percentage} height={4} />
               </div>
-              <span className="text-xs text-gray-400 font-medium">{percentage}%</span>
+              <span className="text-xs text-muted font-medium">{percentage}%</span>
             </div>
           </div>
         </div>

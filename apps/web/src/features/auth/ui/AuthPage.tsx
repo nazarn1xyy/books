@@ -7,7 +7,7 @@ import { DEFAULT_LANGUAGE, LANGUAGES } from '@/shared/i18n/languages';
 import { ApiError } from '@/shared/api/ApiError';
 
 const inputClass =
-  'w-full h-11 bg-white/[0.04] rounded-xl pl-10 pr-4 text-white text-sm placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 border border-white/[0.08] transition-all';
+  'w-full h-11 bg-fg/[0.04] rounded-xl pl-10 pr-4 text-fg text-sm placeholder-subtle focus:outline-none focus:ring-1 focus:ring-fg/20 focus:border-fg/20 border border-fg/[0.08] transition-all';
 
 export function AuthPage() {
   const { login, register } = useAuth();
@@ -80,7 +80,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-black flex flex-col items-center justify-center p-4 sm:p-6 relative select-none overflow-y-auto">
+    <div className="min-h-[100dvh] w-full bg-app flex flex-col items-center justify-center p-4 sm:p-6 relative select-none overflow-y-auto">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_40%,rgba(120,119,198,0.08),rgba(0,0,0,0))] pointer-events-none" />
 
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" ref={langDropdownRef}>
@@ -90,15 +90,15 @@ export function AuthPage() {
             onClick={() => setShowLangDropdown(!showLangDropdown)}
             aria-expanded={showLangDropdown}
             aria-label={t('aria.switchLanguage')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-neutral-300 text-xs font-medium backdrop-blur-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-fg/[0.06] hover:bg-fg/[0.12] border border-fg/[0.08] text-muted text-xs font-medium backdrop-blur-md transition-all active:scale-95"
           >
-            <Globe size={14} className="text-neutral-400" aria-hidden="true" />
+            <Globe size={14} className="text-muted" aria-hidden="true" />
             <span>
               {currentLang.flag} {currentLang.name}
             </span>
           </button>
           {showLangDropdown && (
-            <div className="absolute right-0 mt-2 w-36 bg-[#1C1C1E] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-30 py-1">
+            <div className="absolute right-0 mt-2 w-36 bg-surface rounded-xl border border-line shadow-2xl overflow-hidden z-30 py-1">
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
@@ -108,7 +108,7 @@ export function AuthPage() {
                     setShowLangDropdown(false);
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors text-left ${
-                    language === lang.code ? 'bg-white/15 text-white font-semibold' : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                    language === lang.code ? 'bg-fg/15 text-fg font-semibold' : 'text-muted hover:bg-fg/5 hover:text-fg'
                   }`}
                 >
                   <span>{lang.flag}</span>
@@ -122,7 +122,7 @@ export function AuthPage() {
 
       <div className="w-full max-w-[400px] z-10 my-auto py-8">
         <div className="text-center mb-6">
-          <div className="mx-auto w-16 h-16 rounded-2xl shadow-xl shadow-black/50 border border-white/10 flex items-center justify-center mb-3 bg-[#18181b] overflow-hidden">
+          <div className="mx-auto w-16 h-16 rounded-2xl shadow-xl shadow-black/50 border border-line flex items-center justify-center mb-3 bg-surface overflow-hidden">
             <img
               src="/logo-192.png"
               alt="Libify"
@@ -135,12 +135,12 @@ export function AuthPage() {
               }}
             />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Libify</h1>
-          <p className="text-xs sm:text-sm text-neutral-400 mt-1">{t('auth.tagline')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-fg tracking-tight">Libify</h1>
+          <p className="text-xs sm:text-sm text-muted mt-1">{t('auth.tagline')}</p>
         </div>
 
-        <div className="bg-[#141416]/90 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-7 border border-white/[0.08] shadow-2xl shadow-black/90">
-          <div className="grid grid-cols-2 p-1 bg-white/[0.04] rounded-xl border border-white/[0.06] mb-5" role="tablist">
+        <div className="bg-surface/90 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-7 border border-fg/[0.08] shadow-2xl shadow-black/90">
+          <div className="grid grid-cols-2 p-1 bg-fg/[0.04] rounded-xl border border-fg/[0.06] mb-5" role="tablist">
             {[true, false].map((loginTab) => (
               <button
                 key={String(loginTab)}
@@ -149,7 +149,7 @@ export function AuthPage() {
                 aria-selected={isLogin === loginTab}
                 onClick={() => switchMode(loginTab)}
                 className={`py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
-                  isLogin === loginTab ? 'bg-white/[0.1] text-white shadow-sm' : 'text-neutral-400 hover:text-white'
+                  isLogin === loginTab ? 'bg-fg/[0.1] text-fg shadow-sm' : 'text-muted hover:text-fg'
                 }`}
               >
                 {loginTab ? t('auth.login') : t('auth.register')}
@@ -159,11 +159,11 @@ export function AuthPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-1.5">
-              <label htmlFor="nickname" className="text-xs font-medium text-neutral-400 ml-0.5">
+              <label htmlFor="nickname" className="text-xs font-medium text-muted ml-0.5">
                 {t('auth.nickname')}
               </label>
               <div className="relative">
-                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" aria-hidden="true" />
+                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" aria-hidden="true" />
                 <input
                   id="nickname"
                   type="text"
@@ -177,15 +177,15 @@ export function AuthPage() {
                   className={inputClass}
                 />
               </div>
-              {!isLogin && <p className="text-[11px] text-neutral-500 ml-0.5">{t('auth.nicknameHint')}</p>}
+              {!isLogin && <p className="text-[11px] text-subtle ml-0.5">{t('auth.nicknameHint')}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="password" className="text-xs font-medium text-neutral-400 ml-0.5">
+              <label htmlFor="password" className="text-xs font-medium text-muted ml-0.5">
                 {t('auth.password')}
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" aria-hidden="true" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" aria-hidden="true" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -200,12 +200,12 @@ export function AuthPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? t('aria.hidePassword') : t('aria.showPassword')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-muted transition-colors p-1"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {!isLogin && <p className="text-[11px] text-neutral-500 ml-0.5">{t('auth.passwordHint')}</p>}
+              {!isLogin && <p className="text-[11px] text-subtle ml-0.5">{t('auth.passwordHint')}</p>}
             </div>
 
             {error && (
@@ -217,7 +217,7 @@ export function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-white text-black rounded-xl font-semibold text-sm mt-2 hover:bg-neutral-200 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center shadow-sm"
+              className="w-full h-11 bg-accent text-on-accent rounded-xl font-semibold text-sm mt-2 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center shadow-sm"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : isLogin ? t('auth.loginAction') : t('auth.registerAction')}
             </button>

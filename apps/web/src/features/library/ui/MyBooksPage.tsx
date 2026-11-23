@@ -52,7 +52,7 @@ export function MyBooksPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden relative">
+    <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-app pt-[env(safe-area-inset-top)] overflow-hidden relative">
       <MyBooksHeader
         activeTab={activeTab}
         onTabChange={setActiveTab}

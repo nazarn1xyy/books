@@ -19,7 +19,7 @@ interface MyBooksHeaderProps {
 }
 
 const TABS: { key: MyBooksTab; icon: LucideIcon; activeClass: string; label: string }[] = [
-  { key: 'books', icon: Library, activeClass: 'bg-white text-black', label: 'myBooks.books' },
+  { key: 'books', icon: Library, activeClass: 'bg-accent text-on-accent', label: 'myBooks.books' },
   { key: 'favorites', icon: Heart, activeClass: 'bg-red-500 text-white', label: 'myBooks.favorites' },
   { key: 'quotes', icon: MessageSquareQuote, activeClass: 'bg-purple-500 text-white', label: 'myBooks.quotes' },
   { key: 'bookmarks', icon: Bookmark, activeClass: 'bg-blue-500 text-white', label: 'myBooks.bookmarks' },
@@ -37,32 +37,32 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
   const { t, language, setLanguage } = useLanguage();
 
   return (
-    <div className="flex-shrink-0 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-2 pb-3 z-30">
+    <div className="flex-shrink-0 bg-app/95 backdrop-blur-xl border-b border-line pt-2 pb-3 z-30">
       <div className="px-5 desktop-container">
         <header className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold text-white lg:text-3xl truncate">{t(TITLES[activeTab])}</h1>
+            <h1 className="text-2xl font-bold text-fg lg:text-3xl truncate">{t(TITLES[activeTab])}</h1>
             <SyncStatusBadge className="lg:hidden mt-0.5" />
             {activeTab === 'books' && counts.books > 0 && (
-              <p className="text-gray-500 text-xs mt-0.5">{t('myBooks.booksCount', { count: counts.books })}</p>
+              <p className="text-subtle text-xs mt-0.5">{t('myBooks.booksCount', { count: counts.books })}</p>
             )}
             {activeTab === 'favorites' && (
-              <p className="text-gray-500 text-xs mt-0.5">{t('myBooks.booksCount', { count: counts.favorites })}</p>
+              <p className="text-subtle text-xs mt-0.5">{t('myBooks.booksCount', { count: counts.favorites })}</p>
             )}
             {activeTab === 'quotes' && (
-              <p className="text-gray-500 text-xs mt-0.5">
+              <p className="text-subtle text-xs mt-0.5">
                 {counts.quotes} {t('myBooks.quotes').toLowerCase()}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center bg-white/10 p-0.5 rounded-xl border border-white/5" role="group" aria-label={t('language.title')}>
+            <div className="flex items-center bg-fg/10 p-0.5 rounded-xl border border-fg/5" role="group" aria-label={t('language.title')}>
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => setLanguage(lang.code)}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 active:scale-95 ${
-                    language === lang.code ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-white'
+                    language === lang.code ? 'bg-accent text-on-accent shadow-sm' : 'text-muted hover:text-fg'
                   }`}
                   title={lang.name}
                   aria-label={lang.name}
@@ -77,11 +77,11 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
               <button
                 onClick={onExport}
                 disabled={isExporting}
-                className="p-2.5 min-w-[40px] min-h-[40px] bg-white/10 hover:bg-white/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center border border-white/5"
+                className="p-2.5 min-w-[40px] min-h-[40px] bg-fg/10 hover:bg-fg/20 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center border border-fg/5"
                 title={t('myBooks.exportAll')}
                 aria-label={t('myBooks.exportAll')}
               >
-                <Download size={18} className="text-white" aria-hidden="true" />
+                <Download size={18} className="text-fg" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -103,7 +103,7 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
               <button
                 key={s.key}
                 onClick={() => onSortChange(s.key)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-white text-black font-semibold' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${sortBy === s.key ? 'bg-accent text-on-accent font-semibold' : 'bg-fg/10 text-muted hover:bg-fg/20'}`}
               >
                 {s.label}
               </button>
@@ -122,7 +122,7 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
                 aria-controls={`panel-${key}`}
                 onClick={() => onTabChange(key)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm transition-all whitespace-nowrap ${
-                  active ? `${activeClass} font-semibold shadow-sm` : 'bg-white/10 text-white hover:bg-white/20'
+                  active ? `${activeClass} font-semibold shadow-sm` : 'bg-fg/10 text-fg hover:bg-fg/20'
                 }`}
               >
                 <Icon size={16} fill={key === 'favorites' && active ? 'currentColor' : 'none'} aria-hidden="true" />

@@ -2,7 +2,7 @@ import { useId, useRef, useState, type PointerEvent, type ReactNode } from 'reac
 import { useDialogFocus } from './useDialogFocus';
 import { usePresence } from './usePresence';
 
-const DEFAULT_SURFACE = 'rounded-t-3xl sm:rounded-3xl bg-[#1C1C1E] border border-white/10';
+const DEFAULT_SURFACE = 'rounded-t-3xl sm:rounded-3xl bg-surface border border-line';
 const SWIPE_CLOSE_PX = 100;
 
 interface SheetProps {

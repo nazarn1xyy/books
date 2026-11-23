@@ -14,7 +14,7 @@ const AdminPage = lazyWithReload(() => import('@/features/admin').then((m) => ({
 export function AppRoutes() {
   useScrollRestoration();
   return (
-    <div className="min-h-screen bg-black overflow-x-hidden">
+    <div className="min-h-screen bg-app overflow-x-hidden">
       <Routes>
         <Route element={<BareLayout />}>
           <Route

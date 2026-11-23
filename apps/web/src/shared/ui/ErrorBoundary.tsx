@@ -59,19 +59,19 @@ export class ErrorBoundary extends Component<Props, State> {
     public override render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen bg-black flex items-center justify-center flex-col p-4 text-center">
-                    <h2 className="text-xl font-bold text-white mb-2">Что-то пошло не так</h2>
-                    <p className="text-gray-400 mb-6">Попробуйте обновить или вернуться назад.</p>
+                <div className="min-h-screen bg-app flex items-center justify-center flex-col p-4 text-center">
+                    <h2 className="text-xl font-bold text-fg mb-2">Что-то пошло не так</h2>
+                    <p className="text-muted mb-6">Попробуйте обновить или вернуться назад.</p>
                     <div className="flex gap-3">
                         <button
                             onClick={this.handleRetry}
-                            className="px-6 py-3 bg-white text-black font-semibold rounded-full active:scale-95 transition-transform"
+                            className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-full active:scale-95 transition-transform"
                         >
                             Попробовать снова
                         </button>
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-6 py-3 bg-gray-800 text-white font-semibold rounded-full active:scale-95 transition-transform"
+                            className="px-6 py-3 bg-surface-2 text-fg font-semibold rounded-full active:scale-95 transition-transform"
                         >
                             Обновить страницу
                         </button>

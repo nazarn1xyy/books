@@ -12,10 +12,10 @@ export function RegistrationsChart({ data }: { data: AdminStats['registrationsBy
             <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
-        <XAxis dataKey="day" stroke="#666" fontSize={10} tickLine={false} axisLine={false} tickMargin={10} interval="preserveStartEnd" />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--c-line)" />
+        <XAxis dataKey="day" stroke="var(--c-subtle)" fontSize={10} tickLine={false} axisLine={false} tickMargin={10} interval="preserveStartEnd" />
         <Tooltip
-          contentStyle={{ backgroundColor: '#2C2C2E', border: 'none', borderRadius: '12px', color: '#fff' }}
+          contentStyle={{ backgroundColor: 'var(--c-surface-2)', border: 'none', borderRadius: '12px', color: 'var(--c-fg)' }}
           itemStyle={{ color: '#fff' }}
           cursor={{ stroke: '#3B82F6', strokeWidth: 1, strokeDasharray: '4 4' }}
         />

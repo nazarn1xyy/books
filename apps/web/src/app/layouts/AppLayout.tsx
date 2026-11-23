@@ -10,7 +10,7 @@ export function AppLayout() {
   const { pathname } = useLocation();
   return (
     <>
-      <div className="min-h-screen bg-black animate-page-in lg:ml-[var(--sidebar-width)]" key={pathname}>
+      <div className="min-h-screen bg-app animate-page-in lg:ml-[var(--sidebar-width)]" key={pathname}>
         <RouteErrorBoundary>
           <Suspense fallback={<PageFallback />}>
             <Outlet />
@@ -27,7 +27,7 @@ export function AppLayout() {
 export function BareLayout() {
   const { pathname } = useLocation();
   return (
-    <div className="min-h-screen bg-black animate-page-in" key={pathname}>
+    <div className="min-h-screen bg-app animate-page-in" key={pathname}>
       <RouteErrorBoundary>
         <Suspense fallback={<PageFallback />}>
           <Outlet />

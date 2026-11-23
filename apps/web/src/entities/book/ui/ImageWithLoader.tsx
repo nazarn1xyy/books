@@ -61,7 +61,7 @@ export const ImageWithLoader = memo(function ImageWithLoader({
             {/* Skeleton / Placeholder to prevent Cumulative Layout Shift */}
             {!isLoaded && (
                 <div
-                    className="absolute inset-0 bg-[#2C2C2E] animate-pulse"
+                    className="absolute inset-0 bg-surface-2 animate-pulse"
                     aria-hidden="true"
                 />
             )}

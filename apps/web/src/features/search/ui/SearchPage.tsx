@@ -24,15 +24,15 @@ export function SearchPage() {
     const results = active ? (search.data ?? []) : [];
 
     return (
-        <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-black pt-[env(safe-area-inset-top)] overflow-hidden">
+        <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-app pt-[env(safe-area-inset-top)] overflow-hidden">
             {/* Fixed Search Header */}
-            <header className="flex-shrink-0 bg-black/95 backdrop-blur-xl border-b border-white/10 px-5 pt-2 pb-4 lg:px-8 z-30">
+            <header className="flex-shrink-0 bg-app/95 backdrop-blur-xl border-b border-line px-5 pt-2 pb-4 lg:px-8 z-30">
                 <div className="desktop-container">
-                    <h1 className="text-2xl font-bold text-white mb-3 lg:text-3xl">{t('search.title')}</h1>
+                    <h1 className="text-2xl font-bold text-fg mb-3 lg:text-3xl">{t('search.title')}</h1>
                     <div className="relative lg:max-w-xl">
                         <SearchIcon
                             size={20}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
                             aria-hidden="true"
                         />
                         <input
@@ -45,13 +45,13 @@ export function SearchPage() {
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t('search.placeholder')}
                             aria-label={t('search.title')}
-                            className="w-full h-12 bg-[#1C1C1E] rounded-xl pl-12 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-base"
+                            className="w-full h-12 bg-surface rounded-xl pl-12 pr-12 text-fg placeholder-subtle focus:outline-none focus:ring-2 focus:ring-fg/20 transition-all text-base"
                         />
                         {query && (
                             <button
                                 onClick={() => setQuery('')}
                                 aria-label={t('common.cancel')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-fg transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
                             >
                                 <X size={20} />
                             </button>
@@ -70,15 +70,15 @@ export function SearchPage() {
             >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                        <Loader2 className="animate-spin text-gray-400 mb-4" size={32} />
-                        <p className="text-gray-400">{t('search.searching')}</p>
+                        <Loader2 className="animate-spin text-muted mb-4" size={32} />
+                        <p className="text-muted">{t('search.searching')}</p>
                     </div>
                 ) : active && search.isError ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <p className="text-gray-400 mb-4">{t('errors.networkError')}</p>
+                        <p className="text-muted mb-4">{t('errors.networkError')}</p>
                         <button
                             onClick={() => void search.refetch()}
-                            className="px-4 py-2 bg-white/10 rounded-full text-white text-sm hover:bg-white/20 transition-colors"
+                            className="px-4 py-2 bg-fg/10 rounded-full text-fg text-sm hover:bg-fg/20 transition-colors"
                         >
                             {t('common.retry')}
                         </button>
@@ -91,15 +91,15 @@ export function SearchPage() {
                     </div>
                 ) : active ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                        <SearchIcon size={48} className="text-gray-600 mb-4" />
-                        <p className="text-gray-400 text-center">
+                        <SearchIcon size={48} className="text-subtle mb-4" />
+                        <p className="text-muted text-center">
                             {t('search.noResults', { query: debouncedQuery })}
                         </p>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16">
-                        <SearchIcon size={48} className="text-gray-700 mb-4" />
-                        <p className="text-gray-500 text-center">
+                        <SearchIcon size={48} className="text-subtle mb-4" />
+                        <p className="text-subtle text-center">
                             {t('search.enterQuery')}
                         </p>
                     </div>

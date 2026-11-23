@@ -18,10 +18,10 @@ export function UploadButton({ isUploading, fileInputRef, onFileChange, onOpenPi
       <button
         onClick={onOpenPicker}
         disabled={isUploading}
-        className="w-14 h-14 min-w-[56px] min-h-[56px] bg-white text-black rounded-full flex items-center justify-center shadow-xl active:scale-90 transition-transform disabled:opacity-50"
+        className="w-14 h-14 min-w-[56px] min-h-[56px] bg-accent text-on-accent rounded-full flex items-center justify-center shadow-xl active:scale-90 transition-transform disabled:opacity-50"
         aria-label={t('myBooks.addBook')}
       >
-        {isUploading ? <div className="animate-spin rounded-full h-6 w-6 border-2 border-black border-t-transparent" /> : <Plus size={28} />}
+        {isUploading ? <div className="animate-spin rounded-full h-6 w-6 border-2 border-on-accent border-t-transparent" /> : <Plus size={28} />}
       </button>
     </div>
   );

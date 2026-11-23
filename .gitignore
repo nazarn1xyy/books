@@ -140,3 +140,4 @@ playwright-report/
 
 # graphify knowledge graph (local, not committed)
 graphify-out/
+apps/web/e2e/__screenshots__/

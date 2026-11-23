@@ -14,8 +14,8 @@ export function InstallBanner() {
     <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
       <Download className="text-blue-400 flex-shrink-0 mt-0.5" size={24} aria-hidden="true" />
       <div className="flex-1">
-        <h3 className="text-white font-semibold mb-1">{t('home.installTitle')}</h3>
-        <p className="text-gray-300 text-sm mb-3">{t('home.installDesc')}</p>
+        <h3 className="text-fg font-semibold mb-1">{t('home.installTitle')}</h3>
+        <p className="text-muted text-sm mb-3">{t('home.installDesc')}</p>
         <button
           onClick={async () => {
             if (await promptInstall()) setDismissed(true);
@@ -27,7 +27,7 @@ export function InstallBanner() {
       </div>
       <button
         onClick={() => setDismissed(true)}
-        className="text-gray-400 hover:text-white transition-colors p-1 active:scale-95"
+        className="text-muted hover:text-fg transition-colors p-1 active:scale-95"
         aria-label={t('common.cancel')}
       >
         <X size={20} />
