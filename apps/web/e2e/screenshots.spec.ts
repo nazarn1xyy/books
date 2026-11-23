@@ -99,5 +99,8 @@ for (const theme of ['dark'] as const) {
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await page.waitForTimeout(400);
     await shot('reader-settings');
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await shot('home-continue');
   });
 }

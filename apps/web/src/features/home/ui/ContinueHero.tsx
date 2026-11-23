@@ -40,8 +40,9 @@ export function ContinueHero({ book, progress }: { book: Book; progress: Reading
       )}
       <div aria-hidden="true" className="continue-hero-veil absolute inset-0 -z-10" />
 
-      <div className="flex items-center gap-5 p-5 sm:gap-8 sm:p-8 lg:p-10">
-        <Link to={`/reader/${book.id}`} tabIndex={-1} aria-hidden="true" className="group w-28 flex-shrink-0 sm:w-40 lg:w-48">
+      <div className="p-4 sm:p-8 lg:p-10">
+      <div className="flex items-center gap-4 sm:gap-8">
+        <Link to={`/reader/${book.id}`} tabIndex={-1} aria-hidden="true" className="group w-[5.5rem] flex-shrink-0 sm:w-40 lg:w-48">
           <BookCover book={{ ...book, cover }} size="lg" priority className="continue-hero-cover" />
         </Link>
 
@@ -49,14 +50,14 @@ export function ContinueHero({ book, progress }: { book: Book; progress: Reading
           <h2 id="continue-title" className="sr-only">
             {t('home.continueReading')}
           </h2>
-          <p className="text-xl font-bold leading-tight tracking-tight text-fg line-clamp-3 text-balance sm:text-3xl lg:text-[34px]">
+          <p className="text-[17px] font-bold leading-snug tracking-tight text-fg line-clamp-2 sm:line-clamp-3 sm:text-3xl sm:leading-tight lg:text-[34px]">
             {title}
           </p>
-          <p className="mt-1.5 text-sm text-muted line-clamp-1 sm:text-base">{book.author}</p>
+          <p className="mt-1 text-[13px] text-muted line-clamp-1 sm:mt-1.5 sm:text-base">{book.author}</p>
 
-          <div className="mt-4 max-w-xs sm:mt-6">
+          <div className="mt-3 flex items-center gap-2.5 sm:mt-6 sm:block sm:max-w-xs">
             <div
-              className="h-1.5 overflow-hidden rounded-full bg-fg/15"
+              className="h-1 flex-1 overflow-hidden rounded-full bg-fg/15 sm:h-1.5"
               role="progressbar"
               aria-valuenow={percent}
               aria-valuemin={0}
@@ -65,18 +66,30 @@ export function ContinueHero({ book, progress }: { book: Book; progress: Reading
             >
               <div className="h-full rounded-full bg-[var(--cover-accent)]" style={{ width: `${percent}%` }} />
             </div>
-            <p className="mt-1.5 text-xs font-medium text-muted">{t('home.percentRead', { percent })}</p>
+            <p className="text-xs font-medium tabular-nums text-muted sm:hidden">{percent}%</p>
+            <p className="mt-1.5 hidden text-xs font-medium text-muted sm:block">{t('home.percentRead', { percent })}</p>
           </div>
 
           <Link
             to={`/reader/${book.id}`}
             aria-label={`${t('home.continue')}: ${title}`}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent shadow-lg transition-transform active:scale-95 sm:mt-6"
+            className="mt-4 hidden items-center gap-2 sm:inline-flex rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent shadow-lg transition-transform active:scale-95 sm:mt-6"
           >
             <Play size={15} fill="currentColor" aria-hidden="true" />
             {t('home.continue')}
           </Link>
         </div>
+      </div>
+
+      {/* Phones: a full-width button under the row, easy to reach with a thumb */}
+      <Link
+        to={`/reader/${book.id}`}
+        aria-label={`${t('home.continue')}: ${title}`}
+        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent text-[15px] font-semibold text-on-accent transition-transform active:scale-[0.98] sm:hidden"
+      >
+        <Play size={15} fill="currentColor" aria-hidden="true" />
+        {t('home.continue')}
+      </Link>
       </div>
     </section>
   );
