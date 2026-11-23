@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Copy, MessageSquareQuote, Trash2 } from 'lucide-react';
 import type { Quote } from '@/entities/book/model/types';
+import { EmptyState } from '@/shared/ui/EmptyState';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { TabSpinner } from './TabSpinner';
 
@@ -19,10 +20,7 @@ export function QuotesTab({ quotes, loading, onDelete }: { quotes: Quote[]; load
   if (loading) return <TabSpinner />;
   if (quotes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <MessageSquareQuote size={48} className="text-subtle mb-4" />
-        <p className="text-subtle text-center">{t('myBooks.noQuotes')}</p>
-      </div>
+      <EmptyState icon={MessageSquareQuote} text={t('myBooks.noQuotes')} />
     );
   }
 

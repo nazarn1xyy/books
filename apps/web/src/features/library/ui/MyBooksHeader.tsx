@@ -41,7 +41,7 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   return (
-    <div className="flex-shrink-0 bg-app/95 backdrop-blur-xl border-b border-line pt-2 pb-3 z-30">
+    <div className="flex-shrink-0 bg-app border-b border-line pt-2 pb-3 z-30">
       <div className="px-5 desktop-container">
         <header className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">

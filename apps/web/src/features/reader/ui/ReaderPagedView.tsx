@@ -19,8 +19,9 @@ export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, textOf,
   const fontSize = useReaderSettings((s) => s.fontSize);
   return (
     <div className="h-full flex flex-col relative">
-      <div className="flex-1 overflow-y-auto px-6 py-4 touch-pan-y" style={{ backgroundColor: 'var(--reader-bg)' }}>
-        <div className="max-w-3xl mx-auto">
+      <div className="flex-1 overflow-y-auto px-5 sm:px-8 py-4 touch-pan-y" style={{ backgroundColor: 'var(--reader-bg)' }}>
+        {/* Font size on the column so 68ch tracks the reading size (60–75 characters per line). */}
+        <div className="max-w-[68ch] mx-auto" style={{ fontSize: `${fontSize}px` }}>
           {pageParagraphs.map((para, idx) => {
             const actualIndex = pageIndex * PARAGRAPHS_PER_PAGE + idx;
             const isActive = actualIndex === activeParagraph;

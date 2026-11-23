@@ -1,6 +1,7 @@
 import { Bookmark as BookmarkIcon, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Bookmark } from '@/entities/book/model/types';
+import { EmptyState } from '@/shared/ui/EmptyState';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { TabSpinner } from './TabSpinner';
 
@@ -11,10 +12,7 @@ export function BookmarksTab({ bookmarks, loading, onDelete }: { bookmarks: Book
   if (loading) return <TabSpinner />;
   if (bookmarks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <BookmarkIcon size={48} className="text-subtle mb-4" />
-        <p className="text-subtle text-center">{t('myBooks.noBookmarks')}</p>
-      </div>
+      <EmptyState icon={BookmarkIcon} text={t('myBooks.noBookmarks')} />
     );
   }
 

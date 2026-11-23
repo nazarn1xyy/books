@@ -2,6 +2,7 @@ import { Heart, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Favorite } from '@/entities/book/model/types';
 import { ImageWithLoader } from '@/entities/book/ui/ImageWithLoader';
+import { EmptyState } from '@/shared/ui/EmptyState';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { TabSpinner } from './TabSpinner';
 
@@ -12,10 +13,7 @@ export function FavoritesTab({ favorites, loading, onRemove }: { favorites: Favo
   if (loading) return <TabSpinner />;
   if (favorites.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <Heart size={48} className="text-subtle mb-4" />
-        <p className="text-subtle text-center">{t('myBooks.noBooks')}</p>
-      </div>
+      <EmptyState icon={Heart} text={t('myBooks.noBooks')} action={{ label: t('empty.findBook'), to: '/search' }} />
     );
   }
 

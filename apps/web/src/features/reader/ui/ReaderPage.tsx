@@ -22,6 +22,7 @@ import { ReaderSettingsSheet } from './ReaderSettingsSheet';
 import { ReaderTocDrawer } from './ReaderTocDrawer';
 import { ReaderTranslateSheet } from './ReaderTranslateSheet';
 import { ReaderTtsControls } from './ReaderTtsControls';
+import { useHotkey } from '@/shared/lib/hooks/useHotkey';
 
 // Lazy-load PDF Viewer to prevent 500KB+ pdfjs bundle from loading for FB2 books
 const ReaderPdfViewer = lazy(() => import('./ReaderPdfViewer'));
@@ -66,6 +67,8 @@ export function ReaderPage() {
     keyboardEnabled: readerMode === 'page' && !showSettings && !showToc && !showTranslate,
     onEscape: goBack,
   });
+  // Scroll mode: Escape leaves the reader too (page mode handles it in usePagination).
+  useHotkey('Escape', goBack, readerMode !== 'page' && !showSettings && !showToc && !showTranslate);
   const tts = useReaderTts({ paragraphs, startIndex: position.visibleRange.startIndex, virtuosoRef });
   const translation = useReaderTranslation(paragraphs);
   const quotes = useQuoteSelection(book, toast.show);

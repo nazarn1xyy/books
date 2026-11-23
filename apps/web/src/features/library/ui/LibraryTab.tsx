@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BookOpen, ChevronLeft } from 'lucide-react';
+import { EmptyState } from '@/shared/ui/EmptyState';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import type { LibraryEntry } from '../model/useLibraryGrouping';
 import { BookListItem } from './BookListItem';
@@ -11,10 +12,7 @@ export function LibraryTab({ entries, onRemove }: { entries: LibraryEntry[]; onR
 
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <BookOpen size={48} className="text-subtle mb-4" />
-        <p className="text-subtle text-center">{t('myBooks.noBooks')}</p>
-      </div>
+      <EmptyState icon={BookOpen} text={t('myBooks.noBooks')} action={{ label: t('empty.findBook'), to: '/search' }} />
     );
   }
 

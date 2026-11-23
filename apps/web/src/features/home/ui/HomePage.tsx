@@ -1,7 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { BookCard } from '@/entities/book/ui/BookCard';
 import { useContinueReading } from '@/features/library';
 import { useRecommendations } from '@/features/search';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
+import { useHotkey } from '@/shared/lib/hooks/useHotkey';
+import { BookGrid } from '@/shared/ui/BookGrid';
 import { BookListSkeleton } from '@/shared/ui/Skeleton';
 import { InstallBanner } from './InstallBanner';
 
@@ -9,6 +12,12 @@ const ROW = "flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 
 
 export function HomePage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  // "/" jumps to search, like on most catalogue sites.
+  useHotkey('/', (e) => {
+    e.preventDefault();
+    void navigate('/search');
+  });
   const inProgress = useContinueReading(5);
   const recommendations = useRecommendations();
   const books = recommendations.data ?? [];
@@ -22,7 +31,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-app pb-28 lg:pb-8 pt-[env(safe-area-inset-top)]">
-      <div className="sticky top-0 z-30 bg-app/95 backdrop-blur-xl border-b border-fg/5 pt-2 pb-3 px-5 mb-4">
+      <div className="sticky top-0 z-30 bg-app border-b border-fg/5 pt-2 pb-3 px-5 mb-4">
         <div className="desktop-container">
           <h1 className="text-2xl font-bold text-fg lg:text-3xl">{t('home.title')}</h1>
         </div>
@@ -71,11 +80,11 @@ export function HomePage() {
 
             <section className="mb-8">
               <h2 className="text-lg font-semibold text-fg mb-4 lg:text-xl">{t('home.recentlyAdded')}</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <BookGrid>
                 {recentBooks.map((book) => (
                   <BookCard key={book.id} book={book} size="small" showActions />
                 ))}
-              </div>
+              </BookGrid>
             </section>
           </>
         )}

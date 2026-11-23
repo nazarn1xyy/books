@@ -176,5 +176,8 @@
         "light": "Light",
         "dark": "Dark",
         "system": "System"
+    },
+    "empty": {
+        "findBook": "Find a book"
     }
 }

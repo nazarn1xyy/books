@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, X, Loader2 } from 'lucide-react';
 import { BookCard } from '@/entities/book/ui/BookCard';
+import { useHotkey } from '@/shared/lib/hooks/useHotkey';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { BookGrid } from '@/shared/ui/BookGrid';
 import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue';
 import { useKeyboardHeight } from '@/shared/lib/hooks/useKeyboardHeight';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
@@ -17,6 +20,11 @@ export function SearchPage() {
     const search = useCatalogSearch(debouncedQuery);
     const { isKeyboardOpen, keyboardHeight } = useKeyboardHeight();
     const { t } = useLanguage();
+    const inputRef = useRef<HTMLInputElement>(null);
+    useHotkey('/', (e) => {
+        e.preventDefault();
+        inputRef.current?.focus();
+    });
 
     const active = debouncedQuery.length >= MIN_SEARCH_LENGTH;
     // A new query shows the spinner, not the previous query's results.
@@ -26,7 +34,7 @@ export function SearchPage() {
     return (
         <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-app pt-[env(safe-area-inset-top)] overflow-hidden">
             {/* Fixed Search Header */}
-            <header className="flex-shrink-0 bg-app/95 backdrop-blur-xl border-b border-line px-5 pt-2 pb-4 lg:px-8 z-30">
+            <header className="flex-shrink-0 bg-app border-b border-line px-5 pt-2 pb-4 lg:px-8 z-30">
                 <div className="desktop-container">
                     <h1 className="text-2xl font-bold text-fg mb-3 lg:text-3xl">{t('search.title')}</h1>
                     <div className="relative lg:max-w-xl">
@@ -36,6 +44,7 @@ export function SearchPage() {
                             aria-hidden="true"
                         />
                         <input
+                            ref={inputRef}
                             type="search"
                             inputMode="search"
                             autoComplete="off"
@@ -84,25 +93,15 @@ export function SearchPage() {
                         </button>
                     </div>
                 ) : results.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-8 desktop-container">
+                    <BookGrid className="pb-8 desktop-container">
                         {results.map((book) => (
                             <BookCard key={book.id} book={book} size="small" showActions />
                         ))}
-                    </div>
+                    </BookGrid>
                 ) : active ? (
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <SearchIcon size={48} className="text-subtle mb-4" />
-                        <p className="text-muted text-center">
-                            {t('search.noResults', { query: debouncedQuery })}
-                        </p>
-                    </div>
+                    <EmptyState icon={SearchIcon} text={t('search.noResults', { query: debouncedQuery })} />
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <SearchIcon size={48} className="text-subtle mb-4" />
-                        <p className="text-subtle text-center">
-                            {t('search.enterQuery')}
-                        </p>
-                    </div>
+                    <EmptyState icon={SearchIcon} text={t('search.enterQuery')} />
                 )}
             </div>
         </div>

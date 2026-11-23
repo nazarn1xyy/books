@@ -96,7 +96,7 @@ export function MyBooksPage() {
       {notice && (
         <div
           onClick={() => setNotice(null)}
-          className="fixed bottom-32 left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+8rem)] left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
         >
           {notice}
         </div>

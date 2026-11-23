@@ -22,7 +22,7 @@ export function AdminPage() {
 
   return (
     <div className="min-h-screen bg-app text-fg pb-24 pt-[env(safe-area-inset-top)] overflow-x-hidden">
-      <header className="px-5 py-6 sticky top-0 bg-app/80 backdrop-blur-md z-30">
+      <header className="px-5 py-6 sticky top-0 bg-app z-30">
         <h1 className="text-3xl font-bold">Панель</h1>
       </header>
 

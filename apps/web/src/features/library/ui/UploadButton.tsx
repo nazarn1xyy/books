@@ -13,7 +13,7 @@ interface UploadButtonProps {
 export function UploadButton({ isUploading, fileInputRef, onFileChange, onOpenPicker }: UploadButtonProps) {
   const { t } = useLanguage();
   return (
-    <div className="fixed bottom-24 right-5 z-20 pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] lg:bottom-8 right-5 z-20">
       <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".fb2,.zip,.fb2.zip,.pdf" className="hidden" />
       <button
         onClick={onOpenPicker}
