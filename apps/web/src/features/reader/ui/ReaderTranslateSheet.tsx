@@ -32,11 +32,9 @@ export function ReaderTranslateSheet({
             title={t('reader.translate')}
             placement="bottom"
             swipeToClose
-            surfaceClassName="bg-[var(--reader-ui-bg)] rounded-t-3xl"
-            className="w-full max-w-lg p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] touch-pan-y"
+            surfaceClassName="bg-[var(--reader-ui-bg)] text-[var(--reader-text)] rounded-[32px]"
+            className="w-full max-w-lg p-6 pb-6 touch-pan-y"
         >
-                        {/* Drag Handle */}
-                        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">

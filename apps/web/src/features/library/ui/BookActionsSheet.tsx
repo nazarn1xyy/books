@@ -12,7 +12,7 @@ export function BookActionsSheet({ book, onClose, onRemove }: { book: Book | nul
   const title = book?.title || 'Без назви';
 
   return (
-    <Sheet open={book !== null} onClose={onClose} title={t('myBooks.bookActions', { title })} className="p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] sm:max-w-sm" swipeToClose>
+    <Sheet open={book !== null} onClose={onClose} title={t('myBooks.bookActions', { title })} className="p-5 pb-5 sm:max-w-sm" swipeToClose>
       {book && (
         <>
           <div className="mb-5 flex items-center gap-4">

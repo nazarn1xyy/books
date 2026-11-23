@@ -87,7 +87,7 @@ export const BookCard = memo(function BookCard({
                 >
                     <MoreHorizontal size={18} aria-hidden="true" />
                 </button>
-                <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={t('myBooks.bookActions', { title })} className="p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+                <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={t('myBooks.bookActions', { title })} className="p-3 pb-3">
                     <p className="px-4 pt-2 pb-3 text-sm font-semibold text-fg line-clamp-2">{title}</p>
                     <button type="button" className={sheetAction} onClick={handleFavoriteClick} disabled={isLoading}>
                         <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />

@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom';
 import { useDialogFocus } from './useDialogFocus';
 import { usePresence } from './usePresence';
 
-const DEFAULT_SURFACE = 'rounded-t-3xl sm:rounded-3xl bg-surface border border-line';
+const DEFAULT_SURFACE = 'rounded-[32px] bg-surface';
 const SWIPE_CLOSE_PX = 100;
+/** iOS 26 sheets float: inset from the screen edges and lifted above the home indicator. */
+const FLOATING = 'inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))]';
 
 interface SheetProps {
   open: boolean;
@@ -67,9 +69,9 @@ export function Sheet({
 
   const position =
     placement === 'bottom'
-      ? `inset-x-0 bottom-0 mx-auto ${visible ? 'translate-y-0 opacity-100' : 'translate-y-full'}`
-      : `inset-x-0 bottom-0 sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(92vw,480px)]
-         ${visible ? 'translate-y-0 sm:-translate-x-1/2 sm:-translate-y-1/2 opacity-100' : 'translate-y-full sm:-translate-x-1/2 sm:-translate-y-[45%] opacity-0'}`;
+      ? `${FLOATING} mx-auto ${visible ? 'translate-y-0 opacity-100' : 'translate-y-[calc(100%+2rem)]'}`
+      : `${FLOATING} sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(92vw,480px)]
+         ${visible ? 'translate-y-0 sm:-translate-x-1/2 sm:-translate-y-1/2 opacity-100' : 'translate-y-[calc(100%+2rem)] sm:-translate-x-1/2 sm:-translate-y-[45%] opacity-0'}`;
 
   const sheet = (
     <div className="fixed inset-0 z-[60]" role="presentation">
@@ -89,11 +91,12 @@ export function Sheet({
         onPointerUp={onPointerEnd}
         onPointerCancel={onPointerEnd}
         style={dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
-        className={`absolute ${position} max-h-[85dvh] overflow-y-auto shadow-2xl outline-none
+        className={`absolute ${position} max-h-[85dvh] overflow-y-auto shadow-[0_24px_64px_rgb(0_0_0/0.6)] outline-none
           ${surfaceClassName}
-          transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none
+          transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none
           ${className}`}
       >
+        <div aria-hidden="true" className="mx-auto -mt-1.5 mb-3 h-[5px] w-9 rounded-full bg-current opacity-25 sm:hidden" />
         {title && (
           <h2 id={titleId} className="sr-only">
             {title}

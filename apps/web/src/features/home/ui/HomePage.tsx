@@ -33,7 +33,7 @@ export function HomePage() {
   const recommended = (withCovers.length >= 4 ? withCovers : books).slice(0, RECOMMENDED);
 
   return (
-    <div className="min-h-screen bg-app pb-28 lg:pb-10 pt-[env(safe-area-inset-top)]">
+    <div className="min-h-screen bg-app pb-tabbar pt-[env(safe-area-inset-top)]">
       <div className="sticky top-0 z-30 bg-app/85 backdrop-blur-xl pt-3 pb-3 px-5">
         <div className="desktop-container">
           <h1 className="page-title">{t('home.title')}</h1>

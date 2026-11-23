@@ -14,9 +14,9 @@ import { BookmarksTab } from './BookmarksTab';
 import { ExportProgress } from './ExportProgress';
 import { FavoritesTab } from './FavoritesTab';
 import { LibraryTab } from './LibraryTab';
+import { BookFileInput } from './BookFileInput';
 import { MyBooksHeader, type MyBooksTab } from './MyBooksHeader';
 import { QuotesTab } from './QuotesTab';
-import { UploadButton } from './UploadButton';
 
 export function MyBooksPage() {
   const { t } = useLanguage();
@@ -66,9 +66,11 @@ export function MyBooksPage() {
         onViewChange={setView}
         isExporting={exporter.isExporting}
         onExport={handleExport}
+        isUploading={upload.isUploading}
+        onAdd={upload.openPicker}
       />
 
-      <div className="flex-1 px-5 pt-4 pb-28 overflow-y-auto overflow-x-hidden touch-pan-y desktop-container" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex-1 px-5 pt-4 pb-tabbar overflow-y-auto overflow-x-hidden touch-pan-y desktop-container" style={{ WebkitOverflowScrolling: 'touch' }}>
         {exporter.isExporting && <ExportProgress progress={exporter.progress} />}
 
         <div id={`panel-${activeTab}`} role="tabpanel">
@@ -100,18 +102,13 @@ export function MyBooksPage() {
       {notice && (
         <div
           onClick={() => setNotice(null)}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+8rem)] left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] lg:bottom-6 left-4 right-4 z-30 bg-red-500/90 text-white text-sm font-medium rounded-xl px-4 py-3 shadow-xl cursor-pointer text-center"
         >
           {notice}
         </div>
       )}
 
-      <UploadButton
-        isUploading={upload.isUploading}
-        fileInputRef={upload.fileInputRef}
-        onFileChange={upload.handleFileChange}
-        onOpenPicker={upload.openPicker}
-      />
+      <BookFileInput inputRef={upload.fileInputRef} onChange={upload.handleFileChange} />
     </div>
   );
 }

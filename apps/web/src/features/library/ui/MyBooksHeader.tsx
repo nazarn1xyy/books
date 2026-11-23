@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowUpDown, Bookmark, Download, Heart, LayoutGrid, Library, List, MessageSquareQuote, MoreHorizontal, type LucideIcon } from 'lucide-react';
+import { ArrowUpDown, Bookmark, Download, Heart, LayoutGrid, Library, List, MessageSquareQuote, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react';
 import { Sheet } from '@/shared/ui/Sheet';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
@@ -20,6 +20,9 @@ interface MyBooksHeaderProps {
   onViewChange(view: LibraryView): void;
   isExporting: boolean;
   onExport(): void;
+  /** Opens the file picker to add a book from this device. */
+  onAdd(): void;
+  isUploading: boolean;
 }
 
 const TABS: { key: MyBooksTab; icon: LucideIcon; label: string }[] = [
@@ -46,7 +49,7 @@ const SORTS: { key: LibrarySort; label: string }[] = [
  * Pinned header. One row for the page (title, count, a single "more" menu), one constant-height row
  * for sections and library view controls, so switching tabs never moves the content.
  */
-export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sortBy, onSortChange, view, onViewChange, isExporting, onExport }: MyBooksHeaderProps) {
+export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sortBy, onSortChange, view, onViewChange, isExporting, onExport, onAdd, isUploading }: MyBooksHeaderProps) {
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const showLibraryControls = activeTab === 'books' && counts.books > 0;
@@ -72,15 +75,31 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
                 <SyncStatusBadge className="lg:hidden" />
               </div>
             </div>
+            <div className="-mr-2 flex items-center">
+            <button
+              type="button"
+              onClick={onAdd}
+              disabled={isUploading}
+              aria-label={t('myBooks.addBook')}
+              title={t('myBooks.addBook')}
+              className="min-w-[44px] min-h-[44px] grid place-items-center rounded-full text-fg hover:bg-fg/10 active:scale-95 transition disabled:opacity-50"
+            >
+              {isUploading ? (
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-fg/30 border-t-fg" aria-hidden="true" />
+              ) : (
+                <Plus size={24} aria-hidden="true" />
+              )}
+            </button>
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
               aria-label={t('common.more')}
               aria-haspopup="dialog"
-              className="-mr-2 min-w-[44px] min-h-[44px] grid place-items-center rounded-full text-fg hover:bg-fg/10 active:scale-95 transition"
+              className="min-w-[44px] min-h-[44px] grid place-items-center rounded-full text-fg hover:bg-fg/10 active:scale-95 transition"
             >
               <MoreHorizontal size={22} aria-hidden="true" />
             </button>
+            </div>
           </header>
 
           <div className="mt-3 flex min-h-[52px] items-center gap-3 pb-2">
@@ -151,7 +170,7 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
       </div>
 
       {/* Outside the z-30 header: a flex item with z-index traps the sheet under the bottom nav. */}
-      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={t('common.more')} className="p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={t('common.more')} className="p-5 pb-5">
         <div className="space-y-6">
           {/* On phones the tab row has no room for library controls: they live here. */}
           {showLibraryControls && (

@@ -22,7 +22,7 @@ export function ConfirmDialog({ label, onAnswer, confirmText }: ConfirmDialogPro
       onClose={() => onAnswer(false)}
       title={shownLabel ?? undefined}
       placement="bottom"
-      surfaceClassName="bg-surface rounded-3xl border border-line"
+      surfaceClassName="bg-surface rounded-[32px]"
       className="max-w-md p-6 mb-[calc(1rem+env(safe-area-inset-bottom))] w-[calc(100%-2rem)]"
     >
       <p className="text-fg font-semibold text-center mb-5">{shownLabel}</p>
