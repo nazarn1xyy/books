@@ -30,6 +30,8 @@
   --c-on-accent: #000000;
   --c-danger: #ff453a;
   --c-success: #30d158;
+  --cover-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  --cover-shadow-lift: 0 16px 36px rgb(0 0 0 / 0.5);
 }
 
 [data-theme='light'] {
@@ -45,6 +47,8 @@
   --c-on-accent: #ffffff;
   --c-danger: #d70015;
   --c-success: #248a3d;
+  --cover-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+  --cover-shadow-lift: 0 14px 30px rgb(0 0 0 / 0.26);
 }
 
 :focus-visible {
@@ -377,5 +381,20 @@ input[type="range"]::-webkit-slider-thumb {
   *, *::before, *::after {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+  }
+}
+
+/* Book covers (Plan 6): physical-object feel — tight spine radius, soft drop shadow, desktop hover lift. */
+.book-cover {
+  border-radius: 3px 7px 7px 3px;
+  box-shadow: var(--cover-shadow);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .group:hover .book-cover-lift,
+  .group:focus-visible .book-cover-lift {
+    transform: translateY(-4px);
+    box-shadow: var(--cover-shadow-lift);
   }
 }

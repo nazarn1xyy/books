@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Share2, Download, Check } from 'lucide-react';
 import type { Book } from '../model/types';
 import { getReadingProgress } from '@/shared/storage/storage';
-import { ProgressBar } from '@/shared/ui/ProgressBar';
-import { ImageWithLoader } from './ImageWithLoader';
+import { BookCover } from './BookCover';
 import { useBookCardActions } from '../lib/useBookCardActions';
 import { useBookCover } from '../lib/useBookCover';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
@@ -43,103 +42,58 @@ export const BookCard = memo(function BookCard({
 
     const sizeClasses = {
         small: 'w-full',
-        medium: 'w-36 sm:w-40',
-        large: 'w-44 sm:w-48',
+        medium: 'w-32 sm:w-36 flex-shrink-0',
+        large: 'w-40 sm:w-44 flex-shrink-0',
     };
-
-    const imageHeights = {
-        small: 'aspect-[2/3] w-full',
-        medium: 'h-52 sm:h-56 w-full',
-        large: 'h-64 sm:h-68 w-full',
-    };
+    const coverSize = size === 'small' ? 'sm' : size === 'large' ? 'lg' : 'md';
+    const actionButton =
+        'p-1.5 rounded-full backdrop-blur-md transition-all duration-200 shadow-sm';
 
     return (
         <Link
             to={`/reader/${book.id}`}
             aria-label={`${book.title}, ${book.author}`}
-            className={`${sizeClasses[size]} ${size === 'small' ? 'w-full' : 'flex-shrink-0'} text-left group transition-transform duration-200 active:scale-95 flex flex-col h-full card-hover relative snap-start`}
+            className={`${sizeClasses[size]} text-left group flex flex-col h-full relative snap-start rounded-lg active:scale-[0.97] transition-transform duration-200`}
         >
             <Toast
                 message={cardToast}
                 className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-app/80 text-fg text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap pointer-events-none shadow-lg"
             />
-            <div className="relative overflow-hidden rounded-2xl bg-surface shadow-md">
-                <ImageWithLoader
-                    src={coverSrc}
-                    alt={book.title}
-                    fallbackTitle={book.title}
-                    fallbackAuthor={book.author}
-                    fallbackFormat={book.format}
-                    size={size}
-                    loading={priority ? "eager" : "lazy"}
-                    decoding={priority ? "sync" : "async"}
-                    fetchPriority={priority ? "high" : "low"}
-                    className={`w-full ${imageHeights[size]} object-cover transition-opacity duration-300 group-hover:opacity-90 rounded-2xl`}
-                    wrapperClassName="w-full bg-surface rounded-2xl"
-                />
-
-                {/* Action Buttons */}
+            <BookCover book={{ ...book, cover: coverSrc }} size={coverSize} priority={priority} progress={showProgress ? percentage : 0}>
                 {showActions && (
-                    <div className="absolute top-2 right-2 flex gap-1.5 z-10">
+                    <div className="absolute top-1.5 right-1.5 flex gap-1 z-10 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
                         <button
                             onClick={handleDownloadClick}
                             disabled={isDownloading || isOffline}
-                            className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 ${isOffline
-                                ? 'bg-green-500/90 text-white'
-                                : 'bg-black/50 text-white/80 hover:bg-black/70'
-                                }`}
+                            className={`${actionButton} ${isOffline ? 'bg-green-600 text-white' : 'bg-black/55 text-white hover:bg-black/75'}`}
                             aria-label={isOffline ? t('aria.offlineReady') : t('aria.downloadOffline')}
                         >
-                            {isOffline ? (
-                                <Check size={16} />
-                            ) : (
-                                <Download size={16} className={isDownloading ? 'animate-pulse' : ''} />
-                            )}
+                            {isOffline ? <Check size={14} /> : <Download size={14} className={isDownloading ? 'animate-pulse' : ''} />}
                         </button>
                         <button
                             onClick={handleFavoriteClick}
                             disabled={isLoading}
-                            className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 ${isFavorite
-                                ? 'bg-red-500/90 text-white'
-                                : 'bg-black/50 text-white/80 hover:bg-black/70'
-                                }`}
+                            className={`${actionButton} ${isFavorite ? 'bg-red-500 text-white' : 'bg-black/55 text-white hover:bg-black/75'}`}
                             aria-label={isFavorite ? t('aria.removeFavorite') : t('aria.addFavorite')}
                         >
-                            <Heart
-                                size={16}
-                                fill={isFavorite ? 'currentColor' : 'none'}
-                                className={isLoading ? 'animate-pulse' : ''}
-                            />
+                            <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} className={isLoading ? 'animate-pulse' : ''} />
                         </button>
                         <button
                             onClick={handleShareClick}
-                            className="p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-black/70 backdrop-blur-md transition-all duration-200"
+                            className={`${actionButton} bg-black/55 text-white hover:bg-black/75`}
                             aria-label={t('aria.shareBook')}
                         >
-                            <Share2 size={16} />
+                            <Share2 size={14} />
                         </button>
                     </div>
                 )}
-
-                {/* Offline Badge */}
                 {!showActions && isOffline && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-green-500/90 backdrop-blur-md rounded-full z-10">
-                        <span className="text-xs text-white font-medium">✓</span>
-                    </div>
+                    <span className="absolute top-1.5 left-2 px-1.5 py-0.5 bg-green-600 rounded-full z-10 text-[10px] text-white font-semibold">✓</span>
                 )}
-
-                {showProgress && percentage > 0 && (
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                        <ProgressBar percentage={percentage} height={4} />
-                        <p className="text-[10px] text-muted mt-1">{percentage}%</p>
-                    </div>
-                )}
-            </div>
-            <div className="flex-1 flex flex-col pt-2.5 px-0.5">
-                <h3 className="text-sm font-semibold text-fg line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-muted transition-colors">
-                    {book.title}
-                </h3>
-                <p className="text-xs text-muted mt-1 line-clamp-1">{book.author}</p>
+            </BookCover>
+            <div className="flex-1 flex flex-col pt-2.5">
+                <h3 className="text-[13px] font-semibold text-fg line-clamp-2 leading-snug">{book.title}</h3>
+                <p className="text-xs text-subtle mt-0.5 line-clamp-1">{book.author}</p>
             </div>
         </Link>
     );

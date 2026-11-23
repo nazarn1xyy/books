@@ -1,32 +1,75 @@
-import { test } from '@playwright/test';
-import { mockCatalog, register, uniqueNickname } from './helpers';
+import { readFileSync } from 'node:fs';
+import { test, type Page } from '@playwright/test';
+import { fixture, register, uniqueNickname } from './helpers';
 
 // Report screenshots, not assertions: SHOTS=1 npx playwright test screenshots
+// SHOTS_DIR picks a sub-folder (e.g. "before" / "after").
 test.skip(!process.env.SHOTS, 'set SHOTS=1 to capture screenshots');
 
-const dir = 'e2e/__screenshots__';
+const dir = `e2e/__screenshots__${process.env.SHOTS_DIR ? `/${process.env.SHOTS_DIR}` : ''}`;
+
+const PALETTE = ['#7c2d12', '#1e3a8a', '#14532d', '#581c87', '#9a3412', '#0f766e', '#831843', '#3f3f46', '#a16207', '#155e75'];
+const TITLES = [
+  'Война и мир', '&amp;laquo;Анна Каренина&amp;raquo;', 'Воскресение', 'Детство', 'Хаджи-Мурат',
+  'Крейцерова соната', 'Казаки', 'Смерть Ивана Ильича', 'Севастопольские рассказы', 'Отец Сергий',
+];
+
+/** A catalog of ten books with generated covers, so screenshots show real layouts. */
+async function mockRichCatalog(page: Page): Promise<void> {
+  const entries = TITLES.map(
+    (title, i) => `<entry><title>${title}</title><author><name>Лев Толстой</name></author>
+      <id>tag:book:${900 + i}</id><link href="/b/${900 + i}/fb2" type="application/fb2+zip"/>
+      <link rel="http://opds-spec.org/image" href="/i/${i}/cover.svg" type="image/svg+xml"/></entry>`,
+  );
+  const opds = `<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom">${entries.join('')}</feed>`;
+  const fb2 = readFileSync(fixture('sample.fb2'));
+  await page.route('**/api/catalog/search**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/atom+xml', body: opds }),
+  );
+  await page.route('**/api/catalog/book/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/octet-stream', body: fb2 }),
+  );
+  await page.route('**/api/catalog/image**', (route) => {
+    const src = new URL(route.request().url()).searchParams.get('src') ?? '';
+    const i = Number(/\/i\/(\d+)\//.exec(src)?.[1] ?? 0);
+    const c = PALETTE[i % PALETTE.length];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="#111"/></linearGradient></defs>
+      <rect width="200" height="300" fill="url(#g)"/><circle cx="100" cy="120" r="${40 + i * 3}" fill="#fff" fill-opacity="0.15"/>
+      <rect x="20" y="220" width="160" height="4" fill="#fff" fill-opacity="0.6"/></svg>`;
+    return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: svg });
+  });
+}
 
 for (const theme of ['dark', 'light'] as const) {
   test(`pages in ${theme} theme`, async ({ page }, info) => {
     await page.addInitScript((t) => localStorage.setItem('libify.theme', t), theme);
-    await mockCatalog(page);
+    await mockRichCatalog(page);
     const shot = (name: string) =>
       page.screenshot({ path: `${dir}/${name}-${theme}-${info.project.name}.png` });
     await page.goto('/auth');
     await shot('auth');
     await register(page, uniqueNickname());
+    // A few started books: open them in the reader, plus one uploaded file without a cover.
+    for (const id of [900, 903, 905]) {
+      await page.goto(`/reader/${id}`);
+      await page.getByText('First paragraph of the sample book.').waitFor();
+    }
+    await page.goto('/my-books');
+    await page.locator('input[type=file]').setInputFiles(fixture('sample.fb2'));
+    await page.getByRole('link', { name: /E2E Sample Book/ }).first().waitFor();
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(300);
     await shot('home');
     await page.goto('/search?q=test');
     await page.waitForLoadState('networkidle');
     await shot('search');
     await page.goto('/my-books');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(300);
     await shot('my-books');
-    // Reader with the settings sheet open (the reader body keeps its own themes)
-    await page.goto('/search?q=mock');
-    await page.getByRole('link', { name: /Mocked Catalog Book/ }).first().click();
+    await page.goto('/reader/900');
     await page.getByText('First paragraph of the sample book.').waitFor();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await page.waitForTimeout(400);

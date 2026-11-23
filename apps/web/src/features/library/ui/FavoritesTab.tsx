@@ -1,7 +1,7 @@
 import { Heart, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Favorite } from '@/entities/book/model/types';
-import { ImageWithLoader } from '@/entities/book/ui/ImageWithLoader';
+import { BookCover } from '@/entities/book/ui/BookCover';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { TabSpinner } from './TabSpinner';
@@ -26,14 +26,11 @@ export function FavoritesTab({ favorites, loading, onRemove }: { favorites: Favo
           onClick={() => navigate(`/reader/${fav.book_id}`)}
         >
           <div className="flex items-center gap-4 min-w-0">
-            <ImageWithLoader
-              src={fav.book_cover}
-              alt={fav.book_title}
-              fallbackTitle={fav.book_title}
-              fallbackAuthor={fav.book_author}
+            <BookCover
+              book={{ id: fav.book_id, title: fav.book_title ?? '', author: fav.book_author ?? '', cover: fav.book_cover ?? '' }}
               size="sm"
-              className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
-              wrapperClassName="w-12 h-16 rounded-lg flex-shrink-0 bg-surface-2"
+              lift={false}
+              className="w-12 flex-shrink-0"
             />
             <div className="min-w-0">
               <h3 className="text-fg font-semibold text-sm truncate">{fav.book_title}</h3>

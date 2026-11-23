@@ -2,7 +2,7 @@ import { Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBookCover } from '@/entities/book/lib/useBookCover';
 import type { Book, ReadingProgress } from '@/entities/book/model/types';
-import { ImageWithLoader } from '@/entities/book/ui/ImageWithLoader';
+import { BookCover } from '@/entities/book/ui/BookCover';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { useSwipeToRemove } from '../model/useSwipeToRemove';
@@ -46,17 +46,7 @@ export function BookListItem({ book, progress, onRemove }: { book: Book; progres
         className={`relative bg-surface rounded-2xl z-10 touch-pan-y select-none cursor-pointer w-full ${swipe.dragging ? 'cursor-grabbing' : 'transition-transform duration-200 ease-out'}`}
       >
         <div className="flex gap-4 p-4 pointer-events-none select-none">
-          <ImageWithLoader
-            src={coverSrc}
-            alt={book.title}
-            fallbackTitle={book.title}
-            fallbackAuthor={book.author}
-            fallbackFormat={book.format}
-            size="sm"
-            loading="lazy"
-            className="w-16 h-24 rounded-lg object-cover flex-shrink-0"
-            wrapperClassName="w-16 h-24 rounded-lg flex-shrink-0 bg-surface-2"
-          />
+          <BookCover book={{ ...book, cover: coverSrc }} size="sm" lift={false} className="w-16 flex-shrink-0" />
           <div className="flex-1 flex flex-col justify-between text-left py-1">
             <div>
               <h3 className="font-semibold text-fg line-clamp-2">{book.title || 'Без назви'}</h3>
