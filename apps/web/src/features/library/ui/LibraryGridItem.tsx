@@ -24,7 +24,7 @@ export function LibraryGridItem({ book, progress, priority, onOpenActions }: Lib
     <div className="group relative flex flex-col">
       <Link
         to={`/reader/${book.id}`}
-        aria-label={`${title}, ${book.author}`}
+        aria-label={[title, book.author, percentage > 0 ? t('home.percentRead', { percent: percentage }) : ''].filter(Boolean).join(', ')}
         onPointerDown={press.onPointerDown}
         onPointerMove={press.onPointerMove}
         onPointerUp={press.onPointerUp}

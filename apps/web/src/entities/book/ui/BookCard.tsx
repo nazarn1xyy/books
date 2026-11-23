@@ -52,7 +52,7 @@ export const BookCard = memo(function BookCard({
     return (
         <Link
             to={`/reader/${book.id}`}
-            aria-label={`${book.title}, ${book.author}`}
+            aria-label={[book.title, book.author, showProgress && percentage > 0 ? t('home.percentRead', { percent: percentage }) : ''].filter(Boolean).join(', ')}
             className={`${sizeClasses[size]} text-left group flex flex-col h-full relative snap-start rounded-lg active:scale-[0.97] transition-transform duration-200`}
         >
             <Toast

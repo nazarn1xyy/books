@@ -24,7 +24,8 @@ function coverSvg(i: number): string {
 
 /** A long FB2 with an embedded cover, so started books have covers and measurable progress. */
 function richFb2(i: number): string {
-  const title = (TITLES[i] ?? 'Book').replace(/&amp;(laquo|raquo);/g, '&amp;$1;');
+  // Keeps the double-escaped `&amp;laquo;` so the FB2 path exercises entity decoding too.
+  const title = TITLES[i] ?? 'Book';
   const paragraphs = Array.from({ length: 80 }, (_, n) => `<p>${n === 0 ? 'First paragraph of the sample book.' : `Paragraph ${n} of a long chapter.`}</p>`).join('');
   return `<?xml version="1.0" encoding="utf-8"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
     <description><title-info><author><first-name>Лев</first-name><last-name>Толстой</last-name></author>

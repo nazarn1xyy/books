@@ -79,6 +79,11 @@ export function extractDominantColor(src: string): Promise<string> {
   const inFlight = pending.get(src);
   if (inFlight) return inFlight;
 
+  /** Unreadable covers are remembered in memory too, so they are not decoded on every mount. */
+  const fail = () => {
+    memory.set(src, NEUTRAL_ACCENT);
+    return NEUTRAL_ACCENT;
+  };
   const job = new Promise<string>((resolve) => {
     const img = new Image();
     img.decoding = 'async';
@@ -88,16 +93,16 @@ export function extractDominantColor(src: string): Promise<string> {
         canvas.width = 24;
         canvas.height = 36;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return resolve(NEUTRAL_ACCENT);
+        if (!ctx) return resolve(fail());
         ctx.drawImage(img, 0, 0, 24, 36);
         const color = averageColor(ctx.getImageData(0, 0, 24, 36).data);
         remember(src, color);
         resolve(color);
       } catch {
-        resolve(NEUTRAL_ACCENT); // tainted canvas or decode failure
+        resolve(fail()); // tainted canvas or decode failure
       }
     };
-    img.onerror = () => resolve(NEUTRAL_ACCENT);
+    img.onerror = () => resolve(fail());
     img.src = src;
   }).finally(() => pending.delete(src));
   pending.set(src, job);

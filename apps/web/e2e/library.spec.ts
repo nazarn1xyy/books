@@ -39,6 +39,9 @@ test('my books: grid actions remove a book, the list view is remembered', async 
 
   await page.getByRole('button', { name: /Actions for E2E Sample Book/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
-  await page.getByRole('alertdialog').or(page.getByRole('dialog')).getByRole('button', { name: 'Delete' }).last().click();
+  const confirmDialog = page.getByRole('dialog', { name: 'Delete?' });
+  // Focus moves into the confirmation, not back to the "…" button of the closed sheet.
+  await expect(confirmDialog).toBeFocused();
+  await confirmDialog.getByRole('button', { name: 'Delete' }).click();
   await expect(bookCard(page)).toHaveCount(0);
 });
