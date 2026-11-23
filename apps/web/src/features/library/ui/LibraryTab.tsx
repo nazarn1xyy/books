@@ -49,7 +49,7 @@ export function LibraryTab({ entries, view, onRemove }: LibraryTabProps) {
               <ChevronLeft size={22} aria-hidden="true" />
             </button>
             <div className="min-w-0">
-              <h2 id="series-title" className="text-xl font-semibold tracking-tight text-fg truncate">{openSeries.name}</h2>
+              <h2 id="series-title" className="section-title truncate">{openSeries.name}</h2>
               <p className="text-xs text-subtle">{t('myBooks.booksCount', { count: openSeries.books.length })}</p>
             </div>
           </div>

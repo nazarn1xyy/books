@@ -36,7 +36,7 @@ export function SearchPage() {
             {/* Fixed Search Header */}
             <header className="flex-shrink-0 bg-app border-b border-line px-5 pt-2 pb-4 lg:px-8 z-30">
                 <div className="desktop-container">
-                    <h1 className="text-2xl font-bold text-fg mb-3 lg:text-3xl">{t('search.title')}</h1>
+                    <h1 className="page-title mb-3">{t('search.title')}</h1>
                     <div className="relative lg:max-w-xl">
                         <SearchIcon
                             size={20}

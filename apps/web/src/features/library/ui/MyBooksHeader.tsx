@@ -49,7 +49,7 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
       <div className="px-5 desktop-container">
         <header className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold text-fg lg:text-3xl truncate">{t(TITLES[activeTab])}</h1>
+            <h1 className="page-title truncate">{t(TITLES[activeTab])}</h1>
             <SyncStatusBadge className="lg:hidden mt-0.5" />
             {activeTab === 'books' && counts.books > 0 && (
               <p className="text-subtle text-xs mt-0.5">{t('myBooks.booksCount', { count: counts.books })}</p>

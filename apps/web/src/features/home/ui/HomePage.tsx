@@ -11,7 +11,7 @@ import { ContinueHero } from './ContinueHero';
 import { InstallBanner } from './InstallBanner';
 
 const ROW = "flex gap-4 overflow-x-auto scrollbar-hide scroll-snap-x -mx-5 px-5 pt-1 pb-3 after:content-[''] after:w-4 after:flex-shrink-0";
-const SECTION_TITLE = 'text-xl font-semibold tracking-tight text-fg mb-4';
+const SECTION_TITLE = 'section-title mb-4';
 const RECOMMENDED = 12;
 /** Only the first covers on screen compete for bandwidth with high priority. */
 const PRIORITY_CARDS = 6;

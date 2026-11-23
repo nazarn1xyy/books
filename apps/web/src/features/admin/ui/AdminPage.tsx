@@ -23,7 +23,7 @@ export function AdminPage() {
   return (
     <div className="min-h-screen bg-app text-fg pb-24 pt-[env(safe-area-inset-top)] overflow-x-hidden">
       <header className="px-5 py-6 sticky top-0 bg-app z-30">
-        <h1 className="text-3xl font-bold">Панель</h1>
+        <h1 className="page-title">Панель</h1>
       </header>
 
       <main className="px-5 space-y-8">
@@ -54,7 +54,7 @@ export function AdminPage() {
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart2 size={20} className="text-muted" />
-                  <h2 className="text-lg font-bold">Регистрации по дням</h2>
+                  <h2 className="section-title">Регистрации по дням</h2>
                 </div>
                 <div className="bg-surface rounded-3xl p-4 h-64 border border-fg/5">
                   <RegistrationsChart data={stats.data.registrationsByDay} />
@@ -64,7 +64,7 @@ export function AdminPage() {
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy size={20} className="text-muted" />
-                  <h2 className="text-lg font-bold">Топ-10 книг</h2>
+                  <h2 className="section-title">Топ-10 книг</h2>
                 </div>
                 <div className="bg-surface rounded-3xl border border-fg/5 overflow-hidden">
                   {stats.data.topBooks.length === 0 ? (

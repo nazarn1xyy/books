@@ -73,7 +73,7 @@ for (const theme of ['dark', 'light'] as const) {
       await page.getByText('First paragraph of the sample book.').waitFor();
       await page.evaluate((dy) => {
         window.scrollBy(0, dy);
-        for (const el of document.querySelectorAll<HTMLElement>('*')) {
+        for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
           if (el.scrollHeight > el.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(el).overflowY)) el.scrollTop += dy;
         }
       }, 1500 + (id - 900) * 400);
