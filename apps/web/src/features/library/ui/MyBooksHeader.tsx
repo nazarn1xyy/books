@@ -41,6 +41,7 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   return (
+    <>
     <div className="flex-shrink-0 bg-app border-b border-line pt-2 pb-3 z-30">
       <div className="px-5 desktop-container">
         <header className="mb-3 flex items-center justify-between gap-3">
@@ -147,11 +148,13 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
           })}
         </div>
       </div>
-
-      <Sheet open={appearanceOpen} onClose={() => setAppearanceOpen(false)} title={t('theme.label')} className="p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
-        <h2 className="text-lg font-semibold text-fg mb-4" aria-hidden="true">{t('theme.label')}</h2>
-        <ThemeSwitcher />
-      </Sheet>
     </div>
+
+    {/* Outside the z-30 header: a flex item with z-index traps the sheet under the bottom nav. */}
+    <Sheet open={appearanceOpen} onClose={() => setAppearanceOpen(false)} title={t('theme.label')} className="p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+      <h2 className="text-lg font-semibold text-fg mb-4" aria-hidden="true">{t('theme.label')}</h2>
+      <ThemeSwitcher />
+    </Sheet>
+    </>
   );
 }
