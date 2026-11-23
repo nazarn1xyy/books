@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Eye, EyeOff, Globe, Loader2, Lock, User } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react';
 import { NICKNAME_PATTERN } from '@libify/shared/constants';
 import { useAuth } from '../model/AuthContext';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
-import { DEFAULT_LANGUAGE, LANGUAGES } from '@/shared/i18n/languages';
 import { ApiError } from '@/shared/api/ApiError';
 
 const inputClass =
@@ -11,32 +10,13 @@ const inputClass =
 
 export function AuthPage() {
   const { login, register } = useAuth();
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showLangDropdown, setShowLangDropdown] = useState(false);
-  const langDropdownRef = useRef<HTMLDivElement>(null);
-  const currentLang = LANGUAGES.find((l) => l.code === language) ?? DEFAULT_LANGUAGE;
-
-  useEffect(() => {
-    if (!showLangDropdown) return;
-    const onClick = (e: MouseEvent) => {
-      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) setShowLangDropdown(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowLangDropdown(false);
-    };
-    document.addEventListener('mousedown', onClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [showLangDropdown]);
 
   const messageFor = (err: unknown): string => {
     if (!(err instanceof ApiError)) return t('errors.unknownAuthError');
@@ -82,43 +62,6 @@ export function AuthPage() {
   return (
     <div className="min-h-[100dvh] w-full bg-app flex flex-col items-center justify-center p-4 sm:p-6 relative select-none overflow-y-auto">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_40%,rgba(120,119,198,0.08),rgba(0,0,0,0))] pointer-events-none" />
-
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20" ref={langDropdownRef}>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowLangDropdown(!showLangDropdown)}
-            aria-expanded={showLangDropdown}
-            aria-label={t('aria.switchLanguage')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-fg/[0.06] hover:bg-fg/[0.12] border border-fg/[0.08] text-muted text-xs font-medium backdrop-blur-md transition-all active:scale-95"
-          >
-            <Globe size={14} className="text-muted" aria-hidden="true" />
-            <span>
-              {currentLang.flag} {currentLang.name}
-            </span>
-          </button>
-          {showLangDropdown && (
-            <div className="absolute right-0 mt-2 w-36 bg-surface rounded-xl border border-line shadow-2xl overflow-hidden z-30 py-1">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  type="button"
-                  onClick={() => {
-                    setLanguage(lang.code);
-                    setShowLangDropdown(false);
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors text-left ${
-                    language === lang.code ? 'bg-fg/15 text-fg font-semibold' : 'text-muted hover:bg-fg/5 hover:text-fg'
-                  }`}
-                >
-                  <span>{lang.flag}</span>
-                  <span>{lang.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
       <div className="w-full max-w-[400px] z-10 my-auto py-8">
         <div className="text-center mb-6">

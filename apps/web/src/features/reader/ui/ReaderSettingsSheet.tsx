@@ -28,6 +28,7 @@ export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange
 
     return (
         <Sheet
+            portal={false}
             open={isOpen}
             onClose={onClose}
             title={t('reader.settings')}

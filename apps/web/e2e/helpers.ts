@@ -10,7 +10,7 @@ export function uniqueNickname(prefix = 'e2e'): string {
 
 /** Pin the UI language so text selectors are stable regardless of the browser locale. */
 export async function pinEnglish(page: Page): Promise<void> {
-  await page.addInitScript(() => localStorage.setItem('libify_language', 'en'));
+  await page.addInitScript(() => localStorage.setItem('libify.e2e-language', 'en'));
 }
 
 export const nicknameField = (page: Page) => page.getByLabel('Username', { exact: true });

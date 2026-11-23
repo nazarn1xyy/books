@@ -26,6 +26,7 @@ export function ReaderTranslateSheet({
 
     return (
         <Sheet
+            portal={false}
             open={isOpen}
             onClose={onClose}
             title={t('reader.translate')}

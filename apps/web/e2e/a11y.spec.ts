@@ -11,7 +11,7 @@ const audit = async (page: Page) => {
   }));
 };
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   test.describe(`${theme} theme`, () => {
     test.beforeEach(async ({ page }) => {
       await page.addInitScript((t) => localStorage.setItem('libify.theme', t), theme);

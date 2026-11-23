@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { ArrowUpDown, Bookmark, Download, Heart, LayoutGrid, Library, List, MessageSquareQuote, MoreHorizontal, type LucideIcon } from 'lucide-react';
-import { ThemeSwitcher } from '@/shared/theme/ThemeSwitcher';
 import { Sheet } from '@/shared/ui/Sheet';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
-import { LANGUAGES } from '@/shared/i18n/languages';
 import { SyncStatusBadge } from '@/shared/ui/SyncStatusBadge';
 import type { LibrarySort } from '../model/useLibraryGrouping';
 import type { LibraryView } from '../model/useLibraryView';
@@ -49,7 +47,7 @@ const SORTS: { key: LibrarySort; label: string }[] = [
  * for sections and library view controls, so switching tabs never moves the content.
  */
 export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sortBy, onSortChange, view, onViewChange, isExporting, onExport }: MyBooksHeaderProps) {
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const showLibraryControls = activeTab === 'books' && counts.books > 0;
 
@@ -155,11 +153,6 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
       {/* Outside the z-30 header: a flex item with z-index traps the sheet under the bottom nav. */}
       <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={t('common.more')} className="p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
         <div className="space-y-6">
-          <section>
-            <h2 className="mb-3 text-sm font-semibold text-fg">{t('theme.label')}</h2>
-            <ThemeSwitcher />
-          </section>
-
           {/* On phones the tab row has no room for library controls: they live here. */}
           {showLibraryControls && (
             <section className="lg:hidden space-y-3">
@@ -200,28 +193,6 @@ export function MyBooksHeader({ activeTab, onTabChange, counts, entryCount, sort
               </div>
             </section>
           )}
-
-          {/* Desktop has the language switch in the sidebar. */}
-          <section className="lg:hidden">
-            <h2 className="mb-3 text-sm font-semibold text-fg">{t('language.title')}</h2>
-            <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-fg/5 p-1" role="radiogroup" aria-label={t('language.title')}>
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  type="button"
-                  role="radio"
-                  aria-checked={language === lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg text-sm transition-colors ${
-                    language === lang.code ? 'bg-surface text-fg font-semibold shadow-sm' : 'text-subtle hover:text-fg'
-                  }`}
-                >
-                  <span aria-hidden="true">{lang.flag}</span>
-                  {lang.name}
-                </button>
-              ))}
-            </div>
-          </section>
 
           {counts.books > 0 && (
             <button

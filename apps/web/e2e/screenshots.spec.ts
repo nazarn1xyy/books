@@ -58,7 +58,7 @@ async function mockRichCatalog(page: Page): Promise<void> {
   });
 }
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   test(`pages in ${theme} theme`, async ({ page }, info) => {
     test.setTimeout(60_000);
     await page.addInitScript((t) => localStorage.setItem('libify.theme', t), theme);

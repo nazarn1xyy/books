@@ -1,4 +1,5 @@
 import { useId, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useDialogFocus } from './useDialogFocus';
 import { usePresence } from './usePresence';
 
@@ -21,6 +22,12 @@ interface SheetProps {
   className?: string;
   /** Drag the sheet down to close it (when its content is scrolled to the top). */
   swipeToClose?: boolean;
+  /**
+   * Render into <body> so no ancestor stacking context (scroll panes, page transitions) can put the
+   * bottom nav or floating buttons above the sheet. Reader sheets pass `false`: they need the reader
+   * theme variables of their container.
+   */
+  portal?: boolean;
 }
 
 export function Sheet({
@@ -32,6 +39,7 @@ export function Sheet({
   surfaceClassName = DEFAULT_SURFACE,
   className = '',
   swipeToClose = false,
+  portal = true,
 }: SheetProps) {
   const { mounted, visible } = usePresence(open);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -63,7 +71,7 @@ export function Sheet({
       : `inset-x-0 bottom-0 sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(92vw,480px)]
          ${visible ? 'translate-y-0 sm:-translate-x-1/2 sm:-translate-y-1/2 opacity-100' : 'translate-y-full sm:-translate-x-1/2 sm:-translate-y-[45%] opacity-0'}`;
 
-  return (
+  const sheet = (
     <div className="fixed inset-0 z-[60]" role="presentation">
       <div
         className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
@@ -95,4 +103,6 @@ export function Sheet({
       </div>
     </div>
   );
+
+  return portal ? createPortal(sheet, document.body) : sheet;
 }

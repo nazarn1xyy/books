@@ -14,7 +14,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
-const STORAGE_KEY = 'libify_language';
+const E2E_LANGUAGE_KEY = 'libify.e2e-language';
 
 function getNestedValue(obj: Record<string, unknown>, path: string): string | undefined {
     const keys = path.split('.');
@@ -31,35 +31,21 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string | un
     return typeof result === 'string' ? result : undefined;
 }
 
-// Detect browser language and map to supported languages
-function detectBrowserLanguage(): Language {
-    const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'uk';
-    const langCode = (browserLang.split('-')[0] ?? '').toLowerCase();
-
-    if (langCode === 'en') return 'en';
-    if (langCode === 'uk') return 'uk';
-
-    // Default to Ukrainian
-    return 'uk';
+/**
+ * The interface is Ukrainian; there is no language switch. Tests pin English through a key that
+ * nothing in the UI writes, so a user can't end up stuck in another language.
+ */
+function initialLanguage(): Language {
+    return localStorage.getItem(E2E_LANGUAGE_KEY) === 'en' ? 'en' : 'uk';
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
     const [fetchedLocale, setFetchedLocale] = useState<{ language: Language; data: LocaleData } | null>(null);
 
-    const [language, setLanguageState] = useState<Language>(() => {
-        // First check localStorage
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved && ['uk', 'en'].includes(saved)) {
-            return saved as Language;
-        }
-
-        // Auto-detect from browser
-        return detectBrowserLanguage();
-    });
+    const [language, setLanguageState] = useState<Language>(initialLanguage);
 
     const setLanguage = useCallback((lang: Language) => {
         setLanguageState(lang);
-        localStorage.setItem(STORAGE_KEY, lang);
         document.documentElement.lang = lang;
     }, []);
 
