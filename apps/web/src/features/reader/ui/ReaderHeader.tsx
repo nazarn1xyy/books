@@ -35,7 +35,9 @@ export function ReaderHeader({
         }`;
 
     return (
-        <header className="flex items-center gap-1 px-2 sm:px-4 min-h-[3.5rem] bg-[var(--reader-bg)] border-b border-[color-mix(in_srgb,var(--reader-text)_10%,transparent)] pt-statusbar pb-1 z-10 flex-shrink-0">
+        <header className="bg-[var(--reader-bg)] border-b border-[color-mix(in_srgb,var(--reader-text)_10%,transparent)] pt-statusbar z-10 flex-shrink-0">
+            {/* The bar itself is a fixed 56px row below the status-bar inset, like the app headers. */}
+            <div className="flex h-14 items-center gap-1 px-2 sm:px-4">
             <button onClick={onBack} aria-label={t('common.back')} className={iconButton()}>
                 <ChevronLeft size={26} aria-hidden="true" />
             </button>
@@ -63,6 +65,7 @@ export function ReaderHeader({
                 <button onClick={onOpenSettings} aria-label={t('aria.openSettings')} className={iconButton()}>
                     <Settings size={20} aria-hidden="true" />
                 </button>
+            </div>
             </div>
         </header>
     );

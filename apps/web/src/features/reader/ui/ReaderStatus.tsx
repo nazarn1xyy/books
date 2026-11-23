@@ -29,7 +29,8 @@ export function ReaderStatus({ book, onBack, error, onRetry }: ReaderStatusProps
 
   return (
     <div className="fixed inset-0 flex flex-col bg-[var(--reader-bg)] text-[var(--reader-text)]">
-      <header className="flex items-center px-4 pt-statusbar min-h-[3.5rem]">
+      <header className="px-4 pt-statusbar">
+        <div className="flex h-14 items-center">
         <button
           type="button"
           onClick={onBack}
@@ -38,6 +39,7 @@ export function ReaderStatus({ book, onBack, error, onRetry }: ReaderStatusProps
         >
           <ChevronLeft size={28} aria-hidden="true" />
         </button>
+        </div>
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 pb-[15vh] text-center">
