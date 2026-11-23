@@ -24,5 +24,12 @@ for (const theme of ['dark', 'light'] as const) {
     await page.goto('/my-books');
     await page.waitForLoadState('networkidle');
     await shot('my-books');
+    // Reader with the settings sheet open (the reader body keeps its own themes)
+    await page.goto('/search?q=mock');
+    await page.getByRole('link', { name: /Mocked Catalog Book/ }).first().click();
+    await page.getByText('First paragraph of the sample book.').waitFor();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.waitForTimeout(400);
+    await shot('reader-settings');
   });
 }
