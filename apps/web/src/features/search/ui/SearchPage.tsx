@@ -32,7 +32,7 @@ export function SearchPage() {
     const results = active ? (search.data ?? []) : [];
 
     return (
-        <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-app pt-[env(safe-area-inset-top)] overflow-hidden">
+        <div className="min-h-[100dvh] h-[100dvh] flex flex-col bg-app pt-statusbar overflow-hidden">
             {/* Fixed Search Header */}
             <header className="flex-shrink-0 bg-app border-b border-line px-5 pt-2 pb-4 lg:px-8 z-30">
                 <div className="desktop-container">

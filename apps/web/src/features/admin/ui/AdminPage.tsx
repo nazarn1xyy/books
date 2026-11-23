@@ -21,7 +21,7 @@ export function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-app text-fg pb-tabbar pt-[env(safe-area-inset-top)] overflow-x-hidden">
+    <div className="min-h-screen bg-app text-fg pb-tabbar pt-statusbar overflow-x-hidden">
       <header className="px-5 py-6 sticky top-0 bg-app z-30">
         <h1 className="page-title">Панель</h1>
       </header>

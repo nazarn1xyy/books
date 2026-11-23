@@ -26,7 +26,7 @@ export function ReaderTocDrawer({
             title={t('reader.tocTitle')}
             className="h-full bg-[var(--reader-bg)] border-l border-[color-mix(in_srgb,var(--reader-text)_12%,transparent)] flex flex-col shadow-2xl"
         >
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-[color-mix(in_srgb,var(--reader-text)_12%,transparent)] pt-[calc(env(safe-area-inset-top)+1rem)]">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-[color-mix(in_srgb,var(--reader-text)_12%,transparent)] pt-[calc(env(safe-area-inset-top)+min(env(safe-area-inset-top),10px)+1rem)]">
                             <h2 className="text-[var(--reader-text)] font-semibold text-lg">{t('reader.tocTitle')}</h2>
                             <button
                                 onClick={onClose}

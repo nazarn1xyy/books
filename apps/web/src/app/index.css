@@ -463,3 +463,11 @@ input[type="search"]::-webkit-search-cancel-button {
     padding-bottom: 2.5rem;
   }
 }
+
+/*
+ * Under the status bar, standalone iOS PWAs blur the first pixels of the page. Headers sit a little
+ * lower there: +10px only when a status bar exists (the min() is 0 on desktop, where the inset is 0).
+ */
+@utility pt-statusbar {
+  padding-top: calc(env(safe-area-inset-top) + min(env(safe-area-inset-top), 10px));
+}

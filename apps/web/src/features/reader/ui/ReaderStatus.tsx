@@ -29,7 +29,7 @@ export function ReaderStatus({ book, onBack, error, onRetry }: ReaderStatusProps
 
   return (
     <div className="fixed inset-0 flex flex-col bg-[var(--reader-bg)] text-[var(--reader-text)]">
-      <header className="flex items-center px-4 pt-[env(safe-area-inset-top)] min-h-[3.5rem]">
+      <header className="flex items-center px-4 pt-statusbar min-h-[3.5rem]">
         <button
           type="button"
           onClick={onBack}
