@@ -67,11 +67,16 @@ export function ReaderPage() {
     keyboardEnabled: readerMode === 'page' && !showSettings && !showToc && !showTranslate,
     onEscape: goBack,
   });
-  // Scroll mode: Escape leaves the reader too (page mode handles it in usePagination).
-  useHotkey('Escape', goBack, readerMode !== 'page' && !showSettings && !showToc && !showTranslate);
   const tts = useReaderTts({ paragraphs, startIndex: position.visibleRange.startIndex, virtuosoRef });
   const translation = useReaderTranslation(paragraphs);
   const quotes = useQuoteSelection(book, toast.show);
+  // Scroll mode: Escape closes the quote menu first, otherwise leaves the reader
+  // (page mode handles it in usePagination).
+  useHotkey(
+    'Escape',
+    () => (quotes.menuVisible ? quotes.closeMenu() : goBack()),
+    readerMode !== 'page' && !showSettings && !showToc && !showTranslate,
+  );
 
   if (loading) {
     return (

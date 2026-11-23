@@ -4,7 +4,7 @@ import { mockCatalog, pinEnglish, register, uniqueNickname } from './helpers';
 
 const audit = async (page: Page) => {
   // Contrast is measured on the final frame, not mid fade-in.
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().endTime !== Infinity).map((a) => a.finished)));
   return (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations.map((v) => ({
     id: v.id,
     nodes: v.nodes.map((n) => n.target.join(' ')),

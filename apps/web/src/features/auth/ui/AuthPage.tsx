@@ -7,7 +7,7 @@ import { DEFAULT_LANGUAGE, LANGUAGES } from '@/shared/i18n/languages';
 import { ApiError } from '@/shared/api/ApiError';
 
 const inputClass =
-  'w-full h-11 bg-fg/[0.04] rounded-xl pl-10 pr-4 text-fg text-sm placeholder-subtle focus:outline-none focus:ring-1 focus:ring-fg/20 focus:border-fg/20 border border-fg/[0.08] transition-all';
+  'w-full h-11 bg-fg/[0.04] rounded-xl pl-10 pr-4 text-fg text-base sm:text-sm placeholder-subtle focus:outline-none focus:ring-1 focus:ring-fg/20 focus:border-fg/20 border border-fg/[0.08] transition-all';
 
 export function AuthPage() {
   const { login, register } = useAuth();
