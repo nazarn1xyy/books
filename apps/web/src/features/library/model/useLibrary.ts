@@ -1,5 +1,5 @@
 import type { Book, ReadingProgress } from '@/entities/book/model/types';
-import { getAppState } from '@/shared/storage/storage';
+import { getAppState, getBookMetadata } from '@/shared/storage/storage';
 import { cachedByVersion, useStorageVersion } from '@/shared/storage/useStorageVersion';
 
 export interface LibraryItem {
@@ -24,7 +24,8 @@ const inProgressAt = cachedByVersion((): ContinueReadingItem[] => {
   const state = getAppState();
   return Object.entries(state.readingProgress)
     .flatMap(([id, progress]) => {
-      const book = state.bookMetadata[id];
+      // Not only library books: a book removed from My Books keeps its progress and local metadata.
+      const book = getBookMetadata(id);
       return book && progress.currentPage < progress.totalPages - 1 ? [{ book, progress }] : [];
     })
     .sort((a, b) => (b.progress.lastRead ?? 0) - (a.progress.lastRead ?? 0));

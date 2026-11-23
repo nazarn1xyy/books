@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { fetchBooks } from '@/shared/catalog/flibustaApi';
 
-export const MIN_SEARCH_LENGTH = 2;
+export const MIN_SEARCH_LENGTH = 1;
 
 export function useCatalogSearch(query: string) {
   const q = query.trim();

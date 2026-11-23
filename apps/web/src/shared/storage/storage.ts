@@ -19,7 +19,9 @@ let cachedLocal: LocalState | null = null;
 
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (e.key === LOCAL_KEY) cachedLocal = null;
+    if (e.key !== LOCAL_KEY) return;
+    cachedLocal = null;
+    notify(); // another tab changed book metadata: let this tab's lists re-read it
   });
 }
 
@@ -168,10 +170,7 @@ export function getAppState(): AppState {
   return { myBooks, bookMetadata, readingProgress, settings: loadLocal().settings };
 }
 
+/** Reader settings saved by older versions; read once to seed the reader settings store. */
 export function getSettings(): UserSettings {
   return loadLocal().settings;
-}
-
-export function saveSettings(settings: UserSettings): void {
-  saveLocal({ ...loadLocal(), settings });
 }

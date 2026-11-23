@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Credentials, LoginInput, PublicUser } from '@libify/shared';
 import { services } from '@/shared/services';
 import { importLegacyState } from '@/shared/sync/legacyImport';
@@ -56,10 +56,15 @@ export function AuthProvider({ children, onSignOut }: AuthProviderProps) {
     setUser(next);
   }, []);
 
+  // Session expired on the server: same cleanup of cached server data as an explicit sign-out.
+  const handleUnauthorized = useEffectEvent(() => {
+    applyUser(null);
+    onSignOut?.();
+  });
   useEffect(() => {
-    svc.api.onUnauthorized(() => applyUser(null));
+    svc.api.onUnauthorized(() => handleUnauthorized());
     return () => svc.api.onUnauthorized(null);
-  }, [svc, applyUser]);
+  }, [svc]);
 
   useEffect(() => {
     let cancelled = false;
