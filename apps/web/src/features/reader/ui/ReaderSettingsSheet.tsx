@@ -1,177 +1,211 @@
-import { X, Minus, Plus, Sun, AlignLeft, Layers } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Check, Sun, X } from 'lucide-react';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { Sheet } from '@/shared/ui/Sheet';
 import { FONT_FAMILIES } from '../model/fontFamilies';
-import type { ReaderSettings } from '../model/readerSettingsStore';
+import { BRIGHTNESS_MAX, BRIGHTNESS_MIN, FONT_SIZE_MAX, FONT_SIZE_MIN, type ReaderSettings } from '../model/readerSettingsStore';
 import { useReaderSettings } from '../model/useReaderSettings';
 
 interface ReaderSettingsSheetProps {
-    isOpen: boolean;
-    onClose: () => void;
-    isPdf: boolean;
-    /** Side effect of switching mode (e.g. open the page with the current paragraph). */
-    onReaderModeChange?: (mode: ReaderSettings['readerMode']) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  isPdf: boolean;
+  /** Side effect of switching mode (e.g. open the page with the current paragraph). */
+  onReaderModeChange?: (mode: ReaderSettings['readerMode']) => void;
 }
 
-/** Reader appearance settings; reads and writes the reader settings store directly. */
+/** Swatches use each theme's own page and ink, so the tile is a preview of the page. */
+const THEMES: Array<{ id: ReaderSettings['theme']; labelKey: string; bg: string; ink: string }> = [
+  { id: 'light', labelKey: 'reader.themeLight', bg: '#ffffff', ink: '#000000' },
+  { id: 'sepia', labelKey: 'reader.themeSepia', bg: '#f8f1e3', ink: '#5f4b32' },
+  { id: 'dark', labelKey: 'reader.themeDark', bg: '#1c1c1e', ink: '#ffffff' },
+  { id: 'oled', labelKey: 'reader.themeOled', bg: '#000000', ink: '#b0b0b0' },
+];
+
+const FONTS: Array<{ key: ReaderSettings['fontFamily']; labelKey: string }> = [
+  { key: 'sans', labelKey: 'reader.fontSans' },
+  { key: 'serif', labelKey: 'reader.fontSerif' },
+  { key: 'rounded', labelKey: 'reader.fontRounded' },
+  { key: 'mono', labelKey: 'reader.fontMono' },
+];
+
+const hairline = 'color-mix(in srgb, var(--reader-text) 12%, transparent)';
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="mb-2 px-1 text-[13px] reader-muted">{label}</legend>
+      {children}
+    </fieldset>
+  );
+}
+
+/** Reader appearance in the manner of Apple Books: previews instead of labels, one control per idea. */
 export function ReaderSettingsSheet({ isOpen, onClose, isPdf, onReaderModeChange }: ReaderSettingsSheetProps) {
-    const { t } = useLanguage();
-    const settings = useReaderSettings((s) => s);
-    const onUpdateTheme = settings.setTheme;
-    const onUpdateFontSize = settings.changeFontSize;
-    const onUpdateFontFamily = settings.setFontFamily;
-    const onUpdateBrightness = settings.setBrightness;
-    const onUpdateReaderMode = (mode: ReaderSettings['readerMode']) => {
-        settings.setReaderMode(mode);
-        onReaderModeChange?.(mode);
-    };
+  const { t } = useLanguage();
+  const settings = useReaderSettings((s) => s);
+  const setMode = (mode: ReaderSettings['readerMode']) => {
+    settings.setReaderMode(mode);
+    onReaderModeChange?.(mode);
+  };
+  const brightnessFill = ((settings.brightness - BRIGHTNESS_MIN) / (BRIGHTNESS_MAX - BRIGHTNESS_MIN)) * 100;
 
-    return (
-        <Sheet
-            portal={false}
-            open={isOpen}
-            onClose={onClose}
-            title={t('reader.settings')}
-            placement="bottom"
-            swipeToClose
-            surfaceClassName="bg-[var(--reader-ui-bg)] text-[var(--reader-text)] rounded-[32px]"
-            className="w-full max-w-lg max-h-[85dvh] overflow-y-auto overscroll-contain p-6 pb-6 touch-pan-y"
+  return (
+    <Sheet
+      portal={false}
+      open={isOpen}
+      onClose={onClose}
+      title={t('reader.settings')}
+      placement="bottom"
+      swipeToClose
+      surfaceClassName="bg-[var(--reader-ui-bg)] text-[var(--reader-text)] rounded-[32px]"
+      className="max-w-lg max-h-[85dvh] overflow-y-auto overscroll-contain px-5 pt-5 pb-6 touch-pan-y"
+    >
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold">{t('reader.settings')}</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('aria.closeSettings')}
+          className="-mr-1 grid h-11 w-11 place-items-center rounded-full"
         >
+          <span className="grid h-[30px] w-[30px] place-items-center rounded-full reader-fill reader-muted">
+            <X size={16} strokeWidth={2.5} aria-hidden="true" />
+          </span>
+        </button>
+      </div>
 
-                        {/* Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold text-[var(--reader-text)]">{t('reader.settings')}</h2>
-                            <button
-                                onClick={onClose}
-                                aria-label={t('aria.closeSettings')}
-                                className="p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center reader-muted hover:text-[var(--reader-text)] transition-colors rounded-full active:scale-95"
-                            >
-                                <X size={22} />
-                            </button>
-                        </div>
+      <div className="space-y-6">
+        <Group label={t('reader.theme')}>
+          <div className="grid grid-cols-4 gap-3" role="radiogroup" aria-label={t('reader.theme')}>
+            {THEMES.map((theme) => {
+              const selected = settings.theme === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => settings.setTheme(theme.id)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <span
+                    className={`grid aspect-[4/3] w-full place-items-center rounded-2xl text-[22px] transition-shadow duration-200 ${
+                      selected ? 'ring-2 ring-[var(--reader-text)] ring-offset-2 ring-offset-[var(--reader-ui-bg)]' : ''
+                    }`}
+                    style={{ backgroundColor: theme.bg, color: theme.ink, border: `1px solid ${hairline}`, fontFamily: FONT_FAMILIES[settings.fontFamily] }}
+                    aria-hidden="true"
+                  >
+                    Аа
+                  </span>
+                  <span className={`text-xs ${selected ? 'font-semibold' : 'reader-muted'}`}>{t(theme.labelKey)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Group>
 
-                        {/* Theme Selection */}
-                        <div className="mb-6">
-                            <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.theme')}</label>
-                            <div className="flex gap-2.5 justify-between">
-                                {[
-                                    { id: 'light', name: t('reader.themeLight'), bg: '#F2F2F2', border: '#ddd', text: '#000' },
-                                    { id: 'sepia', name: t('reader.themeSepia'), bg: '#F8F1E3', border: '#E3DCCF', text: '#5F4B32' },
-                                    { id: 'dark', name: t('reader.themeDark'), bg: '#2C2C2E', border: '#3A3A3C', text: '#FFF' },
-                                    { id: 'oled', name: t('reader.themeOled'), bg: '#000000', border: '#333', text: '#AAA' },
-                                ].map((thm) => (
-                                    <button
-                                        key={thm.id}
-                                        onClick={() => onUpdateTheme(thm.id as 'light' | 'dark' | 'sepia' | 'oled')}
-                                        className={`flex-1 py-3 rounded-xl border flex flex-col items-center gap-1 transition-all active:scale-95 ${
-                                            settings.theme === thm.id ? 'ring-2 ring-blue-500 scale-[1.02]' : ''
-                                        }`}
-                                        style={{ backgroundColor: thm.bg, borderColor: thm.border }}
-                                    >
-                                        <span className="text-xs font-semibold" style={{ color: thm.text }}>{thm.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+        {!isPdf && (
+          <Group label={t('reader.fontSize')}>
+            <div className="flex h-12 items-stretch overflow-hidden rounded-2xl reader-fill">
+              <button
+                type="button"
+                onClick={() => settings.changeFontSize(-2)}
+                disabled={settings.fontSize <= FONT_SIZE_MIN}
+                aria-label={t('aria.decreaseFontSize')}
+                className="flex-1 text-[15px] font-medium disabled:opacity-30 active:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)]"
+              >
+                A
+              </button>
+              <span className="grid w-16 place-items-center border-x text-[15px] tabular-nums reader-muted" style={{ borderColor: hairline }}>
+                {settings.fontSize}
+              </span>
+              <button
+                type="button"
+                onClick={() => settings.changeFontSize(2)}
+                disabled={settings.fontSize >= FONT_SIZE_MAX}
+                aria-label={t('aria.increaseFontSize')}
+                className="flex-1 text-[24px] font-medium disabled:opacity-30 active:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)]"
+              >
+                A
+              </button>
+            </div>
+          </Group>
+        )}
 
-                        {/* Font Size - Only for local text books */}
-                        {!isPdf && (
-                            <div className="mb-6">
-                                <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.fontSize')}</label>
-                                <div className="flex items-center justify-between reader-fill rounded-xl p-3.5">
-                                    <button
-                                        onClick={() => onUpdateFontSize(-2)}
-                                        aria-label={t('aria.decreaseFontSize')}
-                                        className="p-2 text-[var(--reader-text)] reader-fill rounded-lg active:scale-90 transition-transform"
-                                    >
-                                        <Minus size={20} />
-                                    </button>
-                                    <span className="text-[var(--reader-text)] font-semibold text-base">{settings.fontSize}px</span>
-                                    <button
-                                        onClick={() => onUpdateFontSize(2)}
-                                        aria-label={t('aria.increaseFontSize')}
-                                        className="p-2 text-[var(--reader-text)] reader-fill rounded-lg active:scale-90 transition-transform"
-                                    >
-                                        <Plus size={20} />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+        {!isPdf && (
+          <Group label={t('reader.fontFamily')}>
+            <div className="overflow-hidden rounded-2xl reader-fill" role="radiogroup" aria-label={t('reader.fontFamily')}>
+              {FONTS.map((font, i) => {
+                const selected = settings.fontFamily === font.key;
+                return (
+                  <button
+                    key={font.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => settings.setFontFamily(font.key)}
+                    className="flex h-12 w-full items-center justify-between px-4 text-left text-[17px]"
+                    style={{ fontFamily: FONT_FAMILIES[font.key], borderTop: i > 0 ? `1px solid ${hairline}` : undefined }}
+                  >
+                    {t(font.labelKey)}
+                    {selected && <Check size={18} strokeWidth={2.5} aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
+          </Group>
+        )}
 
-                        {/* Font Family */}
-                        {!isPdf && (
-                            <div className="mb-6">
-                                <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.fontFamily')}</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {([
-                                        { key: 'sans', label: t('reader.fontSans'), sample: 'Aa' },
-                                        { key: 'serif', label: t('reader.fontSerif'), sample: 'Aa' },
-                                        { key: 'mono', label: t('reader.fontMono'), sample: 'Aa' },
-                                        { key: 'rounded', label: t('reader.fontRounded'), sample: 'Aa' },
-                                    ] as const).map(f => (
-                                        <button
-                                            key={f.key}
-                                            onClick={() => onUpdateFontFamily(f.key)}
-                                            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all active:scale-95 ${
-                                                settings.fontFamily === f.key ? 'reader-selected' : 'reader-fill reader-muted'
-                                            }`}
-                                        >
-                                            <span className="text-[var(--reader-text)] text-lg leading-none" style={{ fontFamily: FONT_FAMILIES[f.key] }}>{f.sample}</span>
-                                            <span className="text-[10px] truncate max-w-full">{f.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+        {!isPdf && (
+          <Group label={t('reader.readingMode')}>
+            <div className="grid grid-cols-2 gap-0.5 rounded-xl reader-fill p-0.5" role="radiogroup" aria-label={t('reader.readingMode')}>
+              {(
+                [
+                  { mode: 'scroll', labelKey: 'reader.scroll' },
+                  { mode: 'page', labelKey: 'reader.pageFlip' },
+                ] as const
+              ).map(({ mode, labelKey }) => {
+                const selected = (settings.readerMode === 'page') === (mode === 'page');
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setMode(mode)}
+                    className={`h-9 rounded-[10px] text-[15px] transition-colors duration-150 ${
+                      selected
+                        ? 'bg-[color-mix(in_srgb,var(--reader-text)_18%,var(--reader-ui-bg))] font-semibold shadow-[0_1px_2px_rgb(0_0_0/0.15)]'
+                        : 'reader-muted'
+                    }`}
+                  >
+                    {t(labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </Group>
+        )}
 
-                        {/* Reader Mode Toggle */}
-                        {!isPdf && (
-                            <div className="mb-6">
-                                <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.readingMode')}</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => onUpdateReaderMode('scroll')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all active:scale-95 ${
-                                            settings.readerMode !== 'page'
-                                                ? 'reader-selected'
-                                                : 'reader-fill reader-muted'
-                                        }`}
-                                    >
-                                        <AlignLeft size={18} />
-                                        <span className="text-sm">{t('reader.scroll')}</span>
-                                    </button>
-                                    <button
-                                        onClick={() => onUpdateReaderMode('page')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all active:scale-95 ${
-                                            settings.readerMode === 'page'
-                                                ? 'reader-selected'
-                                                : 'reader-fill reader-muted'
-                                        }`}
-                                    >
-                                        <Layers size={18} />
-                                        <span className="text-sm">{t('reader.pageFlip')}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Brightness */}
-                        <div>
-                            <label className="text-xs font-medium reader-muted mb-2.5 block uppercase tracking-wider">{t('reader.brightness')}</label>
-                            <div className="flex items-center gap-4 reader-fill rounded-xl p-3.5">
-                                <Sun size={20} className="reader-muted" aria-hidden="true" />
-                                <input
-                                    type="range"
-                                    min="30"
-                                    max="100"
-                                    value={settings.brightness}
-                                    onChange={(e) => onUpdateBrightness(Number(e.target.value))}
-                                    className="flex-1 h-1 reader-fill rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-[var(--reader-text)]"
-                                    aria-label={t('reader.brightness')}
-                                />
-                                <span className="text-[var(--reader-text)] font-semibold text-sm w-10 text-right">{settings.brightness}%</span>
-                            </div>
-                        </div>
-        </Sheet>
-    );
+        <Group label={t('reader.brightness')}>
+          <div className="flex h-12 items-center gap-3 rounded-2xl reader-fill px-4">
+            <Sun size={15} className="reader-muted shrink-0" aria-hidden="true" />
+            <input
+              type="range"
+              min={BRIGHTNESS_MIN}
+              max={BRIGHTNESS_MAX}
+              value={settings.brightness}
+              onChange={(e) => settings.setBrightness(Number(e.target.value))}
+              aria-label={t('reader.brightness')}
+              aria-valuetext={`${settings.brightness}%`}
+              className="reader-range flex-1"
+              style={{ ['--fill' as string]: `${brightnessFill}%` }}
+            />
+            <Sun size={22} className="reader-muted shrink-0" aria-hidden="true" />
+          </div>
+        </Group>
+      </div>
+    </Sheet>
+  );
 }

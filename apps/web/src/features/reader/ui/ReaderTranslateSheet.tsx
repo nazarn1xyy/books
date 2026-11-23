@@ -33,7 +33,7 @@ export function ReaderTranslateSheet({
             placement="bottom"
             swipeToClose
             surfaceClassName="bg-[var(--reader-ui-bg)] text-[var(--reader-text)] rounded-[32px]"
-            className="w-full max-w-lg p-6 pb-6 touch-pan-y"
+            className="max-w-lg p-6 pb-6 touch-pan-y"
         >
 
                         {/* Header */}

@@ -36,72 +36,58 @@ export function ReaderHeader({
 }: ReaderHeaderProps) {
     const { t } = useLanguage();
 
+    // One button style for the whole bar: 44px targets, reader-theme colours, a soft pill when active.
+    const iconButton = (active = false) =>
+        `min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-[var(--reader-text)] transition-[background-color,opacity,transform] active:scale-95 hover:bg-[color-mix(in_srgb,var(--reader-text)_8%,transparent)] ${
+            active ? 'bg-[color-mix(in_srgb,var(--reader-text)_12%,transparent)]' : 'opacity-80 hover:opacity-100'
+        }`;
+
     return (
-        <header className="flex items-center justify-between px-4 min-h-[3.5rem] bg-[var(--reader-bg)] border-b border-white/5 pt-statusbar pb-2 z-10 flex-shrink-0">
-            <button
-                onClick={onBack}
-                aria-label={t('common.back')}
-                className="p-2 -ml-2 min-w-[44px] min-h-[44px] text-[var(--reader-text)] active:opacity-50 active:scale-95 transition-all flex items-center justify-center rounded-full"
-            >
-                <ChevronLeft size={28} />
+        <header className="flex items-center gap-1 px-2 sm:px-4 min-h-[3.5rem] bg-[var(--reader-bg)] border-b border-[color-mix(in_srgb,var(--reader-text)_10%,transparent)] pt-statusbar pb-1 z-10 flex-shrink-0">
+            <button onClick={onBack} aria-label={t('common.back')} className={iconButton()}>
+                <ChevronLeft size={26} aria-hidden="true" />
             </button>
-            <div className="flex-1 text-center overflow-hidden flex items-center justify-center gap-2">
-                <div className="truncate px-1">
-                    <h1 className="text-sm font-semibold text-[var(--reader-text)] truncate">
-                        {displayTitle(book.title)}
-                    </h1>
-                    {book.format === 'pdf' && numPages > 0 && (
-                        <p className="text-xs text-gray-400">
-                            {t('reader.page')} {displayPageNumber} {t('reader.of')} {numPages}
-                        </p>
-                    )}
-                </div>
+            <div className="flex-1 min-w-0 px-1">
+                <h1 className="text-[15px] font-semibold text-[var(--reader-text)] truncate">
+                    {displayTitle(book.title)}
+                </h1>
+                {book.format === 'pdf' && numPages > 0 && (
+                    <p className="text-xs text-[var(--reader-text)] opacity-60 tabular-nums">
+                        {t('reader.page')} {displayPageNumber} {t('reader.of')} {numPages}
+                    </p>
+                )}
             </div>
-            <div className="flex items-center -mr-2 gap-0.5">
+            <div className="flex items-center flex-shrink-0">
                 {user && book.format !== 'pdf' && (
                     <>
                         <button
                             onClick={onTtsPlay}
-                            className={`p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity rounded-full min-w-[40px] min-h-[40px] flex items-center justify-center ${
-                                showTtsControls ? 'text-blue-400 bg-blue-400/10' : ''
-                            }`}
                             aria-label={t('aria.readAloud')}
+                            aria-pressed={showTtsControls}
+                            className={iconButton(showTtsControls)}
                         >
-                            <Play size={20} fill={showTtsControls ? "currentColor" : "none"} />
+                            <Play size={20} fill={showTtsControls ? 'currentColor' : 'none'} aria-hidden="true" />
                         </button>
-                        <button
-                            onClick={onAddBookmark}
-                            aria-label={t('aria.addBookmark')}
-                            className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity rounded-full min-w-[40px] min-h-[40px] flex items-center justify-center"
-                        >
-                            <BookmarkPlus size={20} className="text-blue-400" />
+                        <button onClick={onAddBookmark} aria-label={t('aria.addBookmark')} className={iconButton()}>
+                            <BookmarkPlus size={20} aria-hidden="true" />
                         </button>
                     </>
                 )}
                 <button
                     onClick={onOpenTranslate}
                     aria-label={t('aria.translateBook')}
-                    className={`p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity rounded-full min-w-[40px] min-h-[40px] flex items-center justify-center ${
-                        translationLang ? 'text-green-400 bg-green-400/10' : ''
-                    }`}
+                    aria-pressed={!!translationLang}
+                    className={iconButton(!!translationLang)}
                 >
-                    <Languages size={20} className={translationLang ? 'text-green-400' : ''} />
+                    <Languages size={20} aria-hidden="true" />
                 </button>
                 {book.format !== 'pdf' && chaptersLength > 0 && (
-                    <button
-                        onClick={onOpenToc}
-                        aria-label={t('aria.openToc')}
-                        className="p-2 text-[var(--reader-text)] active:opacity-50 transition-opacity rounded-full min-w-[40px] min-h-[40px] flex items-center justify-center"
-                    >
-                        <List size={20} />
+                    <button onClick={onOpenToc} aria-label={t('aria.openToc')} className={iconButton()}>
+                        <List size={20} aria-hidden="true" />
                     </button>
                 )}
-                <button
-                    onClick={onOpenSettings}
-                    aria-label={t('aria.openSettings')}
-                    className="p-2 min-w-[44px] min-h-[44px] text-[var(--reader-text)] active:opacity-70 active:scale-95 transition-all flex items-center justify-center rounded-full"
-                >
-                    <Settings size={22} />
+                <button onClick={onOpenSettings} aria-label={t('aria.openSettings')} className={iconButton()}>
+                    <Settings size={20} aria-hidden="true" />
                 </button>
             </div>
         </header>
