@@ -1,7 +1,3 @@
-www.libify.store {
-	redir https://libify.store{uri} 308
-}
-
 libify.store {
 	encode zstd gzip
 
