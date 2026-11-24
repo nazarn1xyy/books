@@ -46,6 +46,7 @@ export function Sheet({
   const { mounted, visible } = usePresence(open);
   const panelRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
+  const dragStartT = useRef(0);
   const [dragY, setDragY] = useState(0);
   const titleId = useId();
   useDialogFocus(open, panelRef, onClose);
@@ -54,16 +55,22 @@ export function Sheet({
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (!swipeToClose || e.pointerType === 'mouse' || (panelRef.current?.scrollTop ?? 0) > 0) return;
+    if (dragStartY.current !== null) return; // a second finger must not hijack the drag
     dragStartY.current = e.clientY;
+    dragStartT.current = performance.now();
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (dragStartY.current === null) return;
-    setDragY(Math.max(0, e.clientY - dragStartY.current));
+    const dy = e.clientY - dragStartY.current;
+    // Downward tracks the finger 1:1; upward meets growing resistance instead of a wall.
+    setDragY(dy >= 0 ? dy : -Math.sqrt(-dy) * 2);
   };
   const onPointerEnd = () => {
     if (dragStartY.current === null) return;
     dragStartY.current = null;
-    if (dragY > SWIPE_CLOSE_PX) onClose();
+    const velocity = dragY / Math.max(1, performance.now() - dragStartT.current);
+    if (dragY > SWIPE_CLOSE_PX || (dragY > 10 && velocity > 0.11)) onClose();
     setDragY(0);
   };
 
@@ -90,10 +97,10 @@ export function Sheet({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerEnd}
         onPointerCancel={onPointerEnd}
-        style={dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
+        style={dragY !== 0 ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
         className={`absolute ${position} max-h-[85dvh] overflow-y-auto shadow-[0_24px_64px_rgb(0_0_0/0.6)] outline-none
           ${surfaceClassName}
-          transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none
+          transition-[transform,opacity] ${visible ? "duration-[420ms]" : "duration-[260ms]"} ease-[var(--ease-drawer)] motion-reduce:transition-none
           ${className}`}
       >
         <div aria-hidden="true" className="mx-auto -mt-1.5 mb-3 h-[5px] w-9 rounded-full bg-current opacity-25 sm:hidden" />

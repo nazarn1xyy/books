@@ -22,7 +22,7 @@ export function FavoritesTab({ favorites, loading, onRemove }: { favorites: Favo
       {favorites.map((fav) => (
         <div
           key={fav.id}
-          className="bg-surface border border-fg/5 rounded-2xl p-4 flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99] transition-all"
+          className="bg-surface border border-fg/5 rounded-2xl p-4 flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99] transition"
           onClick={() => navigate(`/reader/${fav.book_id}`)}
         >
           <div className="flex items-center gap-4 min-w-0">

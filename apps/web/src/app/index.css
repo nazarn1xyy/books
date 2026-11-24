@@ -3,6 +3,10 @@
 /* Semantic app colour tokens (Plan 4). Values switch via data-theme on <html>;
    the reader body keeps its own --reader-* themes. */
 @theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --default-transition-timing-function: var(--ease-out);
+  --default-transition-duration: 160ms;
   --color-app: var(--c-app);
   --color-surface: var(--c-surface);
   --color-surface-2: var(--c-surface-2);
@@ -297,32 +301,6 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @media (min-width: 1024px) {
-  .card-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  }
-
-  .hover-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .card-hover:hover .hover-actions {
-    opacity: 1;
-  }
-
-  .btn-hover {
-    transition: all 0.15s ease;
-  }
-
-  .btn-hover:hover {
-    transform: scale(1.05);
-  }
-
   .reader-content {
     max-width: 800px;
     margin-left: auto;
@@ -506,4 +484,19 @@ input[type='range'].reader-range::-moz-range-thumb {
   border-radius: 9999px;
   background: #fff;
   box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+}
+
+/* Native feel: no page-level rubber band or pull-to-refresh behind the app shell, no text
+   selection or callout on long-pressed controls, no font inflation on rotate. */
+html {
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+button,
+[role='tab'],
+nav a {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }

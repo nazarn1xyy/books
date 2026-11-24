@@ -29,13 +29,13 @@ export function ConfirmDialog({ label, onAnswer, confirmText }: ConfirmDialogPro
       <div className="flex gap-3">
         <button
           onClick={() => onAnswer(false)}
-          className="flex-1 h-12 bg-fg/10 text-fg rounded-xl font-medium active:scale-95 transition-all"
+          className="flex-1 h-12 bg-fg/10 text-fg rounded-xl font-medium active:scale-95 transition"
         >
           {t('common.cancel')}
         </button>
         <button
           onClick={() => onAnswer(true)}
-          className="flex-1 h-12 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition-all"
+          className="flex-1 h-12 bg-red-500 text-white rounded-xl font-medium active:scale-95 transition"
         >
           {confirmText ?? t('common.delete')}
         </button>

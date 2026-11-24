@@ -6,7 +6,7 @@ import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { ApiError } from '@/shared/api/ApiError';
 
 const inputClass =
-  'w-full h-11 bg-fg/[0.04] rounded-xl pl-10 pr-4 text-fg text-base sm:text-sm placeholder-subtle focus:outline-none focus:ring-1 focus:ring-fg/20 focus:border-fg/20 border border-fg/[0.08] transition-all';
+  'w-full h-11 bg-fg/[0.04] rounded-xl pl-10 pr-4 text-fg text-base sm:text-sm placeholder-subtle focus:outline-none focus:ring-1 focus:ring-fg/20 focus:border-fg/20 border border-fg/[0.08] transition';
 
 export function AuthPage() {
   const { login, register } = useAuth();
@@ -91,7 +91,7 @@ export function AuthPage() {
                 role="tab"
                 aria-selected={isLogin === loginTab}
                 onClick={() => switchMode(loginTab)}
-                className={`py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
+                className={`py-2 rounded-lg text-xs sm:text-sm font-medium transition duration-200 ${
                   isLogin === loginTab ? 'bg-fg/[0.1] text-fg shadow-sm' : 'text-muted hover:text-fg'
                 }`}
               >
@@ -160,7 +160,7 @@ export function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-accent text-on-accent rounded-xl font-semibold text-sm mt-2 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center shadow-sm"
+              className="w-full h-11 bg-accent text-on-accent rounded-xl font-semibold text-sm mt-2 hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50 flex items-center justify-center shadow-sm"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : isLogin ? t('auth.loginAction') : t('auth.registerAction')}
             </button>

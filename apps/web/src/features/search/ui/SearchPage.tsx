@@ -54,13 +54,13 @@ export function SearchPage() {
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t('search.placeholder')}
                             aria-label={t('search.title')}
-                            className="w-full h-12 bg-surface rounded-xl pl-12 pr-12 text-fg placeholder-subtle focus:outline-none focus:ring-2 focus:ring-fg/20 transition-all text-base"
+                            className="w-full h-12 bg-surface rounded-xl pl-12 pr-12 text-fg placeholder-subtle focus:outline-none focus:ring-2 focus:ring-fg/20 transition text-base"
                         />
                         {query && (
                             <button
                                 onClick={() => setQuery('')}
                                 aria-label={t('common.cancel')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-fg transition-colors active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-fg transition-colors active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
                             >
                                 <X size={20} />
                             </button>

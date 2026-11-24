@@ -20,7 +20,7 @@ export function InstallBanner() {
           onClick={async () => {
             if (await promptInstall()) setDismissed(true);
           }}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white rounded-lg text-sm font-medium transition-all"
+          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white rounded-lg text-sm font-medium transition"
         >
           {t('home.install')}
         </button>

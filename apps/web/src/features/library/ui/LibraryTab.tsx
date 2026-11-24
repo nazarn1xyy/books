@@ -102,7 +102,7 @@ export function LibraryTab({ entries, view, onRemove }: LibraryTabProps) {
           <div key={`series-${entry.name}`} className="space-y-4">
             <div
               onClick={() => setExpandedSeries(isExpanded ? null : entry.name)}
-              className="bg-surface/50 border border-fg/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all cursor-pointer"
+              className="bg-surface/50 border border-fg/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition cursor-pointer"
             >
               <div className="w-16 h-24 bg-surface-2 rounded-lg flex items-center justify-center text-fg/20">
                 <div className="flex flex-col items-center">

@@ -39,7 +39,7 @@ export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, onPrev,
         <button
           onClick={onPrev}
           disabled={pageIndex === 0}
-          className="p-3 text-[var(--reader-text)] disabled:opacity-30 active:scale-95 transition-all rounded-full"
+          className="p-3 text-[var(--reader-text)] disabled:opacity-30 active:scale-95 transition rounded-full"
           aria-label={t('aria.previousPage')}
         >
           <ChevronLeft size={28} />
@@ -50,7 +50,7 @@ export function ReaderPagedView({ pageParagraphs, pageIndex, totalPages, onPrev,
         <button
           onClick={onNext}
           disabled={pageIndex >= totalPages - 1}
-          className="p-3 text-[var(--reader-text)] disabled:opacity-30 active:scale-95 transition-all rounded-full"
+          className="p-3 text-[var(--reader-text)] disabled:opacity-30 active:scale-95 transition rounded-full"
           aria-label={t('aria.nextPage')}
         >
           <ChevronRight size={28} />

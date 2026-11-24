@@ -73,7 +73,7 @@ export function ReaderPdfViewer({
             <div className="sticky top-2 left-2 z-10 flex gap-2 p-2 pointer-events-auto">
                 <button
                     onClick={() => setPdfScale(s => Math.max(0.5, s - 0.25))}
-                    className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center text-xl font-bold backdrop-blur-sm active:scale-90 transition-transform shadow-lg"
+                    className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center text-xl font-bold backdrop-blur-sm active:scale-95 transition-transform shadow-lg"
                     aria-label="Zoom out"
                 >
                     −
@@ -83,7 +83,7 @@ export function ReaderPdfViewer({
                 </span>
                 <button
                     onClick={() => setPdfScale(s => Math.min(3, s + 0.25))}
-                    className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center text-xl font-bold backdrop-blur-sm active:scale-90 transition-transform shadow-lg"
+                    className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center text-xl font-bold backdrop-blur-sm active:scale-95 transition-transform shadow-lg"
                     aria-label="Zoom in"
                 >
                     +
