@@ -20,24 +20,25 @@ export function usePagination({ bookId, paragraphs, initialParagraph, keyboardEn
   const currentPageIndex = chosenPage ?? Math.floor(initialParagraph / PARAGRAPHS_PER_PAGE);
   const totalFlipPages = Math.ceil(paragraphs.length / PARAGRAPHS_PER_PAGE);
 
-  const goToNextPage = useCallback(() => {
-    if (currentPageIndex >= totalFlipPages - 1) return;
-    const newIndex = currentPageIndex + 1;
-    setCurrentPageIndex(newIndex);
-    if (bookId) {
+  /** Every flip (forward or back) saves: reopening shows exactly the page the reader left. */
+  const goToPage = useCallback(
+    (newIndex: number) => {
+      if (newIndex < 0 || newIndex >= totalFlipPages) return;
+      setCurrentPageIndex(newIndex);
+      if (!bookId) return;
       saveReadingProgress({
         bookId,
         currentPage: newIndex * PARAGRAPHS_PER_PAGE,
         totalPages: paragraphs.length,
         lastRead: Date.now(),
         scrollPercentage: Math.round((newIndex / totalFlipPages) * 100),
+        paragraphOffset: 0,
       });
-    }
-  }, [currentPageIndex, totalFlipPages, bookId, paragraphs.length]);
-
-  const goToPrevPage = useCallback(() => {
-    if (currentPageIndex > 0) setCurrentPageIndex(currentPageIndex - 1);
-  }, [currentPageIndex]);
+    },
+    [totalFlipPages, bookId, paragraphs.length],
+  );
+  const goToNextPage = useCallback(() => goToPage(currentPageIndex + 1), [goToPage, currentPageIndex]);
+  const goToPrevPage = useCallback(() => goToPage(currentPageIndex - 1), [goToPage, currentPageIndex]);
 
   /** Opens the page that contains the given paragraph (when switching from scroll mode). */
   const showParagraph = useCallback((paragraphIndex: number) => {

@@ -63,3 +63,57 @@ test('my books: grid actions remove a book, the list view is remembered', async 
   await confirmDialog.getByRole('button', { name: 'Delete' }).click();
   await expect(bookCard(page)).toHaveCount(0);
 });
+
+/** Long paragraphs: a paragraph-level position would be off by whole screens. */
+function longBook(): Buffer {
+  const paras = Array.from(
+    { length: 120 },
+    (_, i) => `<p>Paragraph ${i}. ${'Every word of this long paragraph is here to make it span many lines on the screen. '.repeat(12)}</p>`,
+  ).join('');
+  return Buffer.from(
+    `<?xml version="1.0" encoding="utf-8"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0"><description><title-info><author><first-name>Long</first-name><last-name>Author</last-name></author><book-title>Long Position Book</book-title><lang>en</lang></title-info></description><body><section>${paras}</section></body></FictionBook>`,
+  );
+}
+
+/** Paragraph index at the top of the reading pane and how many px of it are scrolled past. */
+async function topLine(page: Page) {
+  return page.evaluate(() => {
+    const scroller = document.querySelector('[data-virtuoso-scroller]') as HTMLElement;
+    const top = scroller.getBoundingClientRect().top;
+    for (const el of scroller.querySelectorAll<HTMLElement>('[data-index]')) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom > top + 1) return { index: Number(el.dataset.index), px: top - r.top };
+    }
+    return null;
+  });
+}
+
+test('reopening a book lands on the same line, not just the same paragraph', async ({ page }) => {
+  await register(page, uniqueNickname());
+  await page.goto('/my-books');
+  await page.locator('input[type=file]').setInputFiles({ name: 'long.fb2', mimeType: 'application/xml', buffer: longBook() });
+  const card = page.getByRole('link', { name: /Long Position Book/ }).first();
+  await expect(card).toBeVisible();
+  await card.click();
+  await expect(page.getByText(/^Paragraph 0\./)).toBeVisible();
+
+  // Jump deep into the book, then into the middle of a paragraph.
+  const scroller = page.locator('[data-virtuoso-scroller]');
+  for (let i = 0; i < 6; i++) {
+    await scroller.evaluate((el) => el.scrollBy(0, 2500));
+    await page.waitForTimeout(150);
+  }
+  await scroller.evaluate((el) => el.scrollBy(0, 137));
+  await page.waitForTimeout(300);
+  const before = await topLine(page);
+  expect(before && before.index).toBeGreaterThan(3);
+  expect(before!.px).toBeGreaterThan(20);
+  await page.waitForTimeout(1500); // past the save debounce
+
+  await page.reload();
+  await expect(page.getByText(new RegExp(`^Paragraph ${before!.index}\\.`))).toBeVisible();
+  await page.waitForTimeout(500);
+  const after = await topLine(page);
+  expect(after!.index).toBe(before!.index);
+  expect(Math.abs(after!.px - before!.px)).toBeLessThan(12);
+});

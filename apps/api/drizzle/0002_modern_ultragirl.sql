@@ -1,0 +1,1 @@
+ALTER TABLE "reading_progress" ADD COLUMN "paragraph_offset" real DEFAULT 0 NOT NULL;

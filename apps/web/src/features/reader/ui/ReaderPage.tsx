@@ -139,7 +139,9 @@ export function ReaderPage() {
               paragraphs={paragraphs}
               virtuosoRef={virtuosoRef}
               initialIndex={position.initialIndex}
+              initialOffset={position.initialOffset}
               onRangeChanged={position.handleRangeChanged}
+              onLinePosition={position.handleLinePosition}
             />
           )
         ) : (

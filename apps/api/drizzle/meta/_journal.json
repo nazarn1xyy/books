@@ -15,6 +15,13 @@
       "when": 1795029791976,
       "tag": "0001_natural_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795507023252,
+      "tag": "0002_modern_ultragirl",
+      "breakpoints": true
     }
   ]
 }

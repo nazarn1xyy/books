@@ -55,6 +55,7 @@ export class ProgressSyncRepository extends BaseSyncRepository<ProgressData, Pro
       scrollRatio: r.scrollRatio,
       currentPage: r.currentPage,
       totalPages: r.totalPages,
+      paragraphOffset: r.paragraphOffset,
     };
   }
   protected keyOf(r: ProgressRow) {

@@ -99,6 +99,7 @@ function toReadingProgress(data: ProgressData, updatedAt: string): ReadingProgre
     totalPages: data.totalPages,
     lastRead: Date.parse(updatedAt),
     scrollPercentage: Math.round(data.scrollRatio * 100),
+    paragraphOffset: data.paragraphOffset ?? 0,
   };
 }
 
@@ -162,6 +163,7 @@ export function saveReadingProgress(progress: ReadingProgress): void {
     scrollRatio: Math.min(1, Math.max(0, (progress.scrollPercentage ?? 0) / 100)),
     currentPage: page,
     totalPages: Math.max(0, Math.floor(progress.totalPages)),
+    paragraphOffset: Math.min(1, Math.max(0, progress.paragraphOffset ?? 0)),
   };
   services().sync.record('progress', progress.bookId, data).catch(logSyncError);
 }

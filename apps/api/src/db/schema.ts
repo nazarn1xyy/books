@@ -72,6 +72,7 @@ export const readingProgress = pgTable(
     scrollRatio: real('scroll_ratio').notNull().default(0),
     currentPage: integer('current_page').notNull().default(0),
     totalPages: integer('total_pages').notNull().default(0),
+    paragraphOffset: real('paragraph_offset').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.bookId] }), index('reading_progress_sync_idx').on(t.userId, t.syncedAt)],
 );

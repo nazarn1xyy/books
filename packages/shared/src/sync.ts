@@ -24,6 +24,8 @@ export const progressDataSchema = z.object({
   scrollRatio: z.number().min(0).max(1),
   currentPage: z.number().int().min(0),
   totalPages: z.number().int().min(0),
+  /** How far the top of the screen is into the paragraph (0..1), so reopening lands on the same line. */
+  paragraphOffset: z.number().min(0).max(1).optional(),
 });
 
 export const quoteDataSchema = z.object({

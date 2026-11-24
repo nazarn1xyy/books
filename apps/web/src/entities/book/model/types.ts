@@ -19,6 +19,8 @@ export interface ReadingProgress {
   totalPages: number;
   lastRead: number;
   scrollPercentage?: number;
+  /** Fraction (0..1) of the top paragraph already scrolled past: restores the exact line. */
+  paragraphOffset?: number;
 }
 
 export interface Chapter {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import type { VirtuosoHandle } from 'react-virtuoso';
 import type { ReadingProgress } from '@/entities/book/model/types';
+import type { VirtuosoHandle } from 'react-virtuoso';
 import { getReadingProgress, saveReadingProgress } from '@/shared/storage/storage';
 
 const SAVE_DEBOUNCE_MS = 1000;
@@ -28,14 +28,27 @@ export function useReadingPosition({ bookId, total, isPdf, bookmarkParagraph, vi
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<ReadingProgress | null>(null);
 
-  // Flush a pending progress save on unmount.
-  useEffect(
-    () => () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      if (pending.current) saveReadingProgress(pending.current);
-    },
-    [],
-  );
+  const flush = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    if (pending.current) saveReadingProgress(pending.current);
+    pending.current = null;
+  }, []);
+
+  // Flush on leave. iOS kills a backgrounded PWA without unmounting anything, so hiding the page
+  // (app switcher, lock screen, another tab) must save too, not only navigating away.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, [flush]);
 
   /** Paragraph (or PDF page) to open at: bookmark `?p=` first, then saved progress. */
   const initialIndex = useMemo(() => {
@@ -52,6 +65,32 @@ export function useReadingPosition({ bookId, total, isPdf, bookmarkParagraph, vi
     }
     return Math.max(0, Math.min(Number.isNaN(index) ? 0 : index, total - 1));
   }, [bookId, total, bookmarkParagraph]);
+
+  /** How far into the initial paragraph to scroll (bookmarks open at the paragraph start). */
+  const initialOffset = useMemo(() => {
+    if (!bookId || bookmarkParagraph !== null) return 0;
+    const progress = getReadingProgress(bookId);
+    return progress && progress.currentPage === initialIndex ? (progress.paragraphOffset ?? 0) : 0;
+  }, [bookId, bookmarkParagraph, initialIndex]);
+
+  const scheduleSave = useCallback(
+    (index: number, offset: number) => {
+      if (!bookId || total === 0) return;
+      const percentage = Math.round((index / total) * 100);
+      setScrollProgress(percentage);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      pending.current = {
+        bookId,
+        currentPage: index,
+        totalPages: total,
+        lastRead: Date.now(),
+        scrollPercentage: percentage,
+        paragraphOffset: offset,
+      };
+      saveTimer.current = setTimeout(flush, SAVE_DEBOUNCE_MS);
+    },
+    [bookId, total, flush],
+  );
 
   /**
    * Progress is saved only after the view has reached the restored position. Before that the list
@@ -82,25 +121,20 @@ export function useReadingPosition({ bookId, total, isPdf, bookmarkParagraph, vi
         restored.current = true;
       }
 
-      const percentage = Math.round((currentIndex / total) * 100);
-      setScrollProgress(percentage);
-
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      const progress: ReadingProgress = {
-        bookId,
-        currentPage: currentIndex,
-        totalPages: total,
-        lastRead: Date.now(),
-        scrollPercentage: percentage,
-      };
-      pending.current = progress;
-      saveTimer.current = setTimeout(() => {
-        saveReadingProgress(progress);
-        pending.current = null;
-      }, SAVE_DEBOUNCE_MS);
+      // Text in scroll mode reports the exact line through handleLinePosition instead.
+      if (isPdf) scheduleSave(currentIndex, 0);
     },
-    [bookId, total, isPdf, initialIndex],
+    [bookId, total, isPdf, initialIndex, scheduleSave],
   );
 
-  return { initialIndex, visibleRange, scrollProgress, displayPageNumber, handleRangeChanged };
+  /** Scroll mode: the paragraph at the top of the screen and how far into it (0..1) the reader is. */
+  const handleLinePosition = useCallback(
+    (index: number, offset: number) => {
+      if (!restored.current) return;
+      scheduleSave(index, offset);
+    },
+    [scheduleSave],
+  );
+
+  return { initialIndex, initialOffset, visibleRange, scrollProgress, displayPageNumber, handleRangeChanged, handleLinePosition };
 }
