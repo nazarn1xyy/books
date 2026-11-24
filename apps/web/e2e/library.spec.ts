@@ -80,7 +80,7 @@ async function topLine(page: Page) {
   return page.evaluate(() => {
     const scroller = document.querySelector('[data-virtuoso-scroller]') as HTMLElement;
     const top = scroller.getBoundingClientRect().top;
-    for (const el of scroller.querySelectorAll<HTMLElement>('[data-index]')) {
+    for (const el of Array.from(scroller.querySelectorAll<HTMLElement>('[data-index]'))) {
       const r = el.getBoundingClientRect();
       if (r.bottom > top + 1) return { index: Number(el.dataset.index), px: top - r.top };
     }
