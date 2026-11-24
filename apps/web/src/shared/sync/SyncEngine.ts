@@ -11,7 +11,16 @@ let opSchemaLoaded: OpSchema | null = null;
 
 /** Loads zod + the op schema on demand (separate chunk). Exported for tests. */
 export async function preloadSyncSchema(): Promise<OpSchema> {
-  opSchemaLoaded ??= (await import('@libify/shared/sync')).syncOpSchema;
+  // A failed chunk fetch (flaky network, dev dep re-optimisation) must not kill sync for the
+  // whole session: retry with backoff before giving up.
+  for (let attempt = 0; !opSchemaLoaded; attempt++) {
+    try {
+      opSchemaLoaded = (await import('@libify/shared/sync')).syncOpSchema;
+    } catch (err) {
+      if (attempt >= 3) throw err;
+      await new Promise((r) => setTimeout(r, 300 * 2 ** attempt));
+    }
+  }
   return opSchemaLoaded;
 }
 
