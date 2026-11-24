@@ -61,7 +61,7 @@ export function QuoteMenu({ isVisible, position, selectedText, onSave, onClose }
     return (
                 <div
                     ref={menuRef}
-                    className={`fixed z-50 bg-[#2C2C2E] rounded-xl shadow-xl border border-white/10 overflow-hidden transition-[opacity,transform] duration-150 ${visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-1'}`}
+                    className={`fixed z-50 bg-[#2C2C2E] rounded-xl shadow-xl border border-white/10 overflow-hidden origin-top transition-[opacity,transform] duration-150 ${visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1'}`}
                     style={{
                         left: position.x,
                         top: position.y,

@@ -11,8 +11,8 @@ export function InstallBanner() {
   if (!canInstall || dismissed) return null;
 
   return (
-    <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
-      <Download className="text-blue-400 flex-shrink-0 mt-0.5" size={24} aria-hidden="true" />
+    <div className="mb-6 flex items-start gap-3 rounded-2xl bg-surface p-4 banner-enter">
+      <Download className="text-fg flex-shrink-0 mt-0.5" size={24} aria-hidden="true" />
       <div className="flex-1">
         <h3 className="text-fg font-semibold mb-1">{t('home.installTitle')}</h3>
         <p className="text-muted text-sm mb-3">{t('home.installDesc')}</p>
@@ -20,7 +20,7 @@ export function InstallBanner() {
           onClick={async () => {
             if (await promptInstall()) setDismissed(true);
           }}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white rounded-lg text-sm font-medium transition"
+          className="px-4 py-2 bg-accent text-on-accent hover:opacity-90 active:scale-[0.97] rounded-full text-sm font-medium transition"
         >
           {t('home.install')}
         </button>

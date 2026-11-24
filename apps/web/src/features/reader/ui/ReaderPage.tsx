@@ -178,7 +178,7 @@ export function ReaderPage() {
 
       <Toast
         message={toast.message}
-        className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-[#2C2C2E] text-white text-sm font-medium rounded-xl shadow-xl border border-white/10 pointer-events-none whitespace-nowrap animate-pulse"
+        className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-[#2C2C2E] text-white text-sm font-medium rounded-xl shadow-xl border border-white/10 pointer-events-none w-max max-w-[calc(100vw-2rem)] text-center toast-enter"
       />
     </div>
   );

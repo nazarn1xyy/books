@@ -40,7 +40,7 @@ export function BottomNav() {
         {index >= 0 && (
           <span
             aria-hidden="true"
-            className="absolute top-1 bottom-1 left-1 w-[88px] rounded-full bg-white/[0.14] shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+            className="absolute top-1 bottom-1 left-1 w-[88px] rounded-full bg-white/[0.14] shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] transition-transform duration-[350ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
             style={{ transform: `translateX(${index * 100}%)` }}
           />
         )}

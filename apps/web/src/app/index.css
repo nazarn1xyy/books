@@ -500,3 +500,30 @@ nav a {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* One-shot entrances for elements that mount already "on": no JS mount flag needed. */
+.toast-enter {
+  transition: opacity 250ms var(--ease-out), transform 250ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.banner-enter {
+  transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .banner-enter {
+    transform: none !important;
+  }
+}
+
+/* Unbroken strings (long words, URLs, file names) wrap instead of pushing the layout sideways. */
+body {
+  overflow-wrap: break-word;
+}
